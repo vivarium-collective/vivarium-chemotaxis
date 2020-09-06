@@ -111,17 +111,28 @@ class FlagellaMotor(Process):
                 '_emit': True}}
 
         # internal
-        set_and_emit = [
+        state_emit = [
+            'chemoreceptor_activity',
+            'ccw_motor_bias',
+            'ccw_to_cw',
+            'motor_state',
+            'CheA',
+            'CheY_P'
+        ]
+        state_set_updater = [
                 'ccw_motor_bias',
                 'ccw_to_cw',
                 'motor_state',
                 'CheA',
-                'CheY_P']
+                'CheY_P'
+        ]
         for state, default in self.parameters['initial_state']['internal'].items():
             schema['internal'][state] = {'_default': default}
-            if state in set_and_emit:
+            if state in state_emit:
                 schema['internal'][state].update({
-                    '_emit': True,
+                    '_emit': True})
+            if state in state_set_updater:
+                schema['internal'][state].update({
                     '_updater': 'set'})
 
         # boundary (thrust and torque)
@@ -175,8 +186,8 @@ class FlagellaMotor(Process):
 
 
 
-
-
+        # import ipdb; ipdb.set_trace()
+        print(P_on)
 
 
         ## update flagella
@@ -302,12 +313,10 @@ class FlagellaMotor(Process):
 # testing functions
 default_params = {'n_flagella': 5}
 default_timeline = [(10, {})]
-def test_flagella_motor(parameters=default_params, timeline=default_timeline):
+def test_flagella_motor(timeline=default_timeline, parameters=default_params):
     motor = FlagellaMotor(parameters)
     settings = {
-        'timeline': {'timeline': timeline},
-        # 'return_raw_data': True
-    }
+        'timeline': {'timeline': timeline}}
     return simulate_process_in_experiment(motor, settings)
 
 
@@ -320,7 +329,13 @@ if __name__ == '__main__':
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    output = test_flagella_motor()
+    timeline = [
+        (0, {('internal', 'chemoreceptor_activity'): 0.6}),
+        (1, {('internal', 'chemoreceptor_activity'): 0.4}),
+        (2,  {('internal', 'chemoreceptor_activity'): 0.2})
+    ]
+    output = test_flagella_motor(
+        timeline=timeline )
 
     plot_settings = {}
     plot_simulation_output(output, plot_settings, out_dir)
