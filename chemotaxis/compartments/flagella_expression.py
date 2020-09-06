@@ -18,15 +18,15 @@ from vivarium.core.composition import (
     save_flat_timeseries,
     load_timeseries,
     assert_timeseries_close,
-    REFERENCE_DATA_DIR,
     COMPARTMENT_OUT_DIR,
 )
-from vivarium.data.nucleotides import nucleotides
-from vivarium.data.amino_acids import amino_acids
-from vivarium.data.chromosomes.flagella_chromosome import FlagellaChromosome
-from vivarium.plots.gene_expression import plot_timeseries_heatmaps
-from vivarium.states.chromosome import Chromosome, rna_bases, sequence_monomers
-from vivarium.parameters.parameters import (
+from cell.data import REFERENCE_DATA_DIR
+from cell.data.nucleotides import nucleotides
+from cell.data.amino_acids import amino_acids
+from cell.data.chromosomes.flagella_chromosome import FlagellaChromosome
+from cell.plots.gene_expression import plot_timeseries_heatmaps
+from cell.states.chromosome import Chromosome, rna_bases, sequence_monomers
+from cell.parameters.parameters import (
     parameter_scan,
     get_parameters_logspace,
     plot_scan_results,
@@ -38,18 +38,18 @@ from vivarium.library.dict_utils import deep_merge
 from vivarium.library.units import units
 
 # processes
-from vivarium.processes.transcription import Transcription, UNBOUND_RNAP_KEY
-from vivarium.processes.translation import Translation, UNBOUND_RIBOSOME_KEY
-from vivarium.processes.degradation import RnaDegradation
-from vivarium.processes.complexation import Complexation
-from vivarium.processes.convenience_kinetics import ConvenienceKinetics, get_glc_lct_config
-from vivarium.processes.metabolism import Metabolism, get_iAF1260b_config
-from vivarium.processes.division_volume import DivisionVolume
+from cell.processes.transcription import Transcription, UNBOUND_RNAP_KEY
+from cell.processes.translation import Translation, UNBOUND_RIBOSOME_KEY
+from cell.processes.degradation import RnaDegradation
+from cell.processes.complexation import Complexation
+from cell.processes.convenience_kinetics import ConvenienceKinetics, get_glc_lct_config
+from cell.processes.metabolism import Metabolism, get_iAF1260b_config
+from cell.processes.division_volume import DivisionVolume
 from vivarium.processes.meta_division import MetaDivision
 from vivarium.processes.tree_mass import TreeMass
 
 # compartments
-from vivarium.compartments.gene_expression import (
+from cell.compartments.gene_expression import (
     GeneExpression,
     plot_gene_expression_output,
     gene_network_plot,

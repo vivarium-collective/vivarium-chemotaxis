@@ -20,7 +20,7 @@ from vivarium.core.composition import (
     simulate_process_in_experiment,
     PROCESS_OUT_DIR,
 )
-from vivarium.plots.coarse_motor import (
+from chemotaxis.plots.coarse_motor import (
     plot_variable_receptor,
     plot_motor_control,
 )

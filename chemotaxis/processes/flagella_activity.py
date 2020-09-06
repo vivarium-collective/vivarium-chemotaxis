@@ -16,7 +16,7 @@ from vivarium.core.composition import (
     simulate_process_in_experiment,
     PROCESS_OUT_DIR
 )
-from vivarium.plots.flagella_activity import plot_activity
+from chemotaxis.plots.flagella_activity import plot_activity
 
 NAME = 'flagella_activity'
 

@@ -17,31 +17,31 @@ from vivarium.core.composition import (
 )
 
 # data
-from vivarium.data.amino_acids import amino_acids
+from cell.data.amino_acids import amino_acids
 
 # processes
-from vivarium.processes.chemoreceptor_cluster import (
+from chemotaxis.processes.chemoreceptor_cluster import (
     ReceptorCluster,
     get_exponential_random_timeline
 )
-from vivarium.processes.flagella_activity import FlagellaActivity
-from vivarium.processes.transcription import Transcription, UNBOUND_RNAP_KEY
-from vivarium.processes.translation import Translation, UNBOUND_RIBOSOME_KEY
-from vivarium.processes.degradation import RnaDegradation
-from vivarium.processes.complexation import Complexation
-from vivarium.processes.growth_protein import GrowthProtein
 from vivarium.processes.meta_division import MetaDivision
 from vivarium.processes.tree_mass import TreeMass
-from vivarium.processes.derive_globals import DeriveGlobals
-from vivarium.processes.ode_expression import ODE_expression, get_flagella_expression
-from vivarium.compartments.flagella_expression import (
+from cell.processes.transcription import Transcription, UNBOUND_RNAP_KEY
+from cell.processes.translation import Translation, UNBOUND_RIBOSOME_KEY
+from cell.processes.degradation import RnaDegradation
+from cell.processes.complexation import Complexation
+from cell.processes.growth_protein import GrowthProtein
+from cell.processes.derive_globals import DeriveGlobals
+from cell.processes.ode_expression import ODE_expression, get_flagella_expression
+from chemotaxis.processes.flagella_activity import FlagellaActivity
+from chemotaxis.compartments.flagella_expression import (
     get_flagella_expression_config,
     get_flagella_initial_state,
     plot_gene_expression_output,
 )
 
 # plots
-from vivarium.plots.chemotaxis_flagella import plot_signal_transduction
+from chemotaxis.plots.chemotaxis_flagella import plot_signal_transduction
 
 
 
@@ -169,7 +169,7 @@ class ChemotaxisODEExpressionFlagella(Generator):
 
             'division': {
                 'global': boundary_path,
-                'cells': agents_path},
+                'agents': agents_path},
         }
 
 
@@ -281,7 +281,7 @@ class ChemotaxisExpressionFlagella(Generator):
 
             'division': {
                 'global': boundary_path,
-                'cells': agents_path},
+                'agents': agents_path},
 
             'mass_deriver': {
                 'global': boundary_path},

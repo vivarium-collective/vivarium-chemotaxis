@@ -11,11 +11,11 @@ from vivarium.core.composition import (
 )
 
 # processes
-from vivarium.processes.chemoreceptor_cluster import (
+from chemotaxis.processes.chemoreceptor_cluster import (
     ReceptorCluster,
     get_exponential_random_timeline
 )
-from vivarium.processes.coarse_motor import MotorActivity
+from chemotaxis.processes.coarse_motor import MotorActivity
 
 
 
