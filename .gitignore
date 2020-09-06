@@ -6,7 +6,6 @@
 /vivarium_chemotaxis.egg-info
 
 *.out
-out/
 .idea/
 *.iml
 
