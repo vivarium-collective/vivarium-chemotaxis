@@ -41,9 +41,7 @@ from chemotaxis.compartments.flagella_expression import (
 )
 
 # plots
-from chemotaxis.plots.chemotaxis_flagella import plot_signal_transduction
-
-
+from chemotaxis.plots.flagella_activity import plot_signal_transduction
 
 NAME = 'chemotaxis_flagella'
 
@@ -54,12 +52,15 @@ DEFAULT_INITIAL_LIGAND = 1e-2
 
 class ChemotaxisVariableFlagella(Generator):
     n_flagella = 5
+    time_step = 0.01
     defaults = {
         'receptor': {
+            'time_step': time_step,
             'ligand_id': DEFAULT_LIGAND,
             'initial_ligand': DEFAULT_INITIAL_LIGAND
         },
         'flagella': {
+            'time_step': time_step,
             'n_flagella': n_flagella
         },
     }
@@ -73,7 +74,7 @@ class ChemotaxisVariableFlagella(Generator):
 
         return {
             'receptor': receptor,
-            'flagella_activity': flagella}
+            'flagella': flagella}
 
     def generate_topology(self, config):
         boundary_path = ('boundary',)
@@ -82,7 +83,7 @@ class ChemotaxisVariableFlagella(Generator):
             'receptor': {
                 'external': external_path,
                 'internal': ('internal',)},
-            'flagella_activity': {
+            'flagella': {
                 'internal': ('internal',),
                 'membrane': ('membrane',),
                 'internal_counts': ('proteins',),
@@ -97,13 +98,16 @@ class ChemotaxisODEExpressionFlagella(Generator):
     n_flagella = 5
     initial_mass = 1339.0 * units.fg
     growth_rate = 0.000275
+    time_step = 0.01
     defaults = {
         'expression': get_flagella_expression(),
         'receptor': {
+            'time_step': time_step,
             'ligand_id': ligand_id,
             'initial_ligand': initial_ligand
         },
         'flagella': {
+            'time_step': time_step,
             'n_flagella': n_flagella
         },
         'growth': {
@@ -134,7 +138,7 @@ class ChemotaxisODEExpressionFlagella(Generator):
 
         return {
             'receptor': ReceptorCluster(config['receptor']),
-            'flagella_activity': FlagellaActivity(config['flagella']),
+            'flagella': FlagellaActivity(config['flagella']),
             'expression': ODE_expression(config['expression']),
             'growth': GrowthProtein(config['growth']),
             'division': MetaDivision(division_config),
@@ -150,7 +154,7 @@ class ChemotaxisODEExpressionFlagella(Generator):
                 'external': external_path,
                 'internal': ('cell',)},
 
-            'flagella_activity': {
+            'flagella': {
                 'internal': ('internal',),
                 'membrane': ('membrane',),
                 'internal_counts': ('proteins',),
@@ -219,7 +223,7 @@ class ChemotaxisExpressionFlagella(Generator):
 
         return {
             'receptor': ReceptorCluster(config['receptor']),
-            'flagella_activity': FlagellaActivity(config['flagella']),
+            'flagella': FlagellaActivity(config['flagella']),
             'transcription': Transcription(config['transcription']),
             'translation': Translation(config['translation']),
             'degradation': RnaDegradation(config['degradation']),
@@ -241,7 +245,7 @@ class ChemotaxisExpressionFlagella(Generator):
                 'external': external_path,
                 'internal': ('cell',)},
 
-            'flagella_activity': {
+            'flagella': {
                 'internal': ('internal',),
                 'membrane': ('membrane',),
                 'internal_counts': ('proteins',),

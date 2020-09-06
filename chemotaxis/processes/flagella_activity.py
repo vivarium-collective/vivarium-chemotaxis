@@ -1,4 +1,18 @@
-from __future__ import absolute_import, division, print_function
+'''
+====================
+Flagella Activity
+====================
+
+Flagella activity :cite:`mears2014escherichia`
+
+------------
+Bibliography
+------------
+
+.. bibliography:: /references.bib
+    :style: plain
+
+'''
 
 import os
 import sys
@@ -16,6 +30,8 @@ from vivarium.core.composition import (
     simulate_process_in_experiment,
     PROCESS_OUT_DIR
 )
+
+# plots
 from chemotaxis.plots.flagella_activity import plot_activity
 
 NAME = 'flagella_activity'
@@ -49,6 +65,7 @@ class FlagellaActivity(Process):
     defaults = {
         'n_flagella': 5,
         'initial_state': {
+            'chemoreceptor_activity': 1./3.,  # initial probability of receptor cluster being on
             'CheY': 2.59,
             'CheY_P': 2.59,  # (uM) mean concentration of CheY-P
             'cw_bias': 0.5,
@@ -82,7 +99,7 @@ class FlagellaActivity(Process):
         'tumble_jitter': 120.0,
         'tumble_scaling': 1 / initial_pmf,
         'run_scaling': 1 / initial_pmf,
-        'time_step': 0.01,  # 0.001
+        'time_step': 0.01,
     }
 
     def __init__(self, parameters=None):
@@ -106,17 +123,20 @@ class FlagellaActivity(Process):
 
         # membrane
         for state in ['PMF', 'protons_flux_accumulated']:
-            schema['membrane'][state] = {'_default': self.parameters['initial_state'].get(state, 0.0)}
+            schema['membrane'][state] = {
+                '_default': self.parameters['initial_state'].get(state, 0.0)}
 
         # internal
-        schema['internal']['chemoreceptor_activity'] = {}
+        schema['internal']['chemoreceptor_activity'] = {
+            '_default': self.parameters['initial_state']['chemoreceptor_activity']}
+
         for state in ['motile_state', 'CheY', 'CheY_P', 'cw_bias']:
             schema['internal'][state] = {
-                '_default': self.parameters['initial_state'].get(state, 0),
+                '_default': self.parameters['initial_state'].get(state, 0.0),
                 '_emit': True,
                 '_updater': 'set'}
 
-        # internal_counts
+        # internal_counts for flagellar counts (n_flagella)
         schema['internal_counts']['flagella'] = {
             '_value': self.parameters['n_flagella'],
             '_default': self.parameters['n_flagella'],
@@ -140,6 +160,7 @@ class FlagellaActivity(Process):
         PMF = states['membrane']['PMF']
 
         # states
+        P_on = internal['chemoreceptor_activity']
         CheY = internal['CheY']
         CheY_P = internal['CheY_P']
 
