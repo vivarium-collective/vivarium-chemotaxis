@@ -9,30 +9,30 @@ from vivarium.core.composition import (
     plot_compartment_topology,
     COMPARTMENT_OUT_DIR
 )
-from vivarium.compartments.gene_expression import plot_gene_expression_output
-from vivarium.compartments.flagella_expression import get_flagella_expression_config
+from cell.compartments.gene_expression import plot_gene_expression_output
+from chemotaxis.compartments.flagella_expression import get_flagella_expression_config
 
 # processes
-from vivarium.processes.metabolism import (
+from cell.processes.metabolism import (
     Metabolism,
     get_iAF1260b_config
 )
-from vivarium.processes.convenience_kinetics import (
+from cell.processes.convenience_kinetics import (
     ConvenienceKinetics,
     get_glc_lct_config
 )
-from vivarium.processes.transcription import Transcription
-from vivarium.processes.translation import Translation
-from vivarium.processes.degradation import RnaDegradation
-from vivarium.processes.complexation import Complexation
-from vivarium.processes.chemoreceptor_cluster import ReceptorCluster
-from vivarium.processes.flagella_activity import FlagellaActivity
-from vivarium.processes.membrane_potential import MembranePotential
-from vivarium.processes.division_volume import DivisionVolume
+from cell.processes.transcription import Transcription
+from cell.processes.translation import Translation
+from cell.processes.degradation import RnaDegradation
+from cell.processes.complexation import Complexation
+from cell.processes.division_volume import DivisionVolume
+from chemotaxis.processes.chemoreceptor_cluster import ReceptorCluster
+from chemotaxis.processes.flagella_activity import FlagellaActivity
+from chemotaxis.processes.membrane_potential import MembranePotential
 
 # compartments
-from vivarium.compartments.master import default_metabolism_config
-from vivarium.compartments.flagella_expression import get_flagella_expression_config
+from cell.compartments.master import default_metabolism_config
+from chemotaxis.compartments.flagella_expression import get_flagella_expression_config
 
 NAME = 'chemotaxis_master'
 

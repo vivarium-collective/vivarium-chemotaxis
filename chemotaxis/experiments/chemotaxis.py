@@ -35,22 +35,21 @@ from vivarium.core.composition import (
 )
 
 # compartments
-from vivarium.compartments.static_lattice import StaticLattice
-from vivarium.compartments.chemotaxis_minimal import ChemotaxisMinimal
-from vivarium.compartments.chemotaxis_master import ChemotaxisMaster
-from vivarium.compartments.chemotaxis_flagella import (
+from chemotaxis.compartments.static_lattice import StaticLattice
+from chemotaxis.compartments.chemotaxis_minimal import ChemotaxisMinimal
+from chemotaxis.compartments.chemotaxis_master import ChemotaxisMaster
+from chemotaxis.compartments.chemotaxis_flagella import (
     ChemotaxisVariableFlagella,
     ChemotaxisExpressionFlagella,
     ChemotaxisODEExpressionFlagella,
 )
 
 # processes
-from vivarium.processes.coarse_motor import MotorActivity
-from vivarium.processes.multibody_physics import agent_body_config
-from vivarium.processes.static_field import make_field
+from chemotaxis.processes.coarse_motor import MotorActivity
+from cell.processes.multibody_physics import agent_body_config
+from chemotaxis.processes.static_field import make_field
 
-# control
-from vivarium.core.control import Control
+# from chemotaxis.core.control import Control
 
 
 
@@ -351,12 +350,14 @@ experiment_library = {
 
 
 def main():
-    workflow = Control(
-        compartment_library=compartment_library,
-        experiment_library=experiment_library
-        )
+    pass
 
-    workflow.execute()
+    # workflow = Control(
+    #     compartment_library=compartment_library,
+    #     experiment_library=experiment_library
+    #     )
+
+    # workflow.execute()
 
 
 if __name__ == '__main__':

@@ -15,23 +15,24 @@ from vivarium.core.composition import (
     plot_simulation_output,
     set_axes,
     COMPARTMENT_OUT_DIR)
-from vivarium.parameters.parameters import (
+
+from cell.parameters.parameters import (
     parameter_scan,
     get_parameters_logspace,
     plot_scan_results)
 
 # processes
-from vivarium.plots.transport_metabolism import plot_diauxic_shift
-from vivarium.processes.division_volume import DivisionVolume
 from vivarium.processes.meta_division import MetaDivision
 from vivarium.processes.tree_mass import TreeMass
-from vivarium.processes.metabolism import (
+from cell.plots.transport_metabolism import plot_diauxic_shift
+from cell.processes.division_volume import DivisionVolume
+from cell.processes.metabolism import (
     Metabolism,
     get_iAF1260b_config)
-from vivarium.processes.convenience_kinetics import (
+from cell.processes.convenience_kinetics import (
     ConvenienceKinetics,
     get_glc_lct_config)
-from vivarium.processes.ode_expression import (
+from cell.processes.ode_expression import (
     ODE_expression,
     get_lacy_config)
 
@@ -202,7 +203,7 @@ class TransportMetabolism(Generator):
             topology.update({
                 'meta_division': {
                     'global': boundary_path,
-                    'cells': agents_path,
+                    'agents': agents_path,
                 }})
         return topology
 

@@ -36,27 +36,28 @@ from vivarium.core.composition import (
 )
 
 # compartments
-from vivarium.compartments.static_lattice import StaticLattice
-from vivarium.compartments.chemotaxis_minimal import ChemotaxisMinimal
-from vivarium.compartments.chemotaxis_master import ChemotaxisMaster
-from vivarium.compartments.chemotaxis_flagella import (
+from chemotaxis.compartments.static_lattice import StaticLattice
+from chemotaxis.compartments.chemotaxis_minimal import ChemotaxisMinimal
+from chemotaxis.compartments.chemotaxis_master import ChemotaxisMaster
+from chemotaxis.compartments.chemotaxis_flagella import (
     ChemotaxisVariableFlagella,
     ChemotaxisExpressionFlagella,
     ChemotaxisODEExpressionFlagella,
 )
 
 # processes
-from vivarium.processes.coarse_motor import MotorActivity
-from vivarium.processes.multibody_physics import agent_body_config
-from vivarium.processes.static_field import make_field
+from cell.processes.multibody_physics import agent_body_config
+from chemotaxis.processes.coarse_motor import MotorActivity
+from chemotaxis.processes.static_field import make_field
 
 # plots
-from vivarium.plots.multibody_physics import (
+from cell.plots.multibody_physics import (
     plot_temporal_trajectory,
     plot_agent_trajectory,
     plot_motility,
 )
-from vivarium.plots.coarse_motor import plot_variable_receptor
+
+from chemotaxis.plots.coarse_motor import plot_variable_receptor
 
 # make an agent from a lone MotorActivity process
 # MotorActivityAgent = MotorActivity

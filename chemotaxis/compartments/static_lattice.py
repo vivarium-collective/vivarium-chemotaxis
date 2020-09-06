@@ -9,12 +9,12 @@ from vivarium.core.composition import (
 )
 
 # processes
-from vivarium.processes.multibody_physics import (
+from cell.processes.multibody_physics import (
     Multibody,
     agent_body_config,
 )
-from vivarium.plots.multibody_physics import plot_snapshots
-from vivarium.processes.static_field import StaticField
+from cell.plots.multibody_physics import plot_snapshots
+from chemotaxis.processes.static_field import StaticField
 
 NAME = 'static_lattice'
 
