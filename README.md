@@ -7,7 +7,7 @@ vivarium processes.
 Make a pyenv and install dependencies. First install numpy:
 
 ```
-$ pip install numpy==1.19.1
+$ pip install numpy
 ```
 
 Then the remaining requirements:
