@@ -36,7 +36,7 @@ from vivarium.core.composition import (
 )
 
 # compartments
-from chemotaxis.compartments.static_lattice import StaticLattice
+from cell.compartments.static_lattice import StaticLattice
 from chemotaxis.compartments.chemotaxis_minimal import ChemotaxisMinimal
 from chemotaxis.compartments.chemotaxis_master import ChemotaxisMaster
 from chemotaxis.compartments.chemotaxis_flagella import (
@@ -46,9 +46,9 @@ from chemotaxis.compartments.chemotaxis_flagella import (
 )
 
 # processes
+from cell.processes.static_field import make_field
 from cell.processes.multibody_physics import agent_body_config
 from chemotaxis.processes.coarse_motor import MotorActivity
-from chemotaxis.processes.static_field import make_field
 
 # plots
 from cell.plots.multibody_physics import (

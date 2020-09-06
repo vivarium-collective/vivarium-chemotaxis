@@ -1,6 +1,6 @@
 # vivarium-chemotaxis
 
-[vivarium-chemotaxis](https://github.com/vivarium-collective/vivarium-chemotaxis) Is a library for chemotaxis-specific
+[vivarium-chemotaxis](https://github.com/vivarium-collective/vivarium-chemotaxis) is a library for chemotaxis-specific
 vivarium processes.
 
 ## setup
