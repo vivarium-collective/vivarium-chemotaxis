@@ -82,10 +82,14 @@ class FlagellaMotor(Process):
                 'cw_bias': 0.5,
                 'motile_state': 1,  # 1 for tumble, 0 for run
             },
+            'membrane': {
+                'PMF': initial_pmf,
+            },
             'boundary': {
                 'thrust': 0,
                 'torque': 0,
-            }}
+            }
+        }
     }
 
     def __init__(self, parameters=None):
@@ -152,7 +156,7 @@ class FlagellaMotor(Process):
         # membrane
         for state in ['PMF', 'protons_flux_accumulated']:
             schema['membrane'][state] = {
-                '_default': self.parameters['initial_state'].get(state, 0.0)}
+                '_default': self.parameters['initial_state']['membrane'].get(state, 0.0)}
 
         return schema
 
@@ -243,7 +247,6 @@ class FlagellaMotor(Process):
             motile_state = 0
             thrust = 0
             torque = 0
-
 
         return {
             'flagella': flagella_update,
