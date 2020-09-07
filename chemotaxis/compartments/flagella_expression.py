@@ -20,17 +20,18 @@ from vivarium.core.composition import (
     assert_timeseries_close,
     COMPARTMENT_OUT_DIR,
 )
+
+# data
+from chemotaxis.data.chromosomes.flagella_chromosome import FlagellaChromosome
 from cell.data import REFERENCE_DATA_DIR
 from cell.data.nucleotides import nucleotides
 from cell.data.amino_acids import amino_acids
-from cell.data.chromosomes.flagella_chromosome import FlagellaChromosome
 from cell.plots.gene_expression import plot_timeseries_heatmaps
 from cell.states.chromosome import Chromosome, rna_bases, sequence_monomers
 from cell.parameters.parameters import (
     parameter_scan,
     get_parameters_logspace,
-    plot_scan_results,
-)
+    plot_scan_results)
 from vivarium.core.emitter import path_timeseries_from_embedded_timeseries
 
 # vivarium libraries

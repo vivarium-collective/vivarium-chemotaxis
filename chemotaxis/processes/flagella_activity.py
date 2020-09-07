@@ -1,4 +1,18 @@
-from __future__ import absolute_import, division, print_function
+'''
+====================
+Flagella Activity
+====================
+
+Flagella activity :cite:`mears2014escherichia`
+
+------------
+Bibliography
+------------
+
+.. bibliography:: /references.bib
+    :style: plain
+
+'''
 
 import os
 import sys
@@ -14,8 +28,12 @@ from vivarium.library.dict_utils import deep_merge
 from vivarium.core.process import Process
 from vivarium.core.composition import (
     simulate_process_in_experiment,
+    plot_simulation_output,
     PROCESS_OUT_DIR
 )
+from vivarium.core.emitter import timeseries_from_data
+
+# plots
 from chemotaxis.plots.flagella_activity import plot_activity
 
 NAME = 'flagella_activity'
@@ -49,6 +67,7 @@ class FlagellaActivity(Process):
     defaults = {
         'n_flagella': 5,
         'initial_state': {
+            'chemoreceptor_activity': 1./3.,  # initial probability of receptor cluster being on
             'CheY': 2.59,
             'CheY_P': 2.59,  # (uM) mean concentration of CheY-P
             'cw_bias': 0.5,
@@ -82,7 +101,7 @@ class FlagellaActivity(Process):
         'tumble_jitter': 120.0,
         'tumble_scaling': 1 / initial_pmf,
         'run_scaling': 1 / initial_pmf,
-        'time_step': 0.01,  # 0.001
+        'time_step': 0.01,
     }
 
     def __init__(self, parameters=None):
@@ -106,17 +125,20 @@ class FlagellaActivity(Process):
 
         # membrane
         for state in ['PMF', 'protons_flux_accumulated']:
-            schema['membrane'][state] = {'_default': self.parameters['initial_state'].get(state, 0.0)}
+            schema['membrane'][state] = {
+                '_default': self.parameters['initial_state'].get(state, 0.0)}
 
         # internal
-        schema['internal']['chemoreceptor_activity'] = {}
+        schema['internal']['chemoreceptor_activity'] = {
+            '_default': self.parameters['initial_state']['chemoreceptor_activity']}
+
         for state in ['motile_state', 'CheY', 'CheY_P', 'cw_bias']:
             schema['internal'][state] = {
-                '_default': self.parameters['initial_state'].get(state, 0),
+                '_default': self.parameters['initial_state'].get(state, 0.0),
                 '_emit': True,
                 '_updater': 'set'}
 
-        # internal_counts
+        # internal_counts for flagellar counts (n_flagella)
         schema['internal_counts']['flagella'] = {
             '_value': self.parameters['n_flagella'],
             '_default': self.parameters['n_flagella'],
@@ -140,6 +162,7 @@ class FlagellaActivity(Process):
         PMF = states['membrane']['PMF']
 
         # states
+        P_on = internal['chemoreceptor_activity']
         CheY = internal['CheY']
         CheY_P = internal['CheY_P']
 
@@ -315,8 +338,12 @@ def run_variable_flagella(out_dir):
         (40, {('internal_counts', 'flagella'): 7}),
         (60, {})]
     output3 = test_activity(init_params, timeline)
-    plot_activity(output3, out_dir, 'variable_flagella')
+    plot_activity(output3, {}, out_dir, 'variable_flagella')
 
+
+    timeseries = timeseries_from_data(output3)
+    plot_settings = {}
+    plot_simulation_output(timeseries, plot_settings, out_dir, 'simulation_variable_flagella')
 
 if __name__ == '__main__':
     out_dir = os.path.join(PROCESS_OUT_DIR, NAME)
@@ -335,9 +362,17 @@ if __name__ == '__main__':
         zero_flagella = {'n_flagella': 0}
         timeline = [(10, {})]
         output1 = test_activity(zero_flagella, timeline)
-        plot_activity(output1, out_dir, 'motor_control_zero_flagella')
+        plot_activity(output1, {}, out_dir, 'motor_control_zero_flagella')
+
+        timeseries = timeseries_from_data(output1)
+        plot_settings = {}
+        plot_simulation_output(timeseries, plot_settings, out_dir, 'simulation_zero_flagella')
     else:
         five_flagella = {'n_flagella': 5}
         timeline = [(60, {})]
         output2 = test_activity(five_flagella, timeline)
-        plot_activity(output2, out_dir, 'motor_control')
+        plot_activity(output2, {}, out_dir, 'motor_control')
+
+        timeseries = timeseries_from_data(output2)
+        plot_settings = {}
+        plot_simulation_output(timeseries, plot_settings, out_dir, 'simulation_five_flagella')
