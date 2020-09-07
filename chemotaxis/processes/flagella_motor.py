@@ -64,8 +64,8 @@ class FlagellaMotor(Process):
         # motile force parameters
         'flagellum_thrust': 25,  # (pN) (Berg H, E. coli in motion, 2004, pg 113)
         'tumble_jitter': 120.0,
-        'tumble_scaling': 1 / initial_pmf,
-        'run_scaling': 1 / initial_pmf,
+        'tumble_scaling': 1.4 / initial_pmf,
+        'run_scaling': 1.4 / initial_pmf,
 
         # initial state
         'initial_state': {
@@ -199,15 +199,6 @@ class FlagellaMotor(Process):
         if cw_bias < self.parameters['cw_to_ccw_leak']:
             cw_bias = self.parameters['cw_to_ccw_leak']
 
-
-
-
-        # import ipdb; ipdb.set_trace()
-
-
-
-
-
         ## update flagella
         # update number of flagella
         flagella_update = {}
@@ -303,12 +294,14 @@ class FlagellaMotor(Process):
         return new_motor_state
 
     def tumble(self, n_flagella, PMF):
-        thrust = self.parameters['tumble_scaling'] * PMF * self.parameters['flagellum_thrust'] * n_flagella
+        # thrust scales with lg(n_flagella) because only the thickness of the bundle is affected
+        thrust = self.parameters['tumble_scaling'] * PMF * self.parameters['flagellum_thrust'] * math.log(n_flagella + 1)
         torque = random.normalvariate(0, self.parameters['tumble_jitter'])
         return [thrust, torque]
 
     def run(self, n_flagella, PMF):
-        thrust = self.parameters['run_scaling'] * PMF * self.parameters['flagellum_thrust'] * n_flagella
+        # thrust scales with lg(n_flagella) because only the thickness of the bundle is affected
+        thrust = self.parameters['run_scaling'] * PMF * self.parameters['flagellum_thrust'] * math.log(n_flagella + 1)
         torque = 0.0
         return [thrust, torque]
 
@@ -359,8 +352,12 @@ def run_variable_flagella(out_dir='out'):
         rate=2.0,
     )
     timeline_flagella = [
-        (1, {('internal_counts', 'flagella'): 4}),
-        (2, {('internal_counts', 'flagella'): 5}),
+        (0.0, {('internal_counts', 'flagella'): 0}),
+        (0.5, {('internal_counts', 'flagella'): 1}),
+        (1.0, {('internal_counts', 'flagella'): 2}),
+        (1.5, {('internal_counts', 'flagella'): 3}),
+        (2.0, {('internal_counts', 'flagella'): 4}),
+        (2.5, {('internal_counts', 'flagella'): 5}),
     ]
     timeline.extend(timeline_flagella)
 
