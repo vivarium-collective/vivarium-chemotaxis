@@ -18,6 +18,10 @@ from vivarium.core.composition import (
     plot_simulation_output,
     PROCESS_OUT_DIR,
 )
+from vivarium.core.emitter import timeseries_from_data
+
+# plots
+from chemotaxis.plots.flagella_activity import plot_activity
 
 
 NAME = 'flagella_motor'
@@ -68,6 +72,7 @@ class FlagellaMotor(Process):
             'internal': {
                 # response regulator proteins
                 'CheY_tot': 9.7,  # (uM) #0.0097,  # (mM) 9.7 uM = 0.0097 mM
+                'CheY': 9.2,
                 'CheY_P': 0.5,
                 'CheZ': 0.01*100,  # (uM) #phosphatase 100 uM = 0.1 mM (0.01 scaling from RapidCell1.4.2)
                 'CheA': 0.01*100,  # (uM) #100 uM = 0.1 mM (0.01 scaling from RapidCell1.4.2)
@@ -75,7 +80,7 @@ class FlagellaMotor(Process):
                 'chemoreceptor_activity': 1/3,
                 # motor activity
                 'ccw_motor_bias': 0.5,
-                'ccw_to_cw': 0.5,
+                'cw_bias': 0.5,
                 'motile_state': 1,  # 1 for tumble, 0 for run
             },
             'boundary': {
@@ -115,15 +120,16 @@ class FlagellaMotor(Process):
         state_emit = [
             'chemoreceptor_activity',
             'ccw_motor_bias',
-            'ccw_to_cw',
-            'motor_state',
+            'cw_bias',
+            'motile_state',
             'CheA',
-            'CheY_P'
+            'CheY_P',
+            'CheY'
         ]
         state_set_updater = [
                 'ccw_motor_bias',
-                'ccw_to_cw',
-                'motor_state',
+                'cw_bias',
+                'motile_state',
                 'CheA',
                 'CheY_P'
         ]
@@ -179,16 +185,13 @@ class FlagellaMotor(Process):
         ## Motor switching
         # CCW corresponds to run. CW corresponds to tumble
         ccw_motor_bias = mb_0 / (CheY_P * (1 - mb_0) + mb_0)  # (1/s)
-        ccw_to_cw = cw_to_ccw * (1 / ccw_motor_bias - 1)  # (1/s)
-        # don't let ccw_to_cw get under leak value
-        if ccw_to_cw < self.parameters['cw_to_ccw_leak']:
-            ccw_to_cw = self.parameters['cw_to_ccw_leak']
-
-
+        cw_bias = cw_to_ccw * (1 / ccw_motor_bias - 1)  # (1/s)
+        # don't let cw_bias get under leak value
+        if cw_bias < self.parameters['cw_to_ccw_leak']:
+            cw_bias = self.parameters['cw_to_ccw_leak']
 
 
         # import ipdb; ipdb.set_trace()
-        print(P_on)
 
 
         ## update flagella
@@ -213,7 +216,7 @@ class FlagellaMotor(Process):
 
         # update flagella states
         for flagella_id, motor_state in flagella.items():
-            new_motor_state = self.update_flagellum(motor_state, ccw_to_cw, CheY_P, timestep)
+            new_motor_state = self.update_flagellum(motor_state, cw_bias, CheY_P, timestep)
             flagella_update.update({flagella_id: new_motor_state})
 
         ## get cell motile state.
@@ -236,7 +239,7 @@ class FlagellaMotor(Process):
             'flagella': flagella_update,
             'internal': {
                 'ccw_motor_bias': ccw_motor_bias,
-                'ccw_to_cw': ccw_to_cw,
+                'cw_bias': cw_bias,
                 'motile_state': motile_state,
                 'CheY_P': CheY_P},
             'boundary': {
@@ -295,22 +298,6 @@ class FlagellaMotor(Process):
         return [thrust, torque]
 
 
-# def tumble(tumble_jitter=120.0):
-#     thrust = 100  # pN
-#     # average = 160
-#     # sigma = 10
-#     # torque = random.choice([-1, 1]) * random.normalvariate(average, sigma)
-#     torque = random.normalvariate(0, tumble_jitter)
-#     return [thrust, torque]
-#
-# def run():
-#     # average thrust = 200 pN according to:
-#     # Berg, Howard C. E. coli in Motion. Under "Torque-Speed Dependence"
-#     thrust = 250  # pN
-#     torque = 0.0
-#     return [thrust, torque]
-
-
 # testing functions
 def get_chemoreceptor_timeline(
         total_time=2,
@@ -338,6 +325,7 @@ def test_flagella_motor(
 ):
     motor = FlagellaMotor(parameters)
     settings = {
+        'return_raw_data': True,
         'timeline': {
             'timeline': timeline,
             'time_step': 0.01}}
@@ -351,8 +339,10 @@ if __name__ == '__main__':
         os.makedirs(out_dir)
 
     timeline = get_chemoreceptor_timeline()
-    output = test_flagella_motor(
+    data = test_flagella_motor(
         timeline=timeline)
 
     plot_settings = {}
-    plot_simulation_output(output, plot_settings, out_dir)
+    timeseries = timeseries_from_data(data)
+    plot_simulation_output(timeseries, plot_settings, out_dir)
+    plot_activity(data, plot_settings, out_dir)

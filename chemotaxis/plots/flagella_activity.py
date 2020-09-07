@@ -11,8 +11,16 @@ from vivarium.core.emitter import timeseries_from_data
 
 
 
-def plot_activity(data, out_dir='out', filename='motor_control'):
-    timeseries = timeseries_from_data(data)
+def plot_activity(
+        data,
+        settings={},
+        out_dir='out',
+        filename='motor_control',
+):
+    if settings.get('data_type') == 'timeseries':
+        timeseries = data
+    else:
+        timeseries = timeseries_from_data(data)
 
     CheY_vec = timeseries['internal']['CheY']
     CheY_P_vec = timeseries['internal']['CheY_P']

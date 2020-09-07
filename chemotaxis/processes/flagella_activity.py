@@ -336,7 +336,7 @@ def run_variable_flagella(out_dir):
         (40, {('internal_counts', 'flagella'): 7}),
         (60, {})]
     output3 = test_activity(init_params, timeline)
-    plot_activity(output3, out_dir, 'variable_flagella')
+    plot_activity(output3, {}, out_dir, 'variable_flagella')
 
 
 if __name__ == '__main__':
@@ -356,9 +356,9 @@ if __name__ == '__main__':
         zero_flagella = {'n_flagella': 0}
         timeline = [(10, {})]
         output1 = test_activity(zero_flagella, timeline)
-        plot_activity(output1, out_dir, 'motor_control_zero_flagella')
+        plot_activity(output1, {}, out_dir, 'motor_control_zero_flagella')
     else:
         five_flagella = {'n_flagella': 5}
         timeline = [(60, {})]
         output2 = test_activity(five_flagella, timeline)
-        plot_activity(output2, out_dir, 'motor_control')
+        plot_activity(output2, {}, out_dir, 'motor_control')
