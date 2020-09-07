@@ -28,8 +28,10 @@ from vivarium.library.dict_utils import deep_merge
 from vivarium.core.process import Process
 from vivarium.core.composition import (
     simulate_process_in_experiment,
+    plot_simulation_output,
     PROCESS_OUT_DIR
 )
+from vivarium.core.emitter import timeseries_from_data
 
 # plots
 from chemotaxis.plots.flagella_activity import plot_activity
@@ -339,6 +341,10 @@ def run_variable_flagella(out_dir):
     plot_activity(output3, {}, out_dir, 'variable_flagella')
 
 
+    timeseries = timeseries_from_data(output3)
+    plot_settings = {}
+    plot_simulation_output(timeseries, plot_settings, out_dir, 'simulation_variable_flagella')
+
 if __name__ == '__main__':
     out_dir = os.path.join(PROCESS_OUT_DIR, NAME)
     if not os.path.exists(out_dir):
@@ -357,8 +363,16 @@ if __name__ == '__main__':
         timeline = [(10, {})]
         output1 = test_activity(zero_flagella, timeline)
         plot_activity(output1, {}, out_dir, 'motor_control_zero_flagella')
+
+        timeseries = timeseries_from_data(output1)
+        plot_settings = {}
+        plot_simulation_output(timeseries, plot_settings, out_dir, 'simulation_zero_flagella')
     else:
         five_flagella = {'n_flagella': 5}
         timeline = [(60, {})]
         output2 = test_activity(five_flagella, timeline)
         plot_activity(output2, {}, out_dir, 'motor_control')
+
+        timeseries = timeseries_from_data(output2)
+        plot_settings = {}
+        plot_simulation_output(timeseries, plot_settings, out_dir, 'simulation_five_flagella')
