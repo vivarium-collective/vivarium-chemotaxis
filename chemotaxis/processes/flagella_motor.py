@@ -193,7 +193,6 @@ class FlagellaMotor(Process):
 
         # import ipdb; ipdb.set_trace()
 
-
         ## update flagella
         # update number of flagella
         flagella_update = {}
@@ -317,10 +316,11 @@ def get_chemoreceptor_timeline(
     return timeline
 
 
-default_params = {'n_flagella': 5}
 default_timeline = [(10, {})]
+default_params = {'n_flagella': 3}
 def test_flagella_motor(
         timeline=default_timeline,
+        time_step=0.01,
         parameters=default_params
 ):
     motor = FlagellaMotor(parameters)
@@ -328,9 +328,34 @@ def test_flagella_motor(
         'return_raw_data': True,
         'timeline': {
             'timeline': timeline,
-            'time_step': 0.01}}
+            'time_step': time_step}}
     return simulate_process_in_experiment(motor, settings)
 
+
+def run_variable_flagella(out_dir='out'):
+    time_step = 0.01
+    # make timeline with both chemoreceptor variation and flagella counts
+    timeline = get_chemoreceptor_timeline(
+        total_time=3,
+        time_step=time_step,
+    )
+    timeline_flagella = [
+        (1, {('internal_counts', 'flagella'): 4}),
+        (2, {('internal_counts', 'flagella'): 5}),
+    ]
+    timeline.extend(timeline_flagella)
+
+    # run simulation
+    data = test_flagella_motor(
+        timeline=timeline,
+        time_step=time_step,
+    )
+
+    # plot
+    plot_settings = {}
+    timeseries = timeseries_from_data(data)
+    plot_simulation_output(timeseries, plot_settings, out_dir)
+    plot_activity(data, plot_settings, out_dir)
 
 
 if __name__ == '__main__':
@@ -338,11 +363,4 @@ if __name__ == '__main__':
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    timeline = get_chemoreceptor_timeline()
-    data = test_flagella_motor(
-        timeline=timeline)
-
-    plot_settings = {}
-    timeseries = timeseries_from_data(data)
-    plot_simulation_output(timeseries, plot_settings, out_dir)
-    plot_activity(data, plot_settings, out_dir)
+    run_variable_flagella(out_dir)
