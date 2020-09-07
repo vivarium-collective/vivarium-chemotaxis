@@ -5,6 +5,7 @@ Flagella Motor Processes
 '''
 
 import os
+import copy
 import random
 import math
 import uuid
@@ -311,16 +312,36 @@ class FlagellaMotor(Process):
 
 
 # testing functions
+def get_chemoreceptor_timeline(
+        total_time=2,
+        time_step=0.01,
+        rate=0.5,
+        initial_value=1.0/3.0
+):
+    val = copy.copy(initial_value)
+    timeline = [(0, {('internal', 'chemoreceptor_activity'): initial_value})]
+    t = 0
+    while t < total_time:
+        val += random.choice((-1, 1)) * rate * time_step
+        if val < 0:
+            val = 0
+        timeline.append((t, {('internal', 'chemoreceptor_activity'): val}))
+        t += time_step
+    return timeline
+
+
 default_params = {'n_flagella': 5}
 default_timeline = [(10, {})]
-def test_flagella_motor(timeline=default_timeline, parameters=default_params):
+def test_flagella_motor(
+        timeline=default_timeline,
+        parameters=default_params
+):
     motor = FlagellaMotor(parameters)
     settings = {
-        'timeline': {'timeline': timeline}}
+        'timeline': {
+            'timeline': timeline,
+            'time_step': 0.01}}
     return simulate_process_in_experiment(motor, settings)
-
-
-
 
 
 
@@ -329,13 +350,9 @@ if __name__ == '__main__':
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    timeline = [
-        (0, {('internal', 'chemoreceptor_activity'): 0.6}),
-        (1, {('internal', 'chemoreceptor_activity'): 0.4}),
-        (2,  {('internal', 'chemoreceptor_activity'): 0.2})
-    ]
+    timeline = get_chemoreceptor_timeline()
     output = test_flagella_motor(
-        timeline=timeline )
+        timeline=timeline)
 
     plot_settings = {}
     plot_simulation_output(output, plot_settings, out_dir)
