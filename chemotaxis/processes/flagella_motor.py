@@ -43,7 +43,7 @@ class FlagellaMotor(Process):
         'k_z': 30.0,  # / CheZ,
         'gamma_Y': 0.1,  # rate constant
         'k_s': 0.45,  # scaling coefficient
-        'adapt_precision': 3,  # scales CheY_P to cluster activity
+        'adapt_precision': 8,  # scales CheY_P to cluster activity
 
         # motor
         'mb_0': 0.65,  # steady state motor bias (Cluzel et al 2000)
@@ -71,11 +71,10 @@ class FlagellaMotor(Process):
         'initial_state': {
             'internal': {
                 # response regulator proteins
-                'CheY_tot': 9.7,  # (uM) #0.0097,  # (mM) 9.7 uM = 0.0097 mM
-                'CheY': 9.2,
-                'CheY_P': 0.5,
-                'CheZ': 0.01*100,  # (uM) #phosphatase 100 uM = 0.1 mM (0.01 scaling from RapidCell1.4.2)
-                'CheA': 0.01*100,  # (uM) #100 uM = 0.1 mM (0.01 scaling from RapidCell1.4.2)
+                'CheY': 2.59,
+                'CheY_P': 2.59,  # (uM) mean concentration of CheY-P
+                'CheZ': 1.0,  # (uM) #phosphatase 100 uM = 0.1 mM
+                'CheA': 1.0,  # (uM) #100 uM = 0.1 mM
                 # sensor activity
                 'chemoreceptor_activity': 1/3,
                 # motor activity
@@ -124,14 +123,15 @@ class FlagellaMotor(Process):
             'motile_state',
             'CheA',
             'CheY_P',
-            'CheY'
+            'CheY',
         ]
         state_set_updater = [
                 'ccw_motor_bias',
                 'cw_bias',
                 'motile_state',
                 'CheA',
-                'CheY_P'
+                'CheY_P',
+                'CheY',
         ]
         for state, default in self.parameters['initial_state']['internal'].items():
             schema['internal'][state] = {'_default': default}
@@ -168,6 +168,8 @@ class FlagellaMotor(Process):
         # get internal states
         internal = states['internal']
         P_on = internal['chemoreceptor_activity']
+        CheY_0 = internal['CheY']
+        CheY_P_0 = internal['CheY_P']
 
         # parameters
         adapt_precision = self.parameters['adapt_precision']
@@ -180,7 +182,10 @@ class FlagellaMotor(Process):
 
         ## Kinase activity
         # relative steady-state concentration of phosphorylated CheY.
-        CheY_P = adapt_precision * k_y * k_s * P_on / (k_y * k_s * P_on + k_z + gamma_Y)  # CheZ cancels out of k_z
+        new_CheY_P = adapt_precision * k_y * k_s * P_on / (k_y * k_s * P_on + k_z + gamma_Y)  # CheZ cancels out of k_z
+        dCheY_P = new_CheY_P - CheY_P_0
+        CheY_P = max(new_CheY_P, 0.0)  # keep value positive
+        CheY = max(CheY_0 - dCheY_P, 0.0)  # keep value positive
 
         ## Motor switching
         # CCW corresponds to run. CW corresponds to tumble
@@ -191,7 +196,13 @@ class FlagellaMotor(Process):
             cw_bias = self.parameters['cw_to_ccw_leak']
 
 
+
+
         # import ipdb; ipdb.set_trace()
+
+
+
+
 
         ## update flagella
         # update number of flagella
@@ -240,7 +251,9 @@ class FlagellaMotor(Process):
                 'ccw_motor_bias': ccw_motor_bias,
                 'cw_bias': cw_bias,
                 'motile_state': motile_state,
-                'CheY_P': CheY_P},
+                'CheY_P': CheY_P,
+                'CheY': CheY
+            },
             'boundary': {
                 'thrust': thrust,
                 'torque': torque
@@ -258,7 +271,7 @@ class FlagellaMotor(Process):
         '''
         g_0 = self.parameters['g_0']  # (k_B/T) free energy barrier for CCW-->CW
         g_1 = self.parameters['g_1']  # (k_B/T) free energy barrier for CW-->CCW
-        K_D = self.parameters['K_D']  # binding constant of Chey-P to base of the motor
+        K_D = self.parameters['K_D']  # binding constant of CheY-P to base of the motor
         omega = self.parameters['omega']  # (1/s) characteristic motor switch time
 
         # free energy barrier
@@ -301,7 +314,7 @@ class FlagellaMotor(Process):
 def get_chemoreceptor_timeline(
         total_time=2,
         time_step=0.01,
-        rate=0.5,
+        rate=1.0,
         initial_value=1.0/3.0
 ):
     val = copy.copy(initial_value)
@@ -311,6 +324,8 @@ def get_chemoreceptor_timeline(
         val += random.choice((-1, 1)) * rate * time_step
         if val < 0:
             val = 0
+        if val > 1:
+            val = 1
         timeline.append((t, {('internal', 'chemoreceptor_activity'): val}))
         t += time_step
     return timeline
@@ -338,6 +353,7 @@ def run_variable_flagella(out_dir='out'):
     timeline = get_chemoreceptor_timeline(
         total_time=3,
         time_step=time_step,
+        rate=2.0,
     )
     timeline_flagella = [
         (1, {('internal_counts', 'flagella'): 4}),
