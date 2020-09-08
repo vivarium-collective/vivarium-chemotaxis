@@ -24,6 +24,8 @@ from cell.processes.metabolism import (
     Metabolism,
     get_iAF1260b_config,
 )
+from cell.processes.transcription import UNBOUND_RNAP_KEY
+from cell.processes.translation import UNBOUND_RIBOSOME_KEY
 
 # chemotaxis imports
 from chemotaxis.processes.flagella_motor import run_variable_flagella
@@ -37,9 +39,6 @@ from chemotaxis.compartments.chemotaxis_flagella import (
 )
 from chemotaxis.compartments.flagella_expression import (
     flagella_expression_compartment,
-    run_flagella_compartment,
-    get_flagella_initial_state,
-    make_flagella_network,
 )
 
 # data
@@ -51,7 +50,7 @@ from cell.data.amino_acids import amino_acids
 from cell.plots.metabolism import plot_exchanges
 from cell.plots.gene_expression import (
     plot_timeseries_heatmaps,
-    plot_gene_expression_output,
+    gene_network_plot,
 )
 from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
 
@@ -98,54 +97,89 @@ def transport_metabolism_environment(out_dir='out'):
 
 # figure 6a
 def flagella_expression_network(out_dir='out'):
-    make_flagella_network(out_dir)
+    '''
+    Make a network plot of the flagella expression processes.
+    This saves an networkx plot with a default layout, along with
+    node and edge list files of the network for analysis by network
+    visualization software.
+    '''
+
+    # load the compartment
+    flagella_compartment = flagella_expression_compartment({})
+
+    # make expression network plot
+    flagella_expression_network = flagella_compartment.generate()
+    flagella_expression_processes = flagella_expression_network['processes']
+    operons = flagella_expression_processes['transcription'].genes
+    promoters = flagella_expression_processes['transcription'].templates
+    complexes = flagella_expression_processes['complexation'].stoichiometry
+    data = {
+        'operons': operons,
+        'templates': promoters,
+        'complexes': complexes}
+    gene_network_plot(data, out_dir)
 
 # figure 6b
 def flagella_just_in_time(out_dir='out'):
 
-    # get the compartment
+    ## make the compartment
     compartment = flagella_expression_compartment({})
 
-    # get flagella chromosome data
+    ## make the initial state
     flagella_data = FlagellaChromosome()
+    chromosome_config = flagella_data.chromosome_config
 
-    # initial state
-    initial_state = get_flagella_initial_state()
+    molecules = {}
+    for nucleotide in nucleotides.values():
+        molecules[nucleotide] = 5000000
+    for amino_acid in amino_acids.values():
+        molecules[amino_acid] = 1000000
 
-    # run simulation
+    initial_state = {
+        'molecules': molecules,
+        'transcripts': {
+            gene: 0
+            for gene in chromosome_config['genes'].keys()
+        },
+        'proteins': {
+            'CpxR': 10,
+            'CRP': 10,
+            'Fnr': 10,
+            'endoRNAse': 1,
+            'flagella': 8,
+            UNBOUND_RIBOSOME_KEY: 100,  # e. coli has ~ 20000 ribosomes
+            UNBOUND_RNAP_KEY: 100
+        }
+    }
+
+    ## run simulation
     settings = {
         # a cell cycle of 2520 sec is expected to express 8 flagella.
         # 2 flagella expected in approximately 630 seconds.
-        'total_time': 200,
+        'total_time': 500,
         'emit_step': 10.0,
         'verbose': True,
         'initial_state': initial_state}
     timeseries = simulate_compartment_in_experiment(compartment, settings)
 
-    ## plots
+    ## plot output
     plot_config = {
-        'name': 'flagella_expression',
+        'name': 'flagella',
         'ports': {
             'transcripts': 'transcripts',
             'proteins': 'proteins',
-            'molecules': 'molecules'}}
-    plot_gene_expression_output(
-        timeseries,
-        plot_config,
-        out_dir)
-
-    # just-in-time figure
-    plot_config2 = plot_config.copy()
-    plot_config2.update({
-        'name': 'flagella',
+            'molecules': 'molecules'
+        },
         'plot_ports': {
             'transcripts': list(flagella_data.chromosome_config['genes'].keys()),
             'proteins': flagella_data.complexation_monomer_ids + flagella_data.complexation_complex_ids,
-            'molecules': list(nucleotides.values()) + list(amino_acids.values())}})
+            'molecules': list(nucleotides.values()) + list(amino_acids.values())
+        }
+    }
 
     plot_timeseries_heatmaps(
         timeseries,
-        plot_config2,
+        plot_config,
         out_dir)
 
 

@@ -1,7 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import copy
 import argparse
 import random
 import uuid
@@ -10,10 +9,8 @@ import pytest
 import numpy as np
 
 from vivarium.core.process import Generator
-from vivarium.core.experiment import Experiment
 from vivarium.core.composition import (
     simulate_compartment_in_experiment,
-    plot_compartment_topology,
     plot_simulation_output,
     save_flat_timeseries,
     load_timeseries,
@@ -27,15 +24,9 @@ from cell.data import REFERENCE_DATA_DIR
 from cell.data.nucleotides import nucleotides
 from cell.data.amino_acids import amino_acids
 from cell.plots.gene_expression import plot_timeseries_heatmaps
-from cell.states.chromosome import Chromosome, rna_bases, sequence_monomers
-from cell.parameters.parameters import (
-    parameter_scan,
-    get_parameters_logspace,
-    plot_scan_results)
 from vivarium.core.emitter import path_timeseries_from_embedded_timeseries
 
 # vivarium libraries
-from vivarium.library.dict_utils import deep_merge
 from vivarium.library.units import units
 
 # processes
@@ -53,13 +44,12 @@ from vivarium.processes.tree_mass import TreeMass
 from cell.compartments.gene_expression import GeneExpression
 
 # plots
-from cell.plots.gene_expression import (
-    plot_gene_expression_output,
-    gene_network_plot,
-)
+from cell.plots.gene_expression import plot_gene_expression_output
+
 
 NAME = 'flagella_gene_expression'
 COMPARTMENT_TIMESTEP = 10.0
+
 
 def default_metabolism_config():
     metabolism_config = get_iAF1260b_config()
@@ -90,7 +80,6 @@ flagella_schema_override = {
         }
     },
 }
-
 
 def get_flagella_expression_config(config):
     flagella_data = FlagellaChromosome(config)
@@ -138,8 +127,76 @@ def get_flagella_expression_config(config):
         '_schema': copy.deepcopy(flagella_schema_override)
     }
 
+def get_flagella_initial_state(ports={}):
+    flagella_data = FlagellaChromosome()
+    chromosome_config = flagella_data.chromosome_config
+
+    molecules = {}
+    for nucleotide in nucleotides.values():
+        molecules[nucleotide] = 5000000
+    for amino_acid in amino_acids.values():
+        molecules[amino_acid] = 1000000
+
+    return {
+        ports.get(
+            'molecules',
+            'molecules'): molecules,
+        ports.get(
+            'transcripts',
+            'transcripts'): {
+                gene: 0
+                for gene in chromosome_config['genes'].keys()
+        },
+        ports.get(
+            'proteins',
+            'proteins'): {
+                'CpxR': 10,
+                'CRP': 10,
+                'Fnr': 10,
+                'endoRNAse': 1,
+                'flagella': 8,
+                UNBOUND_RIBOSOME_KEY: 100,  # e. coli has ~ 20000 ribosomes
+                UNBOUND_RNAP_KEY: 100
+            }
+    }
+
+def flagella_expression_compartment(config):
+    '''
+    Make a gene expression compartment with flagella expression data
+    '''
+    flagella_expression_config = get_flagella_expression_config(config)
+    return GeneExpression(flagella_expression_config)
+
+
+
+## flagella expression with metabolism
+def get_flagella_metabolism_initial_state(ports={}):
+    flagella_data = FlagellaChromosome()
+    chromosome_config = flagella_data.chromosome_config
+     # molecules are set by metabolism
+    return {
+        ports.get(
+            'transcripts',
+            'transcripts'): {
+                gene: 0
+                for gene in chromosome_config['genes'].keys()
+        },
+        ports.get(
+            'proteins',
+            'proteins'): {
+                'CpxR': 10,
+                'CRP': 10,
+                'Fnr': 10,
+                'endoRNAse': 1,
+                'flagella': 8,
+                UNBOUND_RIBOSOME_KEY: 100,  # e. coli has ~ 20000 ribosomes
+                UNBOUND_RNAP_KEY: 100
+            }
+    }
 
 class FlagellaExpressionMetabolism(Generator):
+    ''' Flagella expression with metabolism process '''
+
     name = 'flagella_expression_metabolism'
     defaults = get_flagella_expression_config({})
     defaults.update({
@@ -287,94 +344,7 @@ class FlagellaExpressionMetabolism(Generator):
         return topology
 
 
-def flagella_expression_compartment(config):
-    flagella_expression_config = get_flagella_expression_config(config)
-    return GeneExpression(flagella_expression_config)
-
-
-def get_flagella_metabolism_initial_state(ports={}):
-    flagella_data = FlagellaChromosome()
-    chromosome_config = flagella_data.chromosome_config
-     # molecules are set by metabolism
-    return {
-        ports.get(
-            'transcripts',
-            'transcripts'): {
-                gene: 0
-                for gene in chromosome_config['genes'].keys()
-        },
-        ports.get(
-            'proteins',
-            'proteins'): {
-                'CpxR': 10,
-                'CRP': 10,
-                'Fnr': 10,
-                'endoRNAse': 1,
-                'flagella': 8,
-                UNBOUND_RIBOSOME_KEY: 100,  # e. coli has ~ 20000 ribosomes
-                UNBOUND_RNAP_KEY: 100
-            }
-    }
-
-
-def get_flagella_initial_state(ports={}):
-    flagella_data = FlagellaChromosome()
-    chromosome_config = flagella_data.chromosome_config
-
-    molecules = {}
-    for nucleotide in nucleotides.values():
-        molecules[nucleotide] = 5000000
-    for amino_acid in amino_acids.values():
-        molecules[amino_acid] = 1000000
-
-    return {
-        ports.get(
-            'molecules',
-            'molecules'): molecules,
-        ports.get(
-            'transcripts',
-            'transcripts'): {
-                gene: 0
-                for gene in chromosome_config['genes'].keys()
-        },
-        ports.get(
-            'proteins',
-            'proteins'): {
-                'CpxR': 10,
-                'CRP': 10,
-                'Fnr': 10,
-                'endoRNAse': 1,
-                'flagella': 8,
-                UNBOUND_RIBOSOME_KEY: 100,  # e. coli has ~ 20000 ribosomes
-                UNBOUND_RNAP_KEY: 100
-            }
-    }
-
-
-def make_compartment_topology(compartment, out_dir='out'):
-    settings = {'show_ports': True}
-    plot_compartment_topology(
-        compartment,
-        settings,
-        out_dir)
-
-
-def make_flagella_network(out_dir='out'):
-    # load the compartment
-    flagella_compartment = flagella_expression_compartment({})
-
-    # make expression network plot
-    flagella_expression_processes = flagella_compartment.generate_processes({})
-    operons = flagella_expression_processes['transcription'].genes
-    promoters = flagella_expression_processes['transcription'].templates
-    complexes = flagella_expression_processes['complexation'].stoichiometry
-    data = {
-        'operons': operons,
-        'templates': promoters,
-        'complexes': complexes}
-    gene_network_plot(data, out_dir)
-
-
+## simulations
 def run_flagella_compartment(
         compartment,
         initial_state=None,
@@ -433,6 +403,7 @@ def run_flagella_compartment(
         out_dir)
 
 
+# tests
 def test_flagella_metabolism(seed=1):
     random.seed(seed)
     np.random.seed(seed)
@@ -501,80 +472,20 @@ def test_flagella_expression():
     assert final_flagella > 0
 
 
-def scan_flagella_expression_parameters():
-    compartment = flagella_expression_compartment({})
-    flagella_data = FlagellaChromosome()
-
-    # conditions
-    conditions = {}
-
-    # parameters
-    scan_params = {}
-    # # add promoter affinities
-    # for promoter in flagella_data.chromosome_config['promoters'].keys():
-    #     scan_params[('promoter_affinities', promoter)] = get_parameters_logspace(1e-3, 1e0, 4)
-
-    # scan minimum transcript affinity -- other affinities are a scaled factor of this value
-    scan_params[('min_tr_affinity', flagella_data.min_tr_affinity)] = get_parameters_logspace(1e-2, 1e2, 6)
-
-    # # add transcription factor thresholds
-    # for threshold in flagella_data.factor_thresholds.keys():
-    #     scan_params[('thresholds', threshold)] = get_parameters_logspace(1e-7, 1e-4, 4)
-
-    # metrics
-    metrics = [
-        ('proteins', monomer)
-        for monomer in flagella_data.complexation_monomer_ids] + [
-        ('proteins', complex)
-        for complex in flagella_data.complexation_complex_ids]
-
-    print('number of parameters: {}'.format(len(scan_params)))  # TODO -- get this down to 10
-
-    # run the scan
-    scan_config = {
-        'compartment': compartment,
-        'scan_parameters': scan_params,
-        'conditions': conditions,
-        'metrics': metrics,
-        'settings': {'total_time': 480}}
-    results = parameter_scan(scan_config)
-
-    return results
-
-
 if __name__ == '__main__':
     out_dir = os.path.join(COMPARTMENT_OUT_DIR, NAME)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    # run scan with python vivarium/compartments/flagella_expression.py --scan
     parser = argparse.ArgumentParser(description='flagella expression')
-    parser.add_argument('--scan', '-s', action='store_true', default=False,)
-    parser.add_argument('--network', '-n', action='store_true', default=False,)
-    parser.add_argument('--topology', '-t', action='store_true', default=False,)
     parser.add_argument('--metabolism', '-m', action='store_true', default=False, )
     args = parser.parse_args()
 
-    if args.scan:
-        results = scan_flagella_expression_parameters()
-        plot_scan_results(results, out_dir)
-    elif args.network:
-        make_flagella_network(out_dir)
-    elif args.topology:
-        compartment = flagella_expression_compartment({})
-        make_compartment_topology(
-            compartment,
-            out_dir
-        )
-    elif args.metabolism:
+    if args.metabolism:
         mtb_out_dir = os.path.join(out_dir, 'metabolism')
         if not os.path.exists(mtb_out_dir):
             os.makedirs(mtb_out_dir)
         compartment = FlagellaExpressionMetabolism({'divide': False})
-        make_compartment_topology(
-            compartment,
-            mtb_out_dir
-        )
         run_flagella_compartment(
             compartment,
             get_flagella_metabolism_initial_state(),
