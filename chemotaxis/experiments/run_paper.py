@@ -27,7 +27,10 @@ from chemotaxis.processes.chemoreceptor_cluster import (
     test_receptor,
     get_pulse_timeline,
 )
-from chemotaxis.compartments.chemotaxis_flagella import test_variable_chemotaxis
+from chemotaxis.compartments.chemotaxis_flagella import (
+    test_variable_chemotaxis,
+    get_chemotaxis_timeline,
+)
 from chemotaxis.compartments.flagella_expression import make_flagella_network
 
 # plots
@@ -92,7 +95,10 @@ def run_chemoreceptor_pulse(out_dir='out'):
 # figure 7c
 def run_chemotaxis_transduction(out_dir='out'):
     test_variable_chemotaxis(
-        out_dir=out_dir
+        out_dir=out_dir,
+        timeline=get_chemotaxis_timeline(
+            timestep=0.1,
+            total_time=90),
     )
 
 

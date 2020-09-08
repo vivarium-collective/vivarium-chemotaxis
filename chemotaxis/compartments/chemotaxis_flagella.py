@@ -295,7 +295,7 @@ class ChemotaxisExpressionFlagella(Generator):
         }
 
 
-def get_timeline(
+def get_chemotaxis_timeline(
     environment_port=DEFAULT_ENVIRONMENT_PORT,
     ligand_id=DEFAULT_LIGAND,
     initial_conc=DEFAULT_INITIAL_LIGAND,
@@ -361,7 +361,7 @@ def test_ode_expression_chemotaxis(
 
     # run experiment
     initial_state = {}
-    timeline = get_timeline(total_time=total_time)
+    timeline = get_chemotaxis_timeline(total_time=total_time)
     experiment_settings = {
         'initial_state': initial_state,
         'timeline': {
@@ -397,7 +397,7 @@ def test_expression_chemotaxis(
     # run experiment
     initial_state = get_flagella_initial_state({
         'molecules': 'internal'})
-    timeline = get_timeline(total_time=total_time)
+    timeline = get_chemotaxis_timeline(total_time=total_time)
     experiment_settings = {
         'initial_state': initial_state,
         'timeline': {
@@ -427,7 +427,7 @@ def test_expression_chemotaxis(
 
 def test_variable_chemotaxis(
         n_flagella=5,
-        total_time=10,
+        timeline=get_chemotaxis_timeline(total_time=10),
         out_dir='out'
 ):
     # make the compartment
@@ -439,7 +439,6 @@ def test_variable_chemotaxis(
 
     # run experiment
     initial_state = {}
-    timeline = get_timeline(total_time=total_time)
     experiment_settings = {
         'initial_state': initial_state,
         'timeline': {
@@ -478,7 +477,7 @@ if __name__ == '__main__':
         make_dir(variable_out_dir)
         test_variable_chemotaxis(
             n_flagella=args.flagella,
-            total_time=90,
+            timeline=get_chemotaxis_timeline(total_time=90),
             out_dir=variable_out_dir)
     elif args.ode:
         # ODE flagella expression

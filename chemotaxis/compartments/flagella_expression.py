@@ -393,7 +393,7 @@ def run_flagella_compartment(
     timeseries = simulate_compartment_in_experiment(compartment, settings)
 
     # save reference timeseries
-    save_timeseries(timeseries, out_dir)
+    save_flat_timeseries(timeseries, out_dir)
 
     plot_config = {
         'name': 'flagella_expression',
