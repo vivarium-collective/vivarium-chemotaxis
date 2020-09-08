@@ -41,8 +41,12 @@ from chemotaxis.compartments.chemotaxis_flagella import (
     test_variable_chemotaxis,
     get_chemotaxis_timeline,
 )
-from chemotaxis.compartments.flagella_expression import get_flagella_expression_compartment
-from chemotaxis.experiments.chemotaxis_experiments import plot_chemotaxis_experiment
+from chemotaxis.compartments.flagella_expression import (
+    FlagellaExpressionMetabolism,
+    get_flagella_expression_compartment,
+)
+
+from chemotaxis.plots.chemotaxis_experiments import plot_chemotaxis_experiment
 
 # data
 from chemotaxis.data.chromosomes.flagella_chromosome import FlagellaChromosome
@@ -54,6 +58,10 @@ from cell.plots.metabolism import plot_exchanges
 from cell.plots.gene_expression import (
     plot_timeseries_heatmaps,
     gene_network_plot,
+)
+from cell.plots.multibody_physics import (
+    plot_snapshots,
+    plot_tags
 )
 from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
 
@@ -133,11 +141,7 @@ def flagella_expression_network(out_dir='out'):
 
 
 # figure 6b
-def flagella_just_in_time(out_dir='out'):
-
-    ## make the compartment
-    compartment = get_flagella_expression_compartment({})
-
+def make_flagella_expression_initial_state():
     ## make the initial state
     flagella_data = FlagellaChromosome()
     chromosome_config = flagella_data.chromosome_config
@@ -148,7 +152,7 @@ def flagella_just_in_time(out_dir='out'):
     for amino_acid in amino_acids.values():
         molecules[amino_acid] = 1000000
 
-    initial_state = {
+    return {
         'molecules': molecules,
         'transcripts': {
             gene: 0
@@ -165,6 +169,15 @@ def flagella_just_in_time(out_dir='out'):
         }
     }
 
+
+def flagella_just_in_time(out_dir='out'):
+
+    ## make the compartment
+    compartment = get_flagella_expression_compartment({})
+
+    # get the initial state
+    initial_state = make_flagella_expression_initial_state()
+
     ## run simulation
     settings = {
         # a cell cycle of 2520 sec is expected to express 8 flagella.
@@ -176,6 +189,7 @@ def flagella_just_in_time(out_dir='out'):
     timeseries = simulate_compartment_in_experiment(compartment, settings)
 
     ## plot output
+    flagella_data = FlagellaChromosome()
     plot_config = {
         'name': 'flagella',
         'ports': {
@@ -197,52 +211,63 @@ def flagella_just_in_time(out_dir='out'):
 
 
 # figure 6c
-def run_heterogeneous_flagella_experiment(out_dir='out'):
-    agents_config = [
-            {
-                'number': 1,
-                'name': 'flagella_expression',
-                'type': get_flagella_expression_compartment({}),
-                'config': DEFAULT_AGENT_CONFIG,
-            }
-        ]
+def run_flagella_metabolism_experiment(out_dir='out'):
+
+    total_time = 3000
+
+    ## make the experiment
+    # configure
+    agents_config = {
+        'ids': ['flagella_metabolism'],
+        'type': FlagellaExpressionMetabolism,
+        'config': DEFAULT_AGENT_CONFIG}
     environment_config = {
         'type': Lattice,
-        'config': get_lattice_config(
-            bounds=[30, 30],
-            jitter_force=1e-5
-        ),
-    },
+        'config': get_lattice_config(bounds=[30, 30])}
+    initial_agent_state = make_flagella_expression_initial_state()
 
-
-    import ipdb; ipdb.set_trace()
-
-
-    initial_state = {}
-    experiment_settings = {}
-
-    # make the experiment
+    # use agent_environment_experiment helper function
+    experiment_settings = {
+        'experiment_name': 'heterogeneous_flagella_experiment',
+        'description': '..',
+        'total_time': 30,
+        'emit_step': 1}
     experiment = agent_environment_experiment(
-        agents_config,
-        environment_config,
-        initial_state,
-        experiment_settings)
+        agents_config=agents_config,
+        environment_config=environment_config,
+        initial_agent_state=initial_agent_state,
+        settings=experiment_settings)
 
-    # simulate
-    settings = {
-        'total_time': 100,
+    ## run the experiment
+    sim_settings = {
+        'total_time': total_time,
         'emit_step': 10,
         'return_raw_data': True}
-    data = simulate_experiment(experiment, settings)
+    data = simulate_experiment(experiment, sim_settings)
 
-    # plot
-    field_config = environment_config['config']['field']
-    plot_chemotaxis_experiment(data, field_config, out_dir)
+    ## plot output
+    # extract data
+    multibody_config = environment_config['config']['multibody']
+    agents = {time: time_data['agents'] for time, time_data in data.items()}
+    # fields = {time: time_data['fields'] for time, time_data in data.items()}
+    data = {
+        'agents': agents,
+        'config': multibody_config}
+
+    # make a tags plot
+    plot_config = {
+        'tagged_molecules': ['flagella'],
+        'n_snapshots': 5,
+        # 'background_color': background_color,
+        'out_dir': out_dir,
+        'filename': 'heterogeneous_flagella_experiment_tags'}
+    plot_tags(data, plot_config)
 
 
 # figure 7a
 def variable_flagella(out_dir='out'):
     run_variable_flagella(out_dir)
+
 
 # figure 7b
 def run_chemoreceptor_pulse(out_dir='out'):
@@ -264,7 +289,7 @@ experiments_library = {
     '4a': BiGG_metabolism,
     '6a': flagella_expression_network,
     '6b': flagella_just_in_time,
-    '6c': run_heterogeneous_flagella_experiment,
+    '6c': run_flagella_metabolism_experiment,
     '7a': variable_flagella,
     '7b': run_chemoreceptor_pulse,
     '7c': run_chemotaxis_transduction,
