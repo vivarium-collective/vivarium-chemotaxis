@@ -353,7 +353,6 @@ def run_variable_flagella(out_dir='out'):
         rate=2.0,
     )
     timeline_flagella = [
-        (0.0, {('internal_counts', 'flagella'): 0}),
         (0.5, {('internal_counts', 'flagella'): 1}),
         (1.0, {('internal_counts', 'flagella'): 2}),
         (1.5, {('internal_counts', 'flagella'): 3}),

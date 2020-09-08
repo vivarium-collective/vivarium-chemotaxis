@@ -50,12 +50,13 @@ from vivarium.processes.meta_division import MetaDivision
 from vivarium.processes.tree_mass import TreeMass
 
 # compartments
-from cell.compartments.gene_expression import (
-    GeneExpression,
+from cell.compartments.gene_expression import GeneExpression
+
+# plots
+from cell.plots.gene_expression import (
     plot_gene_expression_output,
     gene_network_plot,
 )
-
 
 NAME = 'flagella_gene_expression'
 COMPARTMENT_TIMESTEP = 10.0

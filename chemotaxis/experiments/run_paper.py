@@ -10,18 +10,22 @@ with different chemotactic agents and environments.
 import os
 import argparse
 
+# vivarium-core imports
 from vivarium.library.units import units
 from vivarium.core.composition import (
     simulate_process_in_experiment,
+    simulate_compartment_in_experiment,
     plot_simulation_output,
     EXPERIMENT_OUT_DIR,
 )
 
-
+# vivarium-cell imports
 from cell.processes.metabolism import (
     Metabolism,
     get_iAF1260b_config,
 )
+
+# chemotaxis imports
 from chemotaxis.processes.flagella_motor import run_variable_flagella
 from chemotaxis.processes.chemoreceptor_cluster import (
     test_receptor,
@@ -31,19 +35,31 @@ from chemotaxis.compartments.chemotaxis_flagella import (
     test_variable_chemotaxis,
     get_chemotaxis_timeline,
 )
-from chemotaxis.compartments.flagella_expression import make_flagella_network
+from chemotaxis.compartments.flagella_expression import (
+    flagella_expression_compartment,
+    run_flagella_compartment,
+    get_flagella_initial_state,
+    make_flagella_network,
+)
+
+# data
+from chemotaxis.data.chromosomes.flagella_chromosome import FlagellaChromosome
+from cell.data.nucleotides import nucleotides
+from cell.data.amino_acids import amino_acids
 
 # plots
 from cell.plots.metabolism import plot_exchanges
+from cell.plots.gene_expression import (
+    plot_timeseries_heatmaps,
+    plot_gene_expression_output,
+)
 from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
 
 
 
 
 
-
-
-
+# figure 5a
 def BiGG_metabolism(out_dir='out'):
     # configure BiGG metabolism
     config = get_iAF1260b_config()
@@ -70,15 +86,68 @@ def BiGG_metabolism(out_dir='out'):
     plot_simulation_output(timeseries, plot_settings, out_dir, 'BiGG_simulation')
     plot_exchanges(timeseries, sim_settings, out_dir)
 
-
     import ipdb; ipdb.set_trace()
 
+# figure 5b
+def transport_metabolism(out_dir='out'):
+    pass
+
+# figure 5c
+def transport_metabolism_environment(out_dir='out'):
+    pass
 
 # figure 6a
 def flagella_expression_network(out_dir='out'):
     make_flagella_network(out_dir)
 
 # figure 6b
+def flagella_just_in_time(out_dir='out'):
+
+    # get the compartment
+    compartment = flagella_expression_compartment({})
+
+    # get flagella chromosome data
+    flagella_data = FlagellaChromosome()
+
+    # initial state
+    initial_state = get_flagella_initial_state()
+
+    # run simulation
+    settings = {
+        # a cell cycle of 2520 sec is expected to express 8 flagella.
+        # 2 flagella expected in approximately 630 seconds.
+        'total_time': 200,
+        'emit_step': 10.0,
+        'verbose': True,
+        'initial_state': initial_state}
+    timeseries = simulate_compartment_in_experiment(compartment, settings)
+
+    ## plots
+    plot_config = {
+        'name': 'flagella_expression',
+        'ports': {
+            'transcripts': 'transcripts',
+            'proteins': 'proteins',
+            'molecules': 'molecules'}}
+    plot_gene_expression_output(
+        timeseries,
+        plot_config,
+        out_dir)
+
+    # just-in-time figure
+    plot_config2 = plot_config.copy()
+    plot_config2.update({
+        'name': 'flagella',
+        'plot_ports': {
+            'transcripts': list(flagella_data.chromosome_config['genes'].keys()),
+            'proteins': flagella_data.complexation_monomer_ids + flagella_data.complexation_complex_ids,
+            'molecules': list(nucleotides.values()) + list(amino_acids.values())}})
+
+    plot_timeseries_heatmaps(
+        timeseries,
+        plot_config2,
+        out_dir)
+
 
 # figure 6c
 
@@ -105,9 +174,11 @@ def run_chemotaxis_transduction(out_dir='out'):
 experiments_library = {
     '4a': BiGG_metabolism,
     '6a': flagella_expression_network,
+    '6b': flagella_just_in_time,
     '7a': variable_flagella,
     '7b': run_chemoreceptor_pulse,
     '7c': run_chemotaxis_transduction,
+    '7': ['7a', '7b', '7c'],
 }
 
 def make_dir(out_dir):
@@ -137,11 +208,18 @@ def main():
         # get a preset experiment
         # make a directory for this experiment
         experiment_id = str(args.experiment_id)
-        control_out_dir = os.path.join(out_dir, experiment_id)
-        make_dir(control_out_dir)
+        experiment_type = experiments_library[experiment_id]
 
-        run_function = experiments_library[experiment_id]
-        run_function(control_out_dir)
+        if callable(experiment_type):
+            control_out_dir = os.path.join(out_dir, experiment_id)
+            make_dir(control_out_dir)
+            experiment_type(control_out_dir)
+        elif isinstance(experiment_type, list):
+            for exp_id in experiment_type:
+                control_out_dir = os.path.join(out_dir, experiment_id, exp_id)
+                make_dir(control_out_dir)
+                exp = experiments_library[exp_id]
+                exp(control_out_dir)
 
     else:
         print('provide experiment number')
