@@ -27,6 +27,8 @@ from chemotaxis.processes.chemoreceptor_cluster import (
     test_receptor,
     get_pulse_timeline,
 )
+from chemotaxis.compartments.chemotaxis_flagella import test_variable_chemotaxis
+from chemotaxis.compartments.flagella_expression import make_flagella_network
 
 # plots
 from cell.plots.metabolism import plot_exchanges
@@ -69,21 +71,34 @@ def BiGG_metabolism(out_dir='out'):
     import ipdb; ipdb.set_trace()
 
 
+# figure 6a
+def flagella_expression_network(out_dir='out'):
+    make_flagella_network(out_dir)
+
+# figure 6b
+
+# figure 6c
+
+# figure 7a
 def variable_flagella(out_dir='out'):
     run_variable_flagella(out_dir)
 
+# figure 7b
 def run_chemoreceptor_pulse(out_dir='out'):
     timeline = get_pulse_timeline()
     timeseries = test_receptor(timeline)
     plot_receptor_output(timeseries, out_dir, 'pulse')
 
+# figure 7c
 def run_chemotaxis_transduction(out_dir='out'):
-
-    import ipdb; ipdb.set_trace()
+    test_variable_chemotaxis(
+        out_dir=out_dir
+    )
 
 
 experiments_library = {
     '4a': BiGG_metabolism,
+    '6a': flagella_expression_network,
     '7a': variable_flagella,
     '7b': run_chemoreceptor_pulse,
     '7c': run_chemotaxis_transduction,
