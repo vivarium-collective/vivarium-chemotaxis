@@ -22,10 +22,15 @@ from cell.processes.metabolism import (
     Metabolism,
     get_iAF1260b_config,
 )
-
+from chemotaxis.processes.flagella_motor import run_variable_flagella
+from chemotaxis.processes.chemoreceptor_cluster import (
+    test_receptor,
+    get_pulse_timeline,
+)
 
 # plots
 from cell.plots.metabolism import plot_exchanges
+from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
 
 
 
@@ -34,8 +39,7 @@ from cell.plots.metabolism import plot_exchanges
 
 
 
-
-def figure_1a(out_dir):
+def BiGG_metabolism(out_dir='out'):
     # configure BiGG metabolism
     config = get_iAF1260b_config()
     metabolism = Metabolism(config)
@@ -65,14 +69,24 @@ def figure_1a(out_dir):
     import ipdb; ipdb.set_trace()
 
 
+def variable_flagella(out_dir='out'):
+    run_variable_flagella(out_dir)
 
-def figure_2a():
-    pass
+def run_chemoreceptor_pulse(out_dir='out'):
+    timeline = get_pulse_timeline()
+    timeseries = test_receptor(timeline)
+    plot_receptor_output(timeseries, out_dir, 'pulse')
+
+def run_chemotaxis_transduction(out_dir='out'):
+
+    import ipdb; ipdb.set_trace()
 
 
 experiments_library = {
-    '1': figure_1a,
-    '2': figure_2a,
+    '4a': BiGG_metabolism,
+    '7a': variable_flagella,
+    '7b': run_chemoreceptor_pulse,
+    '7c': run_chemotaxis_transduction,
 }
 
 def make_dir(out_dir):
@@ -106,7 +120,7 @@ def main():
         make_dir(control_out_dir)
 
         run_function = experiments_library[experiment_id]
-        run_function(out_dir)
+        run_function(control_out_dir)
 
     else:
         print('provide experiment number')

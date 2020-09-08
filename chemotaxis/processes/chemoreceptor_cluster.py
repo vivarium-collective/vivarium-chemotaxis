@@ -2,10 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import math
-import copy
 import random
-
-import matplotlib.pyplot as plt
 
 from vivarium.core.composition import (
     simulate_process_in_experiment,
@@ -14,6 +11,7 @@ from vivarium.core.composition import (
 from vivarium.core.process import Process
 from vivarium.library.units import units
 
+from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
 
 NAME = 'chemoreceptor_cluster'
 
@@ -288,50 +286,6 @@ def test_receptor(timeline=get_pulse_timeline(), timestep = 1):
     return simulate_process_in_experiment(receptor, experiment_settings)
 
 
-def plot_output(output, out_dir='out', filename='response'):
-    ligand_vec = output['external']['MeAsp']  # TODO -- configure ligand name
-    receptor_activity_vec = output['internal']['chemoreceptor_activity']
-    n_methyl_vec = output['internal']['n_methyl']
-    time_vec = output['time']
-
-    # plot results
-    cols = 1
-    rows = 3
-    plt.figure(figsize=(3.0 * cols, 2.5 * rows))
-    plt.rc('font', size=12)
-
-    ax1 = plt.subplot(rows, cols, 1)
-    ax2 = plt.subplot(rows, cols, 2)
-    ax3 = plt.subplot(rows, cols, 3)
-
-    ax1.plot(time_vec, ligand_vec, 'steelblue')
-    ax2.plot(time_vec, receptor_activity_vec, 'steelblue')
-    ax3.plot(time_vec, n_methyl_vec, 'steelblue')
-
-    ax1.set_xticklabels([])
-    ax1.spines['right'].set_visible(False)
-    ax1.spines['top'].set_visible(False)
-    ax1.tick_params(right=False, top=False)
-    ax1.set_ylabel("external ligand \n (mM) ", fontsize=10)
-    # ax1.set_yscale('log')
-
-    ax2.set_xticklabels([])
-    ax2.spines['right'].set_visible(False)
-    ax2.spines['top'].set_visible(False)
-    ax2.tick_params(right=False, top=False)
-    ax2.set_ylabel("cluster activity \n P(on)", fontsize=10)
-
-    ax3.spines['right'].set_visible(False)
-    ax3.spines['top'].set_visible(False)
-    ax3.tick_params(right=False, top=False)
-    ax3.set_xlabel("time (s)", fontsize=12)
-    ax3.set_ylabel("average \n methylation", fontsize=10)
-
-    fig_path = os.path.join(out_dir, filename)
-    plt.subplots_adjust(wspace=0.7, hspace=0.4)
-    plt.savefig(fig_path + '.png', bbox_inches='tight')
-
-
 if __name__ == '__main__':
     out_dir = os.path.join(PROCESS_OUT_DIR, NAME)
     if not os.path.exists(out_dir):
@@ -339,7 +293,7 @@ if __name__ == '__main__':
 
     timeline = get_pulse_timeline()
     timeseries = test_receptor(timeline)
-    plot_output(timeseries, out_dir, 'pulse')
+    plot_receptor_output(timeseries, out_dir, 'pulse')
 
     linear_config = {
         'time': 10,
@@ -347,7 +301,7 @@ if __name__ == '__main__':
         'speed': 14}
     timeline2 = get_linear_step_timeline(linear_config)
     output2 = test_receptor(timeline2)
-    plot_output(output2, out_dir, 'linear')
+    plot_receptor_output(output2, out_dir, 'linear')
 
     exponential_config = {
         'time': 10,
@@ -355,7 +309,7 @@ if __name__ == '__main__':
         'speed': 14}
     timeline3 = get_exponential_step_timeline(exponential_config)
     output3 = test_receptor(timeline3)
-    plot_output(output3, out_dir, 'exponential_4e-4')
+    plot_receptor_output(output3, out_dir, 'exponential_4e-4')
 
     exponential_random_config = {
         'time': 60,
@@ -363,4 +317,4 @@ if __name__ == '__main__':
         'speed': 14}
     timeline4 = get_exponential_random_timeline(exponential_random_config)
     output4 = test_receptor(timeline4, 0.1)
-    plot_output(output4, out_dir, 'exponential_random')
+    plot_receptor_output(output4, out_dir, 'exponential_random')
