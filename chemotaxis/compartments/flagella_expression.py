@@ -195,7 +195,7 @@ def get_flagella_metabolism_initial_state(ports={}):
     }
 
 class FlagellaExpressionMetabolism(Generator):
-    ''' Flagella expression with metabolism process '''
+    ''' Flagella expression with metabolism '''
 
     name = 'flagella_expression_metabolism'
     defaults = get_flagella_expression_config({})
@@ -282,6 +282,11 @@ class FlagellaExpressionMetabolism(Generator):
         agents_path = config['agents_path']
         external_path = boundary_path + ('external',)
 
+
+        import ipdb; ipdb.set_trace()
+        # TODO -- is external path coming through?
+
+
         topology = {
             'mass_deriver': {
                 'global': boundary_path,
@@ -339,7 +344,7 @@ class FlagellaExpressionMetabolism(Generator):
             topology.update({
                 'meta_division': {
                     'global': boundary_path,
-                    'cells': agents_path,
+                    'agents': agents_path,
                 }})
         return topology
 

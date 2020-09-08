@@ -15,7 +15,6 @@ from vivarium.library.units import units
 from vivarium.core.composition import (
     simulate_process_in_experiment,
     simulate_compartment_in_experiment,
-    simulate_experiment,
     agent_environment_experiment,
     plot_simulation_output,
     EXPERIMENT_OUT_DIR,
@@ -29,7 +28,7 @@ from cell.processes.metabolism import (
 from cell.processes.transcription import UNBOUND_RNAP_KEY
 from cell.processes.translation import UNBOUND_RIBOSOME_KEY
 from cell.compartments.lattice import Lattice
-from cell.experiments.lattice_experiment import get_lattice_config
+from cell.experiments.lattice_experiment import get_iAF1260b_environment
 
 # chemotaxis imports
 from chemotaxis.processes.flagella_motor import run_variable_flagella
@@ -64,14 +63,6 @@ from cell.plots.multibody_physics import (
     plot_tags
 )
 from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
-
-
-DEFAULT_AGENT_CONFIG = {
-    'ligand_id': 'MeAsp',
-    # 'initial_ligand': INITIAL_LIGAND,
-    'external_path': ('global',),
-    'agents_path': ('..', '..', 'agents'),
-    'daughter_path': tuple()}
 
 
 
@@ -163,7 +154,7 @@ def make_flagella_expression_initial_state():
             'CRP': 10,
             'Fnr': 10,
             'endoRNAse': 1,
-            'flagella': 8,
+            'flagella': 4,
             UNBOUND_RIBOSOME_KEY: 100,  # e. coli has ~ 20000 ribosomes
             UNBOUND_RNAP_KEY: 100
         }
@@ -213,25 +204,32 @@ def flagella_just_in_time(out_dir='out'):
 # figure 6c
 def run_flagella_metabolism_experiment(out_dir='out'):
 
-    total_time = 3000
+    total_time = 4000
+    emit_step = 100
 
     ## make the experiment
     # configure
     agents_config = {
         'ids': ['flagella_metabolism'],
         'type': FlagellaExpressionMetabolism,
-        'config': DEFAULT_AGENT_CONFIG}
+        'config': {
+            'agents_path': ('..', '..', 'agents'),
+            'fields_path': ('..', '..', 'fields'),
+            'dimensions_path': ('..', '..', 'dimensions'),
+            'external_path': ('global',),
+        }}
     environment_config = {
         'type': Lattice,
-        'config': get_lattice_config(bounds=[30, 30])}
+        'config': get_iAF1260b_environment(bounds=[17, 17]),
+    }
     initial_agent_state = make_flagella_expression_initial_state()
 
-    # use agent_environment_experiment helper function
+    # use agent_environment_experiment to make the experiment
     experiment_settings = {
         'experiment_name': 'heterogeneous_flagella_experiment',
         'description': '..',
-        'total_time': 30,
-        'emit_step': 1}
+        'total_time': total_time,
+        'emit_step': emit_step}
     experiment = agent_environment_experiment(
         agents_config=agents_config,
         environment_config=environment_config,
@@ -239,11 +237,13 @@ def run_flagella_metabolism_experiment(out_dir='out'):
         settings=experiment_settings)
 
     ## run the experiment
-    sim_settings = {
-        'total_time': total_time,
-        'emit_step': 10,
-        'return_raw_data': True}
-    data = simulate_experiment(experiment, sim_settings)
+    experiment.update(total_time)
+    data = experiment.emitter.get_data()
+    # sim_settings = {
+    #     'total_time': total_time,
+    #     'emit_step': emit_step,
+    #     'return_raw_data': True}
+    # data = simulate_experiment(experiment, sim_settings)
 
     ## plot output
     # extract data
@@ -256,11 +256,12 @@ def run_flagella_metabolism_experiment(out_dir='out'):
 
     # make a tags plot
     plot_config = {
-        'tagged_molecules': ['flagella'],
+        'tagged_molecules': [('proteins', 'flagella')],
         'n_snapshots': 5,
         # 'background_color': background_color,
         'out_dir': out_dir,
         'filename': 'heterogeneous_flagella_experiment_tags'}
+
     plot_tags(data, plot_config)
 
 
