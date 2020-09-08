@@ -55,7 +55,6 @@ from cell.plots.multibody_physics import (
     plot_motility,
 )
 
-from chemotaxis.plots.coarse_motor import plot_variable_receptor
 
 # make an agent from a lone MotorActivity process
 # MotorActivityAgent = MotorActivity

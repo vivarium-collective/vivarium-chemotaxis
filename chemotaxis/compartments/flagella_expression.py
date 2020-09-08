@@ -160,7 +160,7 @@ def get_flagella_initial_state(ports={}):
             }
     }
 
-def flagella_expression_compartment(config):
+def get_flagella_expression_compartment(config):
     '''
     Make a gene expression compartment with flagella expression data
     '''
@@ -441,7 +441,7 @@ def test_flagella_metabolism(seed=1):
 
 @pytest.mark.slow
 def test_flagella_expression():
-    flagella_compartment = flagella_expression_compartment({})
+    flagella_compartment = get_flagella_expression_compartment({})
 
     # initial state for flagella complexation
     initial_state = get_flagella_initial_state()
@@ -492,7 +492,7 @@ if __name__ == '__main__':
             mtb_out_dir
         )
     else:
-        compartment = flagella_expression_compartment({})
+        compartment = get_flagella_expression_compartment({})
         run_flagella_compartment(
             compartment,
             get_flagella_initial_state(),

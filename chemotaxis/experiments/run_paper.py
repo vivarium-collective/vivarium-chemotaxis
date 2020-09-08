@@ -15,6 +15,8 @@ from vivarium.library.units import units
 from vivarium.core.composition import (
     simulate_process_in_experiment,
     simulate_compartment_in_experiment,
+    simulate_experiment,
+    agent_environment_experiment,
     plot_simulation_output,
     EXPERIMENT_OUT_DIR,
 )
@@ -26,6 +28,8 @@ from cell.processes.metabolism import (
 )
 from cell.processes.transcription import UNBOUND_RNAP_KEY
 from cell.processes.translation import UNBOUND_RIBOSOME_KEY
+from cell.compartments.lattice import Lattice
+from cell.experiments.lattice_experiment import get_lattice_config
 
 # chemotaxis imports
 from chemotaxis.processes.flagella_motor import run_variable_flagella
@@ -37,9 +41,8 @@ from chemotaxis.compartments.chemotaxis_flagella import (
     test_variable_chemotaxis,
     get_chemotaxis_timeline,
 )
-from chemotaxis.compartments.flagella_expression import (
-    flagella_expression_compartment,
-)
+from chemotaxis.compartments.flagella_expression import get_flagella_expression_compartment
+from chemotaxis.experiments.chemotaxis_experiments import plot_chemotaxis_experiment
 
 # data
 from chemotaxis.data.chromosomes.flagella_chromosome import FlagellaChromosome
@@ -55,6 +58,12 @@ from cell.plots.gene_expression import (
 from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
 
 
+DEFAULT_AGENT_CONFIG = {
+    'ligand_id': 'MeAsp',
+    # 'initial_ligand': INITIAL_LIGAND,
+    'external_path': ('global',),
+    'agents_path': ('..', '..', 'agents'),
+    'daughter_path': tuple()}
 
 
 
@@ -87,13 +96,16 @@ def BiGG_metabolism(out_dir='out'):
 
     import ipdb; ipdb.set_trace()
 
+
 # figure 5b
 def transport_metabolism(out_dir='out'):
     pass
 
+
 # figure 5c
 def transport_metabolism_environment(out_dir='out'):
     pass
+
 
 # figure 6a
 def flagella_expression_network(out_dir='out'):
@@ -105,7 +117,7 @@ def flagella_expression_network(out_dir='out'):
     '''
 
     # load the compartment
-    flagella_compartment = flagella_expression_compartment({})
+    flagella_compartment = get_flagella_expression_compartment({})
 
     # make expression network plot
     flagella_expression_network = flagella_compartment.generate()
@@ -119,11 +131,12 @@ def flagella_expression_network(out_dir='out'):
         'complexes': complexes}
     gene_network_plot(data, out_dir)
 
+
 # figure 6b
 def flagella_just_in_time(out_dir='out'):
 
     ## make the compartment
-    compartment = flagella_expression_compartment({})
+    compartment = get_flagella_expression_compartment({})
 
     ## make the initial state
     flagella_data = FlagellaChromosome()
@@ -184,6 +197,48 @@ def flagella_just_in_time(out_dir='out'):
 
 
 # figure 6c
+def run_heterogeneous_flagella_experiment(out_dir='out'):
+    agents_config = [
+            {
+                'number': 1,
+                'name': 'flagella_expression',
+                'type': get_flagella_expression_compartment({}),
+                'config': DEFAULT_AGENT_CONFIG,
+            }
+        ]
+    environment_config = {
+        'type': Lattice,
+        'config': get_lattice_config(
+            bounds=[30, 30],
+            jitter_force=1e-5
+        ),
+    },
+
+
+    import ipdb; ipdb.set_trace()
+
+
+    initial_state = {}
+    experiment_settings = {}
+
+    # make the experiment
+    experiment = agent_environment_experiment(
+        agents_config,
+        environment_config,
+        initial_state,
+        experiment_settings)
+
+    # simulate
+    settings = {
+        'total_time': 100,
+        'emit_step': 10,
+        'return_raw_data': True}
+    data = simulate_experiment(experiment, settings)
+
+    # plot
+    field_config = environment_config['config']['field']
+    plot_chemotaxis_experiment(data, field_config, out_dir)
+
 
 # figure 7a
 def variable_flagella(out_dir='out'):
@@ -209,6 +264,7 @@ experiments_library = {
     '4a': BiGG_metabolism,
     '6a': flagella_expression_network,
     '6b': flagella_just_in_time,
+    '6c': run_heterogeneous_flagella_experiment,
     '7a': variable_flagella,
     '7b': run_chemoreceptor_pulse,
     '7c': run_chemotaxis_transduction,
