@@ -28,8 +28,9 @@ NAME = 'flagella_motor'
 
 
 class FlagellaMotor(Process):
-    '''
-    Model of flagellarmotor activity
+    ''' Flagellar motor activity
+
+    Generates thrust and torque based on number of flagella and their motor states.
     '''
 
     name = NAME

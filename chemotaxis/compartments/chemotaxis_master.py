@@ -27,7 +27,7 @@ from cell.processes.degradation import RnaDegradation
 from cell.processes.complexation import Complexation
 from cell.processes.division_volume import DivisionVolume
 from chemotaxis.processes.chemoreceptor_cluster import ReceptorCluster
-from chemotaxis.processes.flagella_activity import FlagellaActivity
+from chemotaxis.processes.flagella_motor import FlagellaMotor
 from chemotaxis.processes.membrane_potential import MembranePotential
 
 # compartments
@@ -81,7 +81,7 @@ class ChemotaxisMaster(Generator):
 
         # chemotaxis -- flagella activity, receptor activity, and PMF
         receptor = ReceptorCluster(config['receptor'])
-        flagella = FlagellaActivity(config['flagella'])
+        flagella = FlagellaMotor(config['flagella'])
         PMF = MembranePotential(config['PMF'])
 
         # Division

@@ -27,18 +27,12 @@ from cell.processes.metabolism import (
 # plots
 from cell.plots.metabolism import plot_exchanges
 
-def make_dir(out_dir):
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
 
-def add_arguments():
-    parser = argparse.ArgumentParser(description='chemotaxis control')
-    parser.add_argument(
-        '--experiment', '-e',
-        type=str,
-        default=None,
-        help='preconfigured experiments')
-    return parser.parse_args()
+
+
+
+
+
 
 
 def figure_1a(out_dir):
@@ -67,31 +61,55 @@ def figure_1a(out_dir):
     plot_simulation_output(timeseries, plot_settings, out_dir, 'BiGG_simulation')
     plot_exchanges(timeseries, sim_settings, out_dir)
 
-    import ipdb;
-    ipdb.set_trace()
 
+    import ipdb; ipdb.set_trace()
+
+
+
+def figure_2a():
+    pass
+
+
+experiments_library = {
+    '1': figure_1a,
+    '2': figure_2a,
+}
+
+def make_dir(out_dir):
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+
+def add_arguments():
+    parser = argparse.ArgumentParser(description='chemotaxis control')
+    parser.add_argument(
+        'experiment_id',
+        type=str,
+        default=None,
+        help='experiment number')
+    return parser.parse_args()
 
 def main():
     """
-    Execute experiments from the paper
+    Execute experiments
     """
 
     out_dir = os.path.join(EXPERIMENT_OUT_DIR, 'chemotaxis')
     make_dir(out_dir)
 
     args = add_arguments()
-    if args.experiment:
+
+    if args.experiment_id:
         # get a preset experiment
         # make a directory for this experiment
-        experiment_name = str(args.experiment)
-        control_out_dir = os.path.join(out_dir, experiment_name)
+        experiment_id = str(args.experiment_id)
+        control_out_dir = os.path.join(out_dir, experiment_id)
         make_dir(control_out_dir)
 
-        if experiment_name == '1':
-            figure_1a(out_dir)
+        run_function = experiments_library[experiment_id]
+        run_function(out_dir)
 
     else:
-        print('provide figure number')
+        print('provide experiment number')
 
 
 if __name__ == '__main__':

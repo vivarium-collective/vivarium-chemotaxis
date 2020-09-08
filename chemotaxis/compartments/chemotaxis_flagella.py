@@ -33,7 +33,7 @@ from cell.processes.complexation import Complexation
 from cell.processes.growth_protein import GrowthProtein
 from cell.processes.derive_globals import DeriveGlobals
 from cell.processes.ode_expression import ODE_expression, get_flagella_expression
-from chemotaxis.processes.flagella_activity import FlagellaActivity
+from chemotaxis.processes.flagella_motor import FlagellaMotor
 from chemotaxis.compartments.flagella_expression import (
     get_flagella_expression_config,
     get_flagella_initial_state,
@@ -70,7 +70,7 @@ class ChemotaxisVariableFlagella(Generator):
 
     def generate_processes(self, config):
         receptor = ReceptorCluster(config['receptor'])
-        flagella = FlagellaActivity(config['flagella'])
+        flagella = FlagellaMotor(config['flagella'])
 
         return {
             'receptor': receptor,
@@ -138,7 +138,7 @@ class ChemotaxisODEExpressionFlagella(Generator):
 
         return {
             'receptor': ReceptorCluster(config['receptor']),
-            'flagella': FlagellaActivity(config['flagella']),
+            'flagella': FlagellaMotor(config['flagella']),
             'expression': ODE_expression(config['expression']),
             'growth': GrowthProtein(config['growth']),
             'division': MetaDivision(division_config),
@@ -223,7 +223,7 @@ class ChemotaxisExpressionFlagella(Generator):
 
         return {
             'receptor': ReceptorCluster(config['receptor']),
-            'flagella': FlagellaActivity(config['flagella']),
+            'flagella': FlagellaMotor(config['flagella']),
             'transcription': Transcription(config['transcription']),
             'translation': Translation(config['translation']),
             'degradation': RnaDegradation(config['degradation']),
