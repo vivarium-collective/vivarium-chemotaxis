@@ -201,8 +201,9 @@ class FlagellaExpressionMetabolism(Generator):
     defaults = get_flagella_expression_config({})
     defaults.update({
         'boundary_path': ('boundary',),
+        'fields_path': ('fields',),
         'dimensions_path': ('dimensions',),
-        'agents_path': ('agents',),  # ('..', '..', 'agents',),
+        'agents_path': ('agents',),
         'daughter_path': tuple(),
         'transport': get_glc_lct_config(),
         'metabolism': default_metabolism_config(),
@@ -278,14 +279,10 @@ class FlagellaExpressionMetabolism(Generator):
 
     def generate_topology(self, config):
         boundary_path = config['boundary_path']
+        fields_path = config['fields_path']
         dimensions_path = config['dimensions_path']
         agents_path = config['agents_path']
         external_path = boundary_path + ('external',)
-
-
-        import ipdb; ipdb.set_trace()
-        # TODO -- is external path coming through?
-
 
         topology = {
             'mass_deriver': {
@@ -329,7 +326,7 @@ class FlagellaExpressionMetabolism(Generator):
             'metabolism': {
                 'internal': ('molecules',),
                 'external': external_path,
-                'fields': ('fields',),
+                'fields': fields_path,
                 'reactions': ('reactions',),
                 'flux_bounds': ('flux_bounds',),
                 'global': boundary_path,

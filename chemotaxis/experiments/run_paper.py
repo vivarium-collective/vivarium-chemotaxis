@@ -83,28 +83,16 @@ def BiGG_metabolism(out_dir='out'):
     # run simulation
     timeseries = simulate_process_in_experiment(metabolism, sim_settings)
 
-    # plot settings
-    plot_settings = {
-        'max_rows': 30,
-        'remove_zeros': True,
-        'skip_ports': ['exchange', 'reactions']}
-
-    # make plots from simulation output
-    plot_simulation_output(timeseries, plot_settings, out_dir, 'BiGG_simulation')
+    # plot
     plot_exchanges(timeseries, sim_settings, out_dir)
-
-    import ipdb; ipdb.set_trace()
-
 
 # figure 5b
 def transport_metabolism(out_dir='out'):
     pass
 
-
 # figure 5c
 def transport_metabolism_environment(out_dir='out'):
     pass
-
 
 # figure 6a
 def flagella_expression_network(out_dir='out'):
@@ -129,7 +117,6 @@ def flagella_expression_network(out_dir='out'):
         'templates': promoters,
         'complexes': complexes}
     gene_network_plot(data, out_dir)
-
 
 # figure 6b
 def make_flagella_expression_initial_state():
@@ -157,9 +144,11 @@ def make_flagella_expression_initial_state():
             'flagella': 4,
             UNBOUND_RIBOSOME_KEY: 100,  # e. coli has ~ 20000 ribosomes
             UNBOUND_RNAP_KEY: 100
+        },
+        'boundary': {
+            'location': [8, 8]
         }
     }
-
 
 def flagella_just_in_time(out_dir='out'):
 
@@ -200,12 +189,11 @@ def flagella_just_in_time(out_dir='out'):
         plot_config,
         out_dir)
 
-
 # figure 6c
 def run_flagella_metabolism_experiment(out_dir='out'):
 
-    total_time = 4000
-    emit_step = 100
+    total_time = 200
+    emit_step = 10
 
     ## make the experiment
     # configure
@@ -216,7 +204,6 @@ def run_flagella_metabolism_experiment(out_dir='out'):
             'agents_path': ('..', '..', 'agents'),
             'fields_path': ('..', '..', 'fields'),
             'dimensions_path': ('..', '..', 'dimensions'),
-            'external_path': ('global',),
         }}
     environment_config = {
         'type': Lattice,
@@ -239,36 +226,32 @@ def run_flagella_metabolism_experiment(out_dir='out'):
     ## run the experiment
     experiment.update(total_time)
     data = experiment.emitter.get_data()
-    # sim_settings = {
-    #     'total_time': total_time,
-    #     'emit_step': emit_step,
-    #     'return_raw_data': True}
-    # data = simulate_experiment(experiment, sim_settings)
 
     ## plot output
     # extract data
     multibody_config = environment_config['config']['multibody']
     agents = {time: time_data['agents'] for time, time_data in data.items()}
-    # fields = {time: time_data['fields'] for time, time_data in data.items()}
-    data = {
+    fields = {time: time_data['fields'] for time, time_data in data.items()}
+    plot_data = {
         'agents': agents,
+        'fields': fields,
         'config': multibody_config}
 
-    # make a tags plot
+    # make tag and snapshot plots
     plot_config = {
+        'fields': ['glc__D_e'],
         'tagged_molecules': [('proteins', 'flagella')],
         'n_snapshots': 5,
         # 'background_color': background_color,
         'out_dir': out_dir,
-        'filename': 'heterogeneous_flagella_experiment_tags'}
+    }
 
-    plot_tags(data, plot_config)
-
+    plot_tags(plot_data, plot_config)
+    plot_snapshots(plot_data, plot_config)
 
 # figure 7a
 def variable_flagella(out_dir='out'):
     run_variable_flagella(out_dir)
-
 
 # figure 7b
 def run_chemoreceptor_pulse(out_dir='out'):
@@ -287,7 +270,7 @@ def run_chemotaxis_transduction(out_dir='out'):
 
 
 experiments_library = {
-    '4a': BiGG_metabolism,
+    '5a': BiGG_metabolism,
     '6a': flagella_expression_network,
     '6b': flagella_just_in_time,
     '6c': run_flagella_metabolism_experiment,
