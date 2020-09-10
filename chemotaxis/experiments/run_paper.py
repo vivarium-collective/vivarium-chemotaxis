@@ -17,6 +17,7 @@ from vivarium.core.composition import (
     simulate_compartment_in_experiment,
     agent_environment_experiment,
     plot_simulation_output,
+    plot_agents_multigen,
     EXPERIMENT_OUT_DIR,
 )
 
@@ -192,8 +193,11 @@ def flagella_just_in_time(out_dir='out'):
 # figure 6c
 def run_flagella_metabolism_experiment(out_dir='out'):
 
-    total_time = 200
+    total_time = 4000
     emit_step = 10
+    process_time_step = 10
+    bounds = [17, 17]
+    emit_fields = ['glc__D_e']
 
     ## make the experiment
     # configure
@@ -201,14 +205,18 @@ def run_flagella_metabolism_experiment(out_dir='out'):
         'ids': ['flagella_metabolism'],
         'type': FlagellaExpressionMetabolism,
         'config': {
+            'time_step': process_time_step,
             'agents_path': ('..', '..', 'agents'),
             'fields_path': ('..', '..', 'fields'),
             'dimensions_path': ('..', '..', 'dimensions'),
         }}
     environment_config = {
         'type': Lattice,
-        'config': get_iAF1260b_environment(bounds=[17, 17]),
-    }
+        'config': get_iAF1260b_environment(
+            time_step=process_time_step,
+            bounds=bounds,
+            scale_concentration=20,
+            keep_fields_emit=emit_fields)}
     initial_agent_state = make_flagella_expression_initial_state()
 
     # use agent_environment_experiment to make the experiment
@@ -237,15 +245,17 @@ def run_flagella_metabolism_experiment(out_dir='out'):
         'fields': fields,
         'config': multibody_config}
 
+    # multigen plot
+    plot_settings = {}
+    plot_agents_multigen(data, plot_settings, out_dir)
+
     # make tag and snapshot plots
     plot_config = {
-        'fields': ['glc__D_e'],
+        'fields': emit_fields,
         'tagged_molecules': [('proteins', 'flagella')],
         'n_snapshots': 5,
         # 'background_color': background_color,
-        'out_dir': out_dir,
-    }
-
+        'out_dir': out_dir}
     plot_tags(plot_data, plot_config)
     plot_snapshots(plot_data, plot_config)
 
@@ -268,7 +278,7 @@ def run_chemotaxis_transduction(out_dir='out'):
             total_time=90),
     )
 
-
+# all the experiments
 experiments_library = {
     '5a': BiGG_metabolism,
     '6a': flagella_expression_network,

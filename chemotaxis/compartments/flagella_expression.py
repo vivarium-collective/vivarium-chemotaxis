@@ -242,12 +242,15 @@ class FlagellaExpressionMetabolism(Generator):
             'initial_mass': config['initial_mass']}))
 
         # Transport
-        transport = ConvenienceKinetics(config['transport'])
+        transport_config = config['transport']
+        transport_config.update({'time_step': config['time_step']})
+        transport = ConvenienceKinetics(transport_config)
         target_fluxes = transport.kinetic_rate_laws.reaction_ids
 
         # Metabolism
         # add target fluxes from transport
         metabolism_config = config.get('metabolism')
+        metabolism_config.update({'time_step': config['time_step']})
         metabolism_config.update({'constrained_reaction_ids': target_fluxes})
         metabolism = Metabolism(metabolism_config)
 
