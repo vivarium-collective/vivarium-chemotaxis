@@ -28,7 +28,7 @@ from cell.processes.metabolism import (
 )
 from cell.processes.transcription import UNBOUND_RNAP_KEY
 from cell.processes.translation import UNBOUND_RIBOSOME_KEY
-from cell.compartments.lattice import Lattice
+from cell.composites.lattice import Lattice
 from cell.experiments.lattice_experiment import get_iAF1260b_environment
 
 # chemotaxis imports
@@ -90,6 +90,9 @@ def BiGG_metabolism(out_dir='out'):
 
 # figure 5b
 def transport_metabolism(out_dir='out'):
+
+
+    import ipdb; ipdb.set_trace()
     pass
 
 
@@ -123,7 +126,7 @@ def flagella_expression_network(out_dir='out'):
     gene_network_plot(data, out_dir)
 
 
-# figure 6b
+# function to make initial state for flagella expression processes
 def make_flagella_expression_initial_state():
     ## make the initial state
     flagella_data = FlagellaChromosome()
@@ -156,15 +159,16 @@ def make_flagella_expression_initial_state():
     }
 
 
+# figure 6b
 def flagella_just_in_time(out_dir='out'):
 
-    ## make the compartment
+    # make the compartment
     compartment = get_flagella_expression_compartment({})
 
     # get the initial state
     initial_state = make_flagella_expression_initial_state()
 
-    ## run simulation
+    # run simulation
     settings = {
         # a cell cycle of 2520 sec is expected to express 8 flagella.
         # 2 flagella expected in approximately 630 seconds.
@@ -174,7 +178,7 @@ def flagella_just_in_time(out_dir='out'):
         'initial_state': initial_state}
     timeseries = simulate_compartment_in_experiment(compartment, settings)
 
-    ## plot output
+    # plot output
     flagella_data = FlagellaChromosome()
     plot_config = {
         'name': 'flagella',
@@ -294,6 +298,8 @@ def run_chemotaxis_transduction(out_dir='out'):
 # for easy access by main
 experiments_library = {
     '5a': BiGG_metabolism,
+    '5b': transport_metabolism,
+    '5c': transport_metabolism_environment,
     '6a': flagella_expression_network,
     '6b': flagella_just_in_time,
     '6c': run_flagella_metabolism_experiment,

@@ -1,30 +1,20 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import copy
-import argparse
 
 from vivarium.library.dict_utils import (
-    get_value_from_path,
     deep_merge
 )
 from vivarium.library.units import units
 from vivarium.core.process import Generator
 from vivarium.core.composition import (
     simulate_compartment_in_experiment,
-    plot_simulation_output,
-    set_axes,
     COMPARTMENT_OUT_DIR)
-
-from cell.parameters.parameters import (
-    parameter_scan,
-    get_parameters_logspace,
-    plot_scan_results)
 
 # processes
 from vivarium.processes.meta_division import MetaDivision
 from vivarium.processes.tree_mass import TreeMass
-from cell.plots.transport_metabolism import plot_diauxic_shift
+from chemotaxis.plots.transport_metabolism import analyze_transport_metabolism
 from cell.processes.division_volume import DivisionVolume
 from cell.processes.metabolism import (
     Metabolism,
@@ -40,6 +30,7 @@ from cell.processes.ode_expression import (
 NAME = 'transport_metabolism'
 TIMESTEP = 5
 
+
 def default_metabolism_config():
     config = get_iAF1260b_config()
 
@@ -52,6 +43,7 @@ def default_metabolism_config():
             'EX_lcts_e': [1.05, 1.0]}}
     config.update(metabolism_config)
     return config
+
 
 def default_expression_config():
     # glc lct config from ode_expression
@@ -283,129 +275,14 @@ def simulate_transport_metabolism(config={}):
     return simulate_compartment_in_experiment(compartment, sim_settings)
 
 
-def analyze_transport_metabolism(timeseries, config={}, out_dir='out'):
-    environment_volume = config.get('environment_volume', 1e-14)
-
-    # calculate growth
-    volume_ts = timeseries['boundary']['volume']
-    print('growth: {}'.format(volume_ts[-1] / volume_ts[1]))
-
-    # simulation plot
-    plot_settings = {
-        'max_rows': 30,
-        'remove_flat': True,
-        'remove_zeros': True,
-        'skip_ports': ['null', 'reactions'],
-    }
-    plot_simulation_output(timeseries, plot_settings, out_dir)
-
-    # diauxic plot
-    settings = {
-        'internal_path': ('cytoplasm',),
-        'external_path': ('boundary', 'external'),
-        'global_path': ('boundary',),
-        'environment_volume': environment_volume,  # L
-    }
-    plot_diauxic_shift(timeseries, settings, out_dir)
-
-
-# parameters
-def scan_transport_metabolism():
-
-    # initialize the compartment
-    compartment = TransportMetabolism({})
-
-    # parameters to be scanned, and their values
-    scan_params = {
-        ('transport',
-         'kinetic_parameters',
-         'EX_glc__D_e',
-         ('internal', 'EIIglc'),
-         'kcat_f'):
-            get_parameters_logspace(1e3, 1e6, 3),
-        ('transport',
-         'kinetic_parameters',
-         'EX_lcts_e',
-         ('internal', 'LacY'),
-         'kcat_f'):
-            get_parameters_logspace(1e3, 1e6, 3),
-    }
-
-    # metrics are the outputs of a scan
-    metrics = [
-        ('reactions', 'EX_glc__D_e'),
-        ('reactions', 'EX_lcts_e'),
-        ('boundary', 'mass')
-    ]
-
-    # define conditions
-    conditions = [
-        {
-        'environment': {
-            'glc__D_e': 12.0,
-            'lcts_e': 10.0},
-        'cytoplasm': {
-            'LacY': 0.0}
-        },
-        {
-        'environment': {
-            'glc__D_e': 0.0,
-            'lcts_e': 10.0},
-        'cytoplasm': {
-            'LacY': 1.0e-6}
-        },
-    ]
-
-    ## TODO -- add targets
-    # targets = {
-    #     'global', 'growth_rate'
-    # }
-
-    # set up scan options
-    timeline = [(10, {})]
-    sim_settings = {
-        'environment': {
-            'volume': 1e-14 * units.L,
-            'ports': {
-                'fields': ('fields',),
-                'external': ('boundary', 'external'),
-                'dimensions': ('dimensions',),
-            }},
-        'timeline': {
-            'timeline': timeline,
-            'ports': {
-                'external': ('boundary', 'external')}}}
-
-    # run scan
-    scan_config = {
-        'compartment': compartment,
-        'scan_parameters': scan_params,
-        'conditions': conditions,
-        'metrics': metrics,
-        'settings': sim_settings}
-    results = parameter_scan(scan_config)
-
-    return results
-
-
 if __name__ == '__main__':
     out_dir = os.path.join(COMPARTMENT_OUT_DIR, NAME)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    # run scan with python vivarium/composites/transport_metabolism.py --scan
-    parser = argparse.ArgumentParser(description='transport metabolism composite')
-    parser.add_argument('--scan', '-s', action='store_true', default=False, )
-    parser.add_argument('--run', '-r', action='store_true', default=False, )
-    args = parser.parse_args()
-
-    if args.scan:
-        results = scan_transport_metabolism()
-        plot_scan_results(results, out_dir)
-    else:
-        config ={
-            'end_time': 2520,
-            'environment_volume': 1e-12,
-        }
-        timeseries = simulate_transport_metabolism(config)
-        analyze_transport_metabolism(timeseries, config, out_dir)
+    config ={
+        'end_time': 2520,
+        'environment_volume': 1e-12,
+    }
+    timeseries = simulate_transport_metabolism(config)
+    analyze_transport_metabolism(timeseries, config, out_dir)

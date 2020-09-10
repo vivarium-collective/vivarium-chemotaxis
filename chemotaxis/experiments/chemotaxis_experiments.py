@@ -26,7 +26,7 @@ from vivarium.core.composition import (
 )
 
 # composites
-from cell.compartments.static_lattice import StaticLattice
+from cell.composites.static_lattice import StaticLattice
 from chemotaxis.composites.chemotaxis_minimal import ChemotaxisMinimal
 from chemotaxis.composites.chemotaxis_master import ChemotaxisMaster
 from chemotaxis.composites.chemotaxis_flagella import (

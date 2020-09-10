@@ -8,6 +8,7 @@ import copy
 import pytest
 import numpy as np
 
+# vivarium-core imports
 from vivarium.core.process import Generator
 from vivarium.core.composition import (
     simulate_compartment_in_experiment,
@@ -17,17 +18,15 @@ from vivarium.core.composition import (
     assert_timeseries_close,
     COMPARTMENT_OUT_DIR,
 )
+from vivarium.core.emitter import path_timeseries_from_embedded_timeseries
+from vivarium.library.units import units
 
 # data
-from chemotaxis.data.chromosomes.flagella_chromosome import FlagellaChromosome
-from cell.data import REFERENCE_DATA_DIR
 from cell.data.nucleotides import nucleotides
 from cell.data.amino_acids import amino_acids
 from cell.plots.gene_expression import plot_timeseries_heatmaps
-from vivarium.core.emitter import path_timeseries_from_embedded_timeseries
-
-# vivarium libraries
-from vivarium.library.units import units
+from chemotaxis.data.chromosomes.flagella_chromosome import FlagellaChromosome
+from chemotaxis.data import REFERENCE_DATA_DIR
 
 # processes
 from cell.processes.transcription import Transcription, UNBOUND_RNAP_KEY
@@ -41,7 +40,7 @@ from vivarium.processes.meta_division import MetaDivision
 from vivarium.processes.tree_mass import TreeMass
 
 # composites
-from cell.compartments.gene_expression import GeneExpression
+from cell.composites.gene_expression import GeneExpression
 
 # plots
 from cell.plots.gene_expression import plot_gene_expression_output
@@ -195,7 +194,7 @@ def get_flagella_metabolism_initial_state(ports={}):
     }
 
 class FlagellaExpressionMetabolism(Generator):
-    ''' Flagella expression with metabolism '''
+    ''' Flagella stochastic expression with metabolism '''
 
     name = 'flagella_expression_metabolism'
     defaults = get_flagella_expression_config({})
@@ -349,7 +348,7 @@ class FlagellaExpressionMetabolism(Generator):
         return topology
 
 
-## simulations
+# simulation function
 def run_flagella_compartment(
         compartment,
         initial_state=None,
@@ -371,19 +370,19 @@ def run_flagella_compartment(
     # save reference timeseries
     save_flat_timeseries(timeseries, out_dir)
 
+    # plot gene expression figure
     plot_config = {
         'name': 'flagella_expression',
         'ports': {
             'transcripts': 'transcripts',
             'proteins': 'proteins',
             'molecules': 'molecules'}}
-
     plot_gene_expression_output(
         timeseries,
         plot_config,
         out_dir)
 
-    # just-in-time figure
+    # plot just-in-time figure
     plot_config2 = plot_config.copy()
     plot_config2.update({
         'name': 'flagella',
@@ -391,13 +390,12 @@ def run_flagella_compartment(
             'transcripts': list(flagella_data.chromosome_config['genes'].keys()),
             'proteins': flagella_data.complexation_monomer_ids + flagella_data.complexation_complex_ids,
             'molecules': list(nucleotides.values()) + list(amino_acids.values())}})
-
     plot_timeseries_heatmaps(
         timeseries,
         plot_config2,
         out_dir)
 
-    # make a basic sim output
+    # plot basic sim output
     plot_settings = {
         'max_rows': 30,
         'remove_zeros': True,
@@ -443,6 +441,7 @@ def test_flagella_metabolism(seed=1):
     reference = load_timeseries(
         os.path.join(REFERENCE_DATA_DIR, name + '.csv'))
     assert_timeseries_close(path_timeseries, reference)
+
 
 @pytest.mark.slow
 def test_flagella_expression():
