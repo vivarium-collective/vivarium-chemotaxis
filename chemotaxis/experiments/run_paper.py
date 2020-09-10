@@ -69,31 +69,30 @@ from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
 
 # figure 5a
 def BiGG_metabolism(out_dir='out'):
-    # configure BiGG metabolism
+    # configure metabolism process iAF1260b BiGG model
     config = get_iAF1260b_config()
     metabolism = Metabolism(config)
 
-    # simulation settings
+    # run simulation with helper function simulate_process_in_experiment
     sim_settings = {
-        'environment': {
-            'volume': 1e-5 * units.L,
-        },
-        'total_time': 2520,  # 2520 sec (42 min) is the expected doubling time in minimal media
+        'environment': {'volume': 1e-5 * units.L},
+        'total_time': 2500,
     }
-
-    # run simulation
     timeseries = simulate_process_in_experiment(metabolism, sim_settings)
 
     # plot
     plot_exchanges(timeseries, sim_settings, out_dir)
 
+
 # figure 5b
 def transport_metabolism(out_dir='out'):
     pass
 
+
 # figure 5c
 def transport_metabolism_environment(out_dir='out'):
     pass
+
 
 # figure 6a
 def flagella_expression_network(out_dir='out'):
@@ -118,6 +117,7 @@ def flagella_expression_network(out_dir='out'):
         'templates': promoters,
         'complexes': complexes}
     gene_network_plot(data, out_dir)
+
 
 # figure 6b
 def make_flagella_expression_initial_state():
@@ -150,6 +150,7 @@ def make_flagella_expression_initial_state():
             'location': [8, 8]
         }
     }
+
 
 def flagella_just_in_time(out_dir='out'):
 
@@ -189,6 +190,7 @@ def flagella_just_in_time(out_dir='out'):
         timeseries,
         plot_config,
         out_dir)
+
 
 # figure 6c
 def run_flagella_metabolism_experiment(out_dir='out'):
@@ -261,15 +263,18 @@ def run_flagella_metabolism_experiment(out_dir='out'):
     plot_tags(plot_data, plot_config)
     plot_snapshots(plot_data, plot_config)
 
+
 # figure 7a
 def variable_flagella(out_dir='out'):
     run_variable_flagella(out_dir)
+
 
 # figure 7b
 def run_chemoreceptor_pulse(out_dir='out'):
     timeline = get_pulse_timeline()
     timeseries = test_receptor(timeline)
     plot_receptor_output(timeseries, out_dir, 'pulse')
+
 
 # figure 7c
 def run_chemotaxis_transduction(out_dir='out'):
@@ -280,7 +285,9 @@ def run_chemotaxis_transduction(out_dir='out'):
             total_time=90),
     )
 
-# all the experiments
+
+# put all the experiments for the paper in a dictionary
+# for easy access by main
 experiments_library = {
     '5a': BiGG_metabolism,
     '6a': flagella_expression_network,
@@ -297,12 +304,12 @@ def make_dir(out_dir):
         os.makedirs(out_dir)
 
 def add_arguments():
-    parser = argparse.ArgumentParser(description='chemotaxis control')
+    parser = argparse.ArgumentParser(description='chemotaxis paper experiments')
     parser.add_argument(
         'experiment_id',
         type=str,
-        default=None,
-        help='experiment number')
+        choices=list(experiments_library.keys()),
+        help='experiment id corresponds to figure number from chemotaxis paper')
     return parser.parse_args()
 
 def main():
@@ -316,8 +323,7 @@ def main():
     args = add_arguments()
 
     if args.experiment_id:
-        # get a preset experiment
-        # make a directory for this experiment
+        # retrieve preset experiment
         experiment_id = str(args.experiment_id)
         experiment_type = experiments_library[experiment_id]
 
@@ -326,12 +332,12 @@ def main():
             make_dir(control_out_dir)
             experiment_type(control_out_dir)
         elif isinstance(experiment_type, list):
-            for exp_id in experiment_type:
-                control_out_dir = os.path.join(out_dir, experiment_id, exp_id)
+            # iterate over list with multiple experiments
+            for sub_experiment_id in experiment_type:
+                control_out_dir = os.path.join(out_dir, sub_experiment_id)
                 make_dir(control_out_dir)
-                exp = experiments_library[exp_id]
+                exp = experiments_library[sub_experiment_id]
                 exp(control_out_dir)
-
     else:
         print('provide experiment number')
 
