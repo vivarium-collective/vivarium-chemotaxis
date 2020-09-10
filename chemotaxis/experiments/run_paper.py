@@ -37,11 +37,11 @@ from chemotaxis.processes.chemoreceptor_cluster import (
     test_receptor,
     get_pulse_timeline,
 )
-from chemotaxis.compartments.chemotaxis_flagella import (
+from chemotaxis.composites.chemotaxis_flagella import (
     test_variable_chemotaxis,
     get_chemotaxis_timeline,
 )
-from chemotaxis.compartments.flagella_expression import (
+from chemotaxis.composites.flagella_expression import (
     FlagellaExpressionMetabolism,
     get_flagella_expression_compartment,
 )
@@ -72,10 +72,14 @@ def BiGG_metabolism(out_dir='out'):
     # configure metabolism process iAF1260b BiGG model
     config = get_iAF1260b_config()
     metabolism = Metabolism(config)
+    external_concentrations = metabolism.initial_state['external']
 
-    # run simulation with helper function simulate_process_in_experiment
+    # run simulation with the helper function simulate_process_in_experiment
     sim_settings = {
-        'environment': {'volume': 1e-5 * units.L},
+        'environment': {
+            'volume': 1e-5 * units.L,
+                'concentrations': external_concentrations
+        },
         'total_time': 2500,
     }
     timeseries = simulate_process_in_experiment(metabolism, sim_settings)

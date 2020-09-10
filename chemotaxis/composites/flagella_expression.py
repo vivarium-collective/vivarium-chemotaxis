@@ -40,7 +40,7 @@ from cell.processes.division_volume import DivisionVolume
 from vivarium.processes.meta_division import MetaDivision
 from vivarium.processes.tree_mass import TreeMass
 
-# compartments
+# composites
 from cell.compartments.gene_expression import GeneExpression
 
 # plots

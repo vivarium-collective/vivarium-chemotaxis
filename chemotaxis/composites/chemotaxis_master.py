@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import os
 
+# core imports
 from vivarium.core.process import Generator
 from vivarium.core.composition import (
     simulate_compartment_in_experiment,
@@ -9,8 +10,6 @@ from vivarium.core.composition import (
     plot_compartment_topology,
     COMPARTMENT_OUT_DIR
 )
-from cell.compartments.gene_expression import plot_gene_expression_output
-from chemotaxis.compartments.flagella_expression import get_flagella_expression_config
 
 # processes
 from cell.processes.metabolism import (
@@ -30,8 +29,12 @@ from cell.processes.division_volume import DivisionVolume
 from chemotaxis.processes.chemoreceptor_cluster import ReceptorCluster
 from chemotaxis.processes.flagella_motor import FlagellaMotor
 
-# compartments
-from chemotaxis.compartments.flagella_expression import get_flagella_expression_config
+# composites
+from chemotaxis.composites.flagella_expression import get_flagella_expression_config
+
+# plots
+from cell.plots.gene_expression import plot_gene_expression_output
+
 
 NAME = 'chemotaxis_master'
 
@@ -39,11 +42,12 @@ NAME = 'chemotaxis_master'
 def get_metabolism_config(time_step=1):
     metabolism_config = get_iAF1260b_config()
     metabolism_config.update({
+        'time_step': time_step,
         'moma': False,
         'tolerance': {
             'EX_glc__D_e': [1.05, 1.0],
-            'EX_lcts_e': [1.05, 1.0]}},
-        {'time_step': time_step})
+            'EX_lcts_e': [1.05, 1.0]}
+        })
     return metabolism_config
 
 

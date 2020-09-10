@@ -2,11 +2,8 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import sys
-import copy
-import random
 import argparse
 
-from vivarium.library.dict_utils import deep_merge
 from vivarium.library.units import units
 from vivarium.core.process import Generator
 from vivarium.core.composition import (
@@ -15,9 +12,6 @@ from vivarium.core.composition import (
     plot_simulation_output,
     COMPARTMENT_OUT_DIR
 )
-
-# data
-from cell.data.amino_acids import amino_acids
 
 # processes
 from chemotaxis.processes.chemoreceptor_cluster import (
@@ -34,7 +28,7 @@ from cell.processes.growth_protein import GrowthProtein
 from cell.processes.derive_globals import DeriveGlobals
 from cell.processes.ode_expression import ODE_expression, get_flagella_expression
 from chemotaxis.processes.flagella_motor import FlagellaMotor
-from chemotaxis.compartments.flagella_expression import (
+from chemotaxis.composites.flagella_expression import (
     get_flagella_expression_config,
     get_flagella_initial_state,
     plot_gene_expression_output,
@@ -42,6 +36,7 @@ from chemotaxis.compartments.flagella_expression import (
 
 # plots
 from chemotaxis.plots.flagella_activity import plot_signal_transduction
+
 
 NAME = 'chemotaxis_flagella'
 
@@ -51,6 +46,10 @@ DEFAULT_INITIAL_LIGAND = 1e-2
 
 
 class ChemotaxisVariableFlagella(Generator):
+    """
+    A composite of the ReceptorCluster and FlagellaMotor processes
+    """
+
     n_flagella = 5
     time_step = 0.01
     defaults = {
@@ -93,6 +92,14 @@ class ChemotaxisVariableFlagella(Generator):
 
 
 class ChemotaxisODEExpressionFlagella(Generator):
+    """
+    A composite of the ReceptorCluster, FlagellaMotor, ODE_expression,
+    and GrowthProtein processes.
+
+    ODE_expression is configured to express flagella, which sets the number
+    of flagella in FlagellaMotor.
+    """
+
     ligand_id = 'MeAsp'
     initial_ligand = DEFAULT_INITIAL_LIGAND
     n_flagella = 5
@@ -178,6 +185,15 @@ class ChemotaxisODEExpressionFlagella(Generator):
 
 
 class ChemotaxisExpressionFlagella(Generator):
+    """
+    A composite of the ReceptorCluster, FlagellaMotor, GrowthProtein
+    and stochastic gene expression processes: Translation, Transcription,
+    Complexation, and Degradation.
+
+    The gene expression processes express flagella based on sequence and
+    transcription unit data.
+    """
+
     ligand_id = 'MeAsp'
     initial_ligand = 0.1
     n_flagella = 5

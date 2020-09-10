@@ -25,11 +25,11 @@ from vivarium.core.composition import (
     EXPERIMENT_OUT_DIR,
 )
 
-# compartments
+# composites
 from cell.compartments.static_lattice import StaticLattice
-from chemotaxis.compartments.chemotaxis_minimal import ChemotaxisMinimal
-from chemotaxis.compartments.chemotaxis_master import ChemotaxisMaster
-from chemotaxis.compartments.chemotaxis_flagella import (
+from chemotaxis.composites.chemotaxis_minimal import ChemotaxisMinimal
+from chemotaxis.composites.chemotaxis_master import ChemotaxisMaster
+from chemotaxis.composites.chemotaxis_flagella import (
     ChemotaxisVariableFlagella,
     ChemotaxisExpressionFlagella,
     ChemotaxisODEExpressionFlagella,

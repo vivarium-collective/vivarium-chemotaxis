@@ -50,20 +50,24 @@ class MotorActivity(Process):
     name = NAME
     defaults = {
         'time_step': 0.1,
-        # Vladimirov parameters
+
+        #  CheY phosphorylation parameters
         # 'k_A': 5.0,  #
         'k_y': 100.0,  # 1/uM/s
         'k_z': 30.0,  # / CheZ,
         'gamma_Y': 0.1,  # rate constant
         'k_s': 0.45,  # scaling coefficient
         'adapt_precision': 3,  # scales CheY_P to cluster activity
+
         # motor
         'mb_0': 0.65,  # steady state motor bias (Cluzel et al 2000)
         'n_motors': 5,
         'cw_to_ccw': 0.83,  # 1/s (Block1983) motor bias, assumed to be constant
         'cw_to_ccw_leak': 0.25,  # rate of spontaneous transition to tumble
+
         # parameters for multibody physics
         'tumble_jitter': 120.0,
+
         # initial state
         'initial_state': {
             'internal': {
