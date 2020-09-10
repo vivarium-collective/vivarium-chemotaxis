@@ -8,7 +8,7 @@ from vivarium.core.composition import set_axes, plot_simulation_output
 from vivarium.library.dict_utils import get_value_from_path
 
 
-def plot_diauxic_shift(timeseries, settings={}, out_dir='out'):
+def plot_glc_lcts_environment(timeseries, settings={}, out_dir='out'):
     external_path = settings.get('external_path', ('environment',))
     internal_path = settings.get('internal_path', ('cytoplasm',))
     internal_counts_path = settings.get('internal_counts_path', ('cytoplasm_counts',))
@@ -83,32 +83,26 @@ def plot_diauxic_shift(timeseries, settings={}, out_dir='out'):
     ax4.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
 
     # save figure
-    fig_path = os.path.join(out_dir, 'diauxic_shift')
+    fig_path = os.path.join(out_dir, 'glc_lcts_environment')
     plt.subplots_adjust(wspace=0.6, hspace=0.5)
     plt.savefig(fig_path, bbox_inches='tight')
 
 
 def analyze_transport_metabolism(timeseries, config={}, out_dir='out'):
-    environment_volume = config.get('environment_volume', 1e-14)
-
-    # calculate growth
-    volume_ts = timeseries['boundary']['volume']
-    print('growth: {}'.format(volume_ts[-1] / volume_ts[1]))
+    environment_volume = config.get('environment_volume', None)
 
     # simulation plot
     plot_settings = {
         'max_rows': 30,
         'remove_flat': True,
         'remove_zeros': True,
-        'skip_ports': ['null', 'reactions'],
-    }
+        'skip_ports': ['null', 'reactions']}
     plot_simulation_output(timeseries, plot_settings, out_dir)
 
-    # diauxic plot
+    # glucose-lactose plot
     settings = {
         'internal_path': ('cytoplasm',),
         'external_path': ('boundary', 'external'),
         'global_path': ('boundary',),
-        'environment_volume': environment_volume,  # L
-    }
-    plot_diauxic_shift(timeseries, settings, out_dir)
+        'environment_volume': environment_volume}
+    plot_glc_lcts_environment(timeseries, settings, out_dir)

@@ -1,13 +1,16 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import argparse
 
-from vivarium.library.dict_utils import (
-    deep_merge
-)
 from vivarium.library.units import units
 from vivarium.core.process import Generator
-from vivarium.core.composition import simulate_compartment_in_experiment
+from vivarium.core.composition import (
+    simulate_compartment_in_experiment,
+    save_timeseries,
+    load_timeseries,
+    assert_timeseries_close,
+)
 
 # processes
 from vivarium.processes.meta_division import MetaDivision
@@ -16,14 +19,15 @@ from chemotaxis.plots.transport_metabolism import analyze_transport_metabolism
 from cell.processes.division_volume import DivisionVolume
 from cell.processes.metabolism import (
     Metabolism,
-    get_iAF1260b_config)
+    get_iAF1260b_config,
+    get_minimal_media_BiGG)
 from cell.processes.convenience_kinetics import ConvenienceKinetics
 from cell.processes.ode_expression import (
     ODE_expression,
     get_lacy_config)
 
 # directories
-from chemotaxis import COMPOSITE_OUT_DIR
+from chemotaxis import COMPOSITE_OUT_DIR, REFERENCE_DATA_DIR
 
 
 NAME = 'transport_metabolism'
@@ -57,7 +61,7 @@ def default_expression_config():
         ('external', 'glc__D_e'),
         ('internal', 'lcts_p')]
     regulation = {
-        'lacy_RNA': 'if (external, glc__D_e) > 0.005 and (internal, lcts_p) < 0.05'}  # inhibited in this condition
+        'lacy_RNA': 'if (external, glc__D_e) > 0.01 and (internal, lcts_p) < 0.05'}  # inhibited in this condition
     transcription_leak = {
         'rate': 7e-5,  #5e-5,
         'magnitude': 1e-6}
@@ -65,8 +69,7 @@ def default_expression_config():
         'time_step': TIMESTEP,
         'regulators': regulators,
         'regulation': regulation,
-        'transcription_leak': transcription_leak,
-    }
+        'transcription_leak': transcription_leak}
     config.update(reg_config)
     return config
 
@@ -102,24 +105,24 @@ def default_transport_config():
     transport_kinetics = {
         'EX_glc__D_e': {
             ('internal', 'EIIglc'): {
-                ('external', 'glc__D_e'): 1e0,  # k_m for external [glc__D_e]
-                ('internal', 'pep_c'): None,  # Set k_m = None to make a reactant non-limiting
-                'kcat_f': 6e1,  # kcat for the forward direction
+                ('external', 'glc__D_e'): 1e-1,  # k_m for external [glc__D_e]
+                ('internal', 'pep_c'): None,  # k_m = None makes a reactant non-limiting
+                'kcat_f': 1e2,
             }
         },
         'EX_lcts_e': {
             ('internal', 'LacY'): {
-                ('external', 'lcts_e'): 1e0,
-                'kcat_f': 6e1,
+                ('external', 'lcts_e'): 1e-1,
+                'kcat_f': 1e2,
             }
         }
     }
 
     transport_initial_state = {
         'internal': {
-            'EIIglc': 1.8e-3,  # (mmol/L)
+            'EIIglc': 1.0e-3,  # (mmol/L)
             'g6p_c': 0.0,
-            'pep_c': 1.8e-1,
+            'pep_c': 1.0e-1,
             'pyr_c': 0.0,
             'LacY': 0,
             'lcts_p': 0.0,
@@ -140,27 +143,6 @@ def default_transport_config():
         'kinetic_parameters': transport_kinetics,
         'initial_state': transport_initial_state,
         'ports': transport_ports}
-
-
-# def make_transport_config():
-#     config = default_transport_config()
-#     txp_config = {
-#         'time_step': TIMESTEP,
-#         'kinetic_parameters': {
-#             'EX_glc__D_e': {
-#                 ('internal', 'EIIglc'): {
-#                     ('external', 'glc__D_e'): 2e-1,  # k_m for external [glc__D_e]
-#                 }
-#             },
-#             'EX_lcts_e': {
-#                 ('internal', 'LacY'): {
-#                     ('external', 'lcts_e'): 1e-1,
-#                 }
-#             }
-#         }
-#     }
-#     deep_merge(config, txp_config)
-#     return config
 
 
 def get_metabolism_initial_external_state(
@@ -292,21 +274,32 @@ class TransportMetabolismExpression(Generator):
 
 
 # simulate
-def test_txp_mtb_ge():
+def test_txp_mtb_ge(out_dir='out'):
     timeseries = run_txp_mtb_ge(
         env_volume=1e-12,
-        total_time=10)
-
-    # TODO -- compare to reference data
+        total_time=10
+    )
+    save_timeseries(timeseries, out_dir)
+    reference = load_timeseries(
+        os.path.join(REFERENCE_DATA_DIR, NAME + '.csv'))
+    assert_timeseries_close(timeseries, reference)
 
 
 def run_txp_mtb_ge(
     env_volume=1e-12,
     total_time=10,
+    minimal_media=get_minimal_media_BiGG()
 ):
+    # make the compartment
+    compartment = TransportMetabolismExpression({
+        'agent_id': '0',
+        'divide': False})
+
+    # configure simulation
     default_test_setting = {
         'environment': {
             'volume': env_volume * units.L,
+            'concentrations': minimal_media,
             'ports': {
                 'fields': ('fields',),
                 'external': ('boundary', 'external'),
@@ -315,8 +308,7 @@ def run_txp_mtb_ge(
             }},
         'total_time': total_time}
 
-    agent_id = '0'
-    compartment = TransportMetabolismExpression({'agent_id': agent_id})
+    # run simulation
     return simulate_compartment_in_experiment(compartment, default_test_setting)
 
 
@@ -325,13 +317,34 @@ if __name__ == '__main__':
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
+    parser = argparse.ArgumentParser(description='transport metabolism')
+    parser.add_argument('--shift', '-s', action='store_true', default=False)
+    args = parser.parse_args()
+
+    if args.shift:
+        out_dir = os.path.join(out_dir, 'shift')
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        minimal_media = get_metabolism_initial_external_state(
+            scale_concentration=100,
+            override={'glc__D_e': 1.0, 'lcts_e': 1.0})
+        environment_volume = 1e-13
+    else:
+        minimal_media = get_minimal_media_BiGG()
+        environment_volume = 1e-6
+
     # simulate
-    total_time = 200
-    environment_volume = 1e-12
+    total_time = 2520
     timeseries = run_txp_mtb_ge(
         env_volume=environment_volume,
         total_time=total_time,
-    )
+        minimal_media=minimal_media)
+
+    # print resulting growth
+    volume_ts = timeseries['boundary']['volume']
+    mass_ts = timeseries['boundary']['mass']
+    print('volume growth: {}'.format(volume_ts[-1] / volume_ts[1]))
+    print('mass growth: {}'.format(mass_ts[-1] / mass_ts[1]))
 
     # plot
     config ={

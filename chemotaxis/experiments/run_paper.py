@@ -85,10 +85,8 @@ def BiGG_metabolism(out_dir='out'):
     sim_settings = {
         'environment': {
             'volume': 1e-5 * units.L,
-            'concentrations': external_concentrations
-        },
-        'total_time': 2500,
-    }
+            'concentrations': external_concentrations},
+        'total_time': 2500}
     timeseries = simulate_process_in_experiment(metabolism, sim_settings)
 
     # plot
@@ -101,15 +99,14 @@ def transport_metabolism(out_dir='out'):
     environment_volume = 1e-13 * units.L
     initial_concentrations = {
         'glc__D_e': 1.0,
-        'lcts_e': 1.0
-    }
+        'lcts_e': 1.0}
 
     # make the compartment
     compartment = TransportMetabolismExpression({
         'agent_id': '0',
         'divide': False})
 
-    # get external state, adjusting default minimal concentrations
+    # get external state with adjusted minimal concentrations
     external_state = get_metabolism_initial_external_state(
         scale_concentration=100,
         override=initial_concentrations)
@@ -124,9 +121,7 @@ def transport_metabolism(out_dir='out'):
                 'fields': ('fields',),
                 'external': ('boundary', 'external'),
                 'dimensions': ('dimensions',),
-                'global': ('boundary',),
-            }
-        },
+                'global': ('boundary',)}},
         'total_time': total_time}
 
     # run simulation
@@ -141,6 +136,9 @@ def transport_metabolism(out_dir='out'):
 
 # figure 5c
 def transport_metabolism_environment(out_dir='out'):
+
+
+    import ipdb; ipdb.set_trace()
     pass
 
 

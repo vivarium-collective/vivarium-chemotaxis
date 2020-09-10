@@ -25,7 +25,6 @@ from cell.data.nucleotides import nucleotides
 from cell.data.amino_acids import amino_acids
 from cell.plots.gene_expression import plot_timeseries_heatmaps
 from chemotaxis.data.chromosomes.flagella_chromosome import FlagellaChromosome
-from chemotaxis.data import REFERENCE_DATA_DIR
 
 # processes
 from cell.processes.transcription import Transcription, UNBOUND_RNAP_KEY
@@ -46,7 +45,7 @@ from chemotaxis.composites.transport_metabolism import default_transport_config
 from cell.plots.gene_expression import plot_gene_expression_output
 
 # directories
-from chemotaxis import COMPOSITE_OUT_DIR
+from chemotaxis import COMPOSITE_OUT_DIR, REFERENCE_DATA_DIR
 
 
 NAME = 'flagella_gene_expression'
