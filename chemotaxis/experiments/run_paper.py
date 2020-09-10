@@ -46,8 +46,8 @@ from chemotaxis.composites.flagella_expression import (
     get_flagella_expression_compartment,
 )
 from chemotaxis.composites.transport_metabolism import (
-    TransportMetabolism,
-    get_metabolism_initial_state,
+    TransportMetabolismExpression,
+    get_metabolism_initial_external_state,
 )
 
 from chemotaxis.plots.chemotaxis_experiments import plot_chemotaxis_experiment
@@ -77,13 +77,15 @@ def BiGG_metabolism(out_dir='out'):
     # configure metabolism process iAF1260b BiGG model
     config = get_iAF1260b_config()
     metabolism = Metabolism(config)
+
+    # get default minimal external concentrations
     external_concentrations = metabolism.initial_state['external']
 
     # run simulation with the helper function simulate_process_in_experiment
     sim_settings = {
         'environment': {
             'volume': 1e-5 * units.L,
-                'concentrations': external_concentrations
+            'concentrations': external_concentrations
         },
         'total_time': 2500,
     }
@@ -95,40 +97,39 @@ def BiGG_metabolism(out_dir='out'):
 
 # figure 5b
 def transport_metabolism(out_dir='out'):
-    total_time = 200
-    environment_volume = 1e-14 * units.L
-
-    # make timeline
-    initial_state = get_metabolism_initial_state()
-    initial_state = {
-        ('external', mol_id): conc
-        for mol_id, conc in initial_state.items()}
-    timeline = [
-        (0, initial_state),
-        (total_time, {})]
+    total_time = 3000
+    environment_volume = 1e-13 * units.L
+    initial_concentrations = {
+        'glc__D_e': 1.0,
+        'lcts_e': 1.0
+    }
 
     # make the compartment
-    agent_id = '0'
-    compartment = TransportMetabolism({
-        'agent_id': agent_id,
+    compartment = TransportMetabolismExpression({
+        'agent_id': '0',
         'divide': False})
 
-    # run simulation
+    # get external state, adjusting default minimal concentrations
+    external_state = get_metabolism_initial_external_state(
+        scale_concentration=100,
+        override=initial_concentrations)
+
+    # configure non-spatial environment
+    # TransportMetabolismExpression redirects external through boundary port
     sim_settings = {
-        # 'initial_state': initial_state,
         'environment': {
             'volume': environment_volume,
+            'concentrations': external_state,
             'ports': {
                 'fields': ('fields',),
                 'external': ('boundary', 'external'),
                 'dimensions': ('dimensions',),
                 'global': ('boundary',),
-            }},
-        'timeline': {
-            'timeline': timeline,
-            'ports': {
-                'external': ('boundary', 'external'),
-                'global': ('boundary',)}}}
+            }
+        },
+        'total_time': total_time}
+
+    # run simulation
     timeseries = simulate_compartment_in_experiment(compartment, sim_settings)
 
     # plot

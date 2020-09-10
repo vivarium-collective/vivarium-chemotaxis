@@ -17,9 +17,7 @@ from cell.processes.division_volume import DivisionVolume
 from cell.processes.metabolism import (
     Metabolism,
     get_iAF1260b_config)
-from cell.processes.convenience_kinetics import (
-    ConvenienceKinetics,
-    get_glc_lct_config)
+from cell.processes.convenience_kinetics import ConvenienceKinetics
 from cell.processes.ode_expression import (
     ODE_expression,
     get_lacy_config)
@@ -29,7 +27,7 @@ from chemotaxis import COMPOSITE_OUT_DIR
 
 
 NAME = 'transport_metabolism'
-TIMESTEP = 5
+TIMESTEP = 10
 
 
 def default_metabolism_config():
@@ -80,28 +78,92 @@ def default_transport_config():
     to a single uptake kinetic with ``glc__D_e_external`` as the only
     cofactor.
     """
-
-    config = get_glc_lct_config()
-    txp_config = {
-        'time_step': TIMESTEP,
-        'kinetic_parameters': {
-            'EX_glc__D_e': {
-                ('internal', 'EIIglc'): {
-                    ('external', 'glc__D_e'): 2e-1,  # k_m for external [glc__D_e]
-                }
+    transport_reactions = {
+        'EX_glc__D_e': {
+            'stoichiometry': {
+                ('internal', 'g6p_c'): 1.0,
+                ('external', 'glc__D_e'): -1.0,
+                ('internal', 'pep_c'): -1.0,
+                ('internal', 'pyr_c'): 1.0,
             },
-            'EX_lcts_e': {
-                ('internal', 'LacY'): {
-                    ('external', 'lcts_e'): 1e-1,
-                }
+            'is reversible': False,
+            'catalyzed by': [('internal', 'EIIglc')]
+        },
+        'EX_lcts_e': {
+            'stoichiometry': {
+                ('external', 'lcts_e'): -1.0,
+                ('internal', 'lcts_p'): 1.0,
+            },
+            'is reversible': False,
+            'catalyzed by': [('internal', 'LacY')]
+        }
+    }
+
+    transport_kinetics = {
+        'EX_glc__D_e': {
+            ('internal', 'EIIglc'): {
+                ('external', 'glc__D_e'): 1e0,  # k_m for external [glc__D_e]
+                ('internal', 'pep_c'): None,  # Set k_m = None to make a reactant non-limiting
+                'kcat_f': 6e1,  # kcat for the forward direction
+            }
+        },
+        'EX_lcts_e': {
+            ('internal', 'LacY'): {
+                ('external', 'lcts_e'): 1e0,
+                'kcat_f': 6e1,
             }
         }
     }
-    deep_merge(config, txp_config)
-    return config
+
+    transport_initial_state = {
+        'internal': {
+            'EIIglc': 1.8e-3,  # (mmol/L)
+            'g6p_c': 0.0,
+            'pep_c': 1.8e-1,
+            'pyr_c': 0.0,
+            'LacY': 0,
+            'lcts_p': 0.0,
+        },
+        'external': {
+            'glc__D_e': 10.0,
+            'lcts_e': 10.0,
+        },
+    }
+
+    transport_ports = {
+        'internal': ['g6p_c', 'pep_c', 'pyr_c', 'EIIglc', 'LacY', 'lcts_p'],
+        'external': ['glc__D_e', 'lcts_e']
+    }
+
+    return {
+        'reactions': transport_reactions,
+        'kinetic_parameters': transport_kinetics,
+        'initial_state': transport_initial_state,
+        'ports': transport_ports}
 
 
-def get_metabolism_initial_state(
+# def make_transport_config():
+#     config = default_transport_config()
+#     txp_config = {
+#         'time_step': TIMESTEP,
+#         'kinetic_parameters': {
+#             'EX_glc__D_e': {
+#                 ('internal', 'EIIglc'): {
+#                     ('external', 'glc__D_e'): 2e-1,  # k_m for external [glc__D_e]
+#                 }
+#             },
+#             'EX_lcts_e': {
+#                 ('internal', 'LacY'): {
+#                     ('external', 'lcts_e'): 1e-1,
+#                 }
+#             }
+#         }
+#     }
+#     deep_merge(config, txp_config)
+#     return config
+
+
+def get_metabolism_initial_external_state(
     scale_concentration=1,
     override={}
 ):
@@ -117,9 +179,11 @@ def get_metabolism_initial_state(
     return molecules
 
 
-class TransportMetabolism(Generator):
-    """
-    Transport/Metabolism Compartment, with ODE expression
+class TransportMetabolismExpression(Generator):
+    """ Transport/Metabolism/Expression composite
+
+    Metabolism is an FBA BiGG model, transport is a kinetic model with
+    convenience kinetics, gene expression is an ODE model
     """
     name = NAME
     defaults = {
@@ -136,7 +200,7 @@ class TransportMetabolism(Generator):
     }
 
     def __init__(self, config=None):
-        super(TransportMetabolism, self).__init__(config)
+        super(TransportMetabolismExpression, self).__init__(config)
 
     def generate_processes(self, config):
         daughter_path = config['daughter_path']
@@ -228,7 +292,15 @@ class TransportMetabolism(Generator):
 
 
 # simulate
-def test_txp_mtb_ge(
+def test_txp_mtb_ge():
+    timeseries = run_txp_mtb_ge(
+        env_volume=1e-12,
+        total_time=10)
+
+    # TODO -- compare to reference data
+
+
+def run_txp_mtb_ge(
     env_volume=1e-12,
     total_time=10,
 ):
@@ -241,11 +313,10 @@ def test_txp_mtb_ge(
                 'dimensions': ('dimensions',),
                 'global': ('boundary',),
             }},
-        'timestep': 1,
         'total_time': total_time}
 
     agent_id = '0'
-    compartment = TransportMetabolism({'agent_id': agent_id})
+    compartment = TransportMetabolismExpression({'agent_id': agent_id})
     return simulate_compartment_in_experiment(compartment, default_test_setting)
 
 
@@ -254,9 +325,10 @@ if __name__ == '__main__':
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
+    # simulate
     total_time = 200
     environment_volume = 1e-12
-    timeseries = test_txp_mtb_ge(
+    timeseries = run_txp_mtb_ge(
         env_volume=environment_volume,
         total_time=total_time,
     )

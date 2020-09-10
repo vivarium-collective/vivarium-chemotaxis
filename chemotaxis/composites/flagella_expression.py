@@ -32,7 +32,7 @@ from cell.processes.transcription import Transcription, UNBOUND_RNAP_KEY
 from cell.processes.translation import Translation, UNBOUND_RIBOSOME_KEY
 from cell.processes.degradation import RnaDegradation
 from cell.processes.complexation import Complexation
-from cell.processes.convenience_kinetics import ConvenienceKinetics, get_glc_lct_config
+from cell.processes.convenience_kinetics import ConvenienceKinetics
 from cell.processes.metabolism import Metabolism, get_iAF1260b_config
 from cell.processes.division_volume import DivisionVolume
 from vivarium.processes.meta_division import MetaDivision
@@ -40,6 +40,7 @@ from vivarium.processes.tree_mass import TreeMass
 
 # composites
 from cell.composites.gene_expression import GeneExpression
+from chemotaxis.composites.transport_metabolism import default_transport_config
 
 # plots
 from cell.plots.gene_expression import plot_gene_expression_output
@@ -206,7 +207,7 @@ class FlagellaExpressionMetabolism(Generator):
         'dimensions_path': ('dimensions',),
         'agents_path': ('agents',),
         'daughter_path': tuple(),
-        'transport': get_glc_lct_config(),
+        'transport': default_transport_config(),
         'metabolism': default_metabolism_config(),
         'initial_mass': 0.0 * units.fg,
         'time_step': COMPARTMENT_TIMESTEP,

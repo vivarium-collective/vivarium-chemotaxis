@@ -15,10 +15,7 @@ from cell.processes.metabolism import (
     Metabolism,
     get_iAF1260b_config
 )
-from cell.processes.convenience_kinetics import (
-    ConvenienceKinetics,
-    get_glc_lct_config
-)
+from cell.processes.convenience_kinetics import ConvenienceKinetics
 from cell.processes.transcription import Transcription
 from cell.processes.translation import Translation
 from cell.processes.degradation import RnaDegradation
@@ -30,6 +27,7 @@ from chemotaxis.processes.flagella_motor import FlagellaMotor
 
 # composites
 from chemotaxis.composites.flagella_expression import get_flagella_expression_config
+from chemotaxis.composites.transport_metabolism import default_transport_config
 
 # plots
 from cell.plots.gene_expression import plot_gene_expression_output
@@ -59,7 +57,7 @@ class ChemotaxisMaster(Generator):
         'dimensions_path': ('dimensions',),
         'fields_path': ('fields',),
         'boundary_path': ('boundary',),
-        'transport': get_glc_lct_config(),
+        'transport': default_transport_config(),
         'metabolism': get_metabolism_config(10),
         'transcription': get_flagella_expression_config({})['transcription'],
         'translation': get_flagella_expression_config({})['translation'],
