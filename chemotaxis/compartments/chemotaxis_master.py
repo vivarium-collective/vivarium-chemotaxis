@@ -25,22 +25,27 @@ from cell.processes.transcription import Transcription
 from cell.processes.translation import Translation
 from cell.processes.degradation import RnaDegradation
 from cell.processes.complexation import Complexation
+from cell.processes.membrane_potential import MembranePotential
 from cell.processes.division_volume import DivisionVolume
 from chemotaxis.processes.chemoreceptor_cluster import ReceptorCluster
 from chemotaxis.processes.flagella_motor import FlagellaMotor
-from chemotaxis.processes.membrane_potential import MembranePotential
 
 # compartments
-from cell.compartments.master import default_metabolism_config
 from chemotaxis.compartments.flagella_expression import get_flagella_expression_config
 
 NAME = 'chemotaxis_master'
 
 
-def metabolism_timestep_config(time_step=1):
-    config = default_metabolism_config()
-    config.update({'time_step': time_step})
-    return config
+def get_metabolism_config(time_step=1):
+    metabolism_config = get_iAF1260b_config()
+    metabolism_config.update({
+        'moma': False,
+        'tolerance': {
+            'EX_glc__D_e': [1.05, 1.0],
+            'EX_lcts_e': [1.05, 1.0]}},
+        {'time_step': time_step})
+    return metabolism_config
+
 
 class ChemotaxisMaster(Generator):
 
@@ -49,7 +54,7 @@ class ChemotaxisMaster(Generator):
         'fields_path': ('fields',),
         'boundary_path': ('boundary',),
         'transport': get_glc_lct_config(),
-        'metabolism': metabolism_timestep_config(10),
+        'metabolism': get_metabolism_config(10),
         'transcription': get_flagella_expression_config({})['transcription'],
         'translation': get_flagella_expression_config({})['translation'],
         'degradation': get_flagella_expression_config({})['degradation'],
