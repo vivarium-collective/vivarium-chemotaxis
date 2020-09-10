@@ -8,7 +8,6 @@ from vivarium.core.composition import (
     simulate_compartment_in_experiment,
     plot_simulation_output,
     plot_compartment_topology,
-    COMPARTMENT_OUT_DIR
 )
 
 # processes
@@ -34,6 +33,9 @@ from chemotaxis.composites.flagella_expression import get_flagella_expression_co
 
 # plots
 from cell.plots.gene_expression import plot_gene_expression_output
+
+# directories
+from chemotaxis import COMPOSITE_OUT_DIR
 
 
 NAME = 'chemotaxis_master'
@@ -235,7 +237,7 @@ def test_chemotaxis_master(total_time=5):
 
 
 if __name__ == '__main__':
-    out_dir = os.path.join(COMPARTMENT_OUT_DIR, NAME)
+    out_dir = os.path.join(COMPOSITE_OUT_DIR, NAME)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 

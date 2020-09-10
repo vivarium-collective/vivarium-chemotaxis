@@ -4,14 +4,17 @@ import os
 import math
 import random
 
-from vivarium.core.composition import (
-    simulate_process_in_experiment,
-    PROCESS_OUT_DIR
-)
+# vivarium-core imports
+from vivarium.core.composition import simulate_process_in_experiment
 from vivarium.core.process import Process
 from vivarium.library.units import units
 
+# plots
 from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
+
+# directories
+from chemotaxis import PROCESS_OUT_DIR
+
 
 NAME = 'chemoreceptor_cluster'
 

@@ -1,13 +1,11 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import random
 
 from vivarium.core.process import Generator
 from vivarium.core.composition import (
     simulate_compartment_in_experiment,
     plot_simulation_output,
-    COMPARTMENT_OUT_DIR
 )
 
 # processes
@@ -17,6 +15,8 @@ from chemotaxis.processes.chemoreceptor_cluster import (
 )
 from chemotaxis.processes.coarse_motor import MotorActivity
 
+# directories
+from chemotaxis import COMPOSITE_OUT_DIR
 
 
 NAME = 'chemotaxis_minimal'
@@ -76,7 +76,7 @@ def get_chemotaxis_config(config={}):
 
 
 if __name__ == '__main__':
-    out_dir = os.path.join(COMPARTMENT_OUT_DIR, NAME)
+    out_dir = os.path.join(COMPOSITE_OUT_DIR, NAME)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 

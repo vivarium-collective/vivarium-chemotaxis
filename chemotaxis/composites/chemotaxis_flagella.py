@@ -10,7 +10,6 @@ from vivarium.core.composition import (
     plot_compartment_topology,
     simulate_compartment_in_experiment,
     plot_simulation_output,
-    COMPARTMENT_OUT_DIR
 )
 
 # processes
@@ -36,6 +35,9 @@ from chemotaxis.composites.flagella_expression import (
 
 # plots
 from chemotaxis.plots.flagella_activity import plot_signal_transduction
+
+# directories
+from chemotaxis import COMPOSITE_OUT_DIR
 
 
 NAME = 'chemotaxis_flagella'
@@ -477,7 +479,7 @@ def make_dir(out_dir):
 
 
 if __name__ == '__main__':
-    out_dir = os.path.join(COMPARTMENT_OUT_DIR, NAME)
+    out_dir = os.path.join(COMPOSITE_OUT_DIR, NAME)
     make_dir(out_dir)
 
     parser = argparse.ArgumentParser(description='variable flagella')

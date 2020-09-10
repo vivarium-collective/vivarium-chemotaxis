@@ -1,6 +1,6 @@
 '''
 ==========================
-Vladimirov Motor Processes
+Coarse Motor Processes
 ==========================
 '''
 
@@ -8,24 +8,27 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import random
-import copy
 import math
 
 import numpy as np
 from numpy import linspace
-import matplotlib.pyplot as plt
 
+# vivarium-core imports
 from vivarium.core.process import Process
-from vivarium.core.composition import (
-    simulate_process_in_experiment,
-    PROCESS_OUT_DIR,
-)
+from vivarium.core.composition import simulate_process_in_experiment
+
+# plots
 from chemotaxis.plots.coarse_motor import (
     plot_variable_receptor,
     plot_motor_control,
 )
 
+# directories
+from chemotaxis import PROCESS_OUT_DIR
+
+
 NAME = 'coarse_motor'
+
 
 class MotorActivity(Process):
     ''' Model of motor activity

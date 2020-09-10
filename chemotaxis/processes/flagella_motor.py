@@ -16,12 +16,14 @@ from vivarium.core.process import Process
 from vivarium.core.composition import (
     simulate_process_in_experiment,
     plot_simulation_output,
-    PROCESS_OUT_DIR,
 )
 from vivarium.core.emitter import timeseries_from_data
 
 # plots
 from chemotaxis.plots.flagella_activity import plot_activity
+
+# directories
+from chemotaxis import PROCESS_OUT_DIR
 
 
 NAME = 'flagella_motor'

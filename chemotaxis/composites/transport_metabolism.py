@@ -7,9 +7,7 @@ from vivarium.library.dict_utils import (
 )
 from vivarium.library.units import units
 from vivarium.core.process import Generator
-from vivarium.core.composition import (
-    simulate_compartment_in_experiment,
-    COMPARTMENT_OUT_DIR)
+from vivarium.core.composition import simulate_compartment_in_experiment
 
 # processes
 from vivarium.processes.meta_division import MetaDivision
@@ -25,6 +23,9 @@ from cell.processes.convenience_kinetics import (
 from cell.processes.ode_expression import (
     ODE_expression,
     get_lacy_config)
+
+# directories
+from chemotaxis import COMPOSITE_OUT_DIR
 
 
 NAME = 'transport_metabolism'
@@ -46,7 +47,11 @@ def default_metabolism_config():
 
 
 def default_expression_config():
-    # glc lct config from ode_expression
+    """
+    :py:class:`ODE_expression` configuration for expression of glucose
+    and lactose transporters
+    """
+
     config = get_lacy_config()
 
     # redo regulation with BiGG id for glucose
@@ -69,6 +74,13 @@ def default_expression_config():
 
 
 def default_transport_config():
+    """
+    :py:class:`ConvenienceKinetics` configuration for simplified glucose
+    and lactose transport.Glucose uptake simplifies the PTS/GalP system
+    to a single uptake kinetic with ``glc__D_e_external`` as the only
+    cofactor.
+    """
+
     config = get_glc_lct_config()
     txp_config = {
         'time_step': TIMESTEP,
@@ -153,7 +165,6 @@ class TransportMetabolism(Generator):
 
         return processes
 
-
     def generate_topology(self, config):
         boundary_path = config['boundary_path']
         agents_path = config['agents_path']
@@ -218,6 +229,7 @@ def test_txp_mtb_ge():
     compartment = TransportMetabolism({'agent_id': agent_id})
     return simulate_compartment_in_experiment(compartment, default_test_setting)
 
+
 def get_metabolism_initial_state(
     scale_concentration=1,
     override={}
@@ -232,6 +244,7 @@ def get_metabolism_initial_state(
     for mol_id, conc in override.items():
         molecules[mol_id] = conc
     return molecules
+
 
 def simulate_transport_metabolism(config={}):
     end_time = config.get('end_time', 2520)  # 2520 sec (42 min) is the expected doubling time in minimal media
@@ -276,7 +289,7 @@ def simulate_transport_metabolism(config={}):
 
 
 if __name__ == '__main__':
-    out_dir = os.path.join(COMPARTMENT_OUT_DIR, NAME)
+    out_dir = os.path.join(COMPOSITE_OUT_DIR, NAME)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 

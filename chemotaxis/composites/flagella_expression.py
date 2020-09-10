@@ -16,7 +16,6 @@ from vivarium.core.composition import (
     save_flat_timeseries,
     load_timeseries,
     assert_timeseries_close,
-    COMPARTMENT_OUT_DIR,
 )
 from vivarium.core.emitter import path_timeseries_from_embedded_timeseries
 from vivarium.library.units import units
@@ -44,6 +43,9 @@ from cell.composites.gene_expression import GeneExpression
 
 # plots
 from cell.plots.gene_expression import plot_gene_expression_output
+
+# directories
+from chemotaxis import COMPOSITE_OUT_DIR
 
 
 NAME = 'flagella_gene_expression'
@@ -433,7 +435,7 @@ def test_flagella_metabolism(seed=1):
     path_timeseries = path_timeseries_from_embedded_timeseries(timeseries)
 
     # # save reference timeseries
-    # out_dir = os.path.join(COMPARTMENT_OUT_DIR, name)
+    # out_dir = os.path.join(COMPOSITE_OUT_DIR, name)
     # if not os.path.exists(out_dir):
     #     os.makedirs(out_dir)
     # save_flat_timeseries(path_timeseries, out_dir)
@@ -477,7 +479,7 @@ def test_flagella_expression():
 
 
 if __name__ == '__main__':
-    out_dir = os.path.join(COMPARTMENT_OUT_DIR, NAME)
+    out_dir = os.path.join(COMPOSITE_OUT_DIR, NAME)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
