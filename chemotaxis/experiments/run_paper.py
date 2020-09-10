@@ -193,7 +193,7 @@ def flagella_just_in_time(out_dir='out'):
 # figure 6c
 def run_flagella_metabolism_experiment(out_dir='out'):
 
-    total_time = 4000
+    total_time = 6000
     emit_step = 10
     process_time_step = 10
     bounds = [17, 17]
@@ -215,7 +215,9 @@ def run_flagella_metabolism_experiment(out_dir='out'):
         'config': get_iAF1260b_environment(
             time_step=process_time_step,
             bounds=bounds,
-            scale_concentration=20,
+            depth=6000.0,
+            diffusion=1e-2,
+            scale_concentration=5,
             keep_fields_emit=emit_fields)}
     initial_agent_state = make_flagella_expression_initial_state()
 
