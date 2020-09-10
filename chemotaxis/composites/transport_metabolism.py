@@ -101,6 +101,22 @@ def default_transport_config():
     return config
 
 
+def get_metabolism_initial_state(
+    scale_concentration=1,
+    override={}
+):
+    # get external state from iAF1260b metabolism
+    config = get_iAF1260b_config()
+    metabolism = Metabolism(config)
+    molecules = {
+        mol_id: conc * scale_concentration
+        for mol_id, conc in metabolism.initial_state['external'].items()
+    }
+    for mol_id, conc in override.items():
+        molecules[mol_id] = conc
+    return molecules
+
+
 class TransportMetabolism(Generator):
     """
     Transport/Metabolism Compartment, with ODE expression
@@ -212,10 +228,13 @@ class TransportMetabolism(Generator):
 
 
 # simulate
-def test_txp_mtb_ge():
+def test_txp_mtb_ge(
+    env_volume=1e-12,
+    total_time=10,
+):
     default_test_setting = {
         'environment': {
-            'volume': 1e-12 * units.L,
+            'volume': env_volume * units.L,
             'ports': {
                 'fields': ('fields',),
                 'external': ('boundary', 'external'),
@@ -223,69 +242,11 @@ def test_txp_mtb_ge():
                 'global': ('boundary',),
             }},
         'timestep': 1,
-        'total_time': 10}
+        'total_time': total_time}
 
     agent_id = '0'
     compartment = TransportMetabolism({'agent_id': agent_id})
     return simulate_compartment_in_experiment(compartment, default_test_setting)
-
-
-def get_metabolism_initial_state(
-    scale_concentration=1,
-    override={}
-):
-    # get external state from iAF1260b metabolism
-    config = get_iAF1260b_config()
-    metabolism = Metabolism(config)
-    molecules = {
-        mol_id: conc * scale_concentration
-        for mol_id, conc in metabolism.initial_state['external'].items()
-    }
-    for mol_id, conc in override.items():
-        molecules[mol_id] = conc
-    return molecules
-
-
-def simulate_transport_metabolism(config={}):
-    end_time = config.get('end_time', 2520)  # 2520 sec (42 min) is the expected doubling time in minimal media
-    environment_volume = config.get('environment_volume', 1e-14)
-
-    # make the compartment
-    agent_id = '0'
-    compartment = TransportMetabolism({
-        'agent_id': agent_id,
-        'divide': False})
-
-    # make timeline initial state
-    initial_state = get_metabolism_initial_state(
-        # scale_concentration=1000,
-        # override={'glc__D_e': 1.0, 'lcts_e': 1.0}
-    )
-    initial_state = {
-        ('external', mol_id): conc
-        for mol_id, conc in initial_state.items()}
-    timeline = [
-        (0, initial_state),
-        # (200, initial_state),
-        (end_time, {})]
-
-    # run simulation
-    sim_settings = {
-        # 'initial_state': initial_state,
-        'environment': {
-            'volume': environment_volume * units.L,
-            'ports': {
-                'fields': ('fields',),
-                'external': ('boundary', 'external'),
-                'dimensions': ('dimensions',),
-                'global': ('boundary',),
-            }},
-        'timeline': {
-            'timeline': timeline,
-            'ports': {
-                'external': ('boundary', 'external'),
-                'global': ('boundary',)}}}
-    return simulate_compartment_in_experiment(compartment, sim_settings)
 
 
 if __name__ == '__main__':
@@ -293,9 +254,15 @@ if __name__ == '__main__':
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
+    total_time = 200
+    environment_volume = 1e-12
+    timeseries = test_txp_mtb_ge(
+        env_volume=environment_volume,
+        total_time=total_time,
+    )
+
+    # plot
     config ={
-        'end_time': 2520,
-        'environment_volume': 1e-12,
-    }
-    timeseries = simulate_transport_metabolism(config)
+        'end_time': total_time,
+        'environment_volume': environment_volume}
     analyze_transport_metabolism(timeseries, config, out_dir)

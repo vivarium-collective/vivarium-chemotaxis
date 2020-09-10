@@ -45,6 +45,10 @@ from chemotaxis.composites.flagella_expression import (
     FlagellaExpressionMetabolism,
     get_flagella_expression_compartment,
 )
+from chemotaxis.composites.transport_metabolism import (
+    TransportMetabolism,
+    get_metabolism_initial_state,
+)
 
 from chemotaxis.plots.chemotaxis_experiments import plot_chemotaxis_experiment
 
@@ -64,6 +68,7 @@ from cell.plots.multibody_physics import (
     plot_tags
 )
 from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
+from chemotaxis.plots.transport_metabolism import analyze_transport_metabolism
 
 
 
@@ -90,10 +95,47 @@ def BiGG_metabolism(out_dir='out'):
 
 # figure 5b
 def transport_metabolism(out_dir='out'):
+    total_time = 200
+    environment_volume = 1e-14 * units.L
 
+    # make timeline
+    initial_state = get_metabolism_initial_state()
+    initial_state = {
+        ('external', mol_id): conc
+        for mol_id, conc in initial_state.items()}
+    timeline = [
+        (0, initial_state),
+        (total_time, {})]
 
-    import ipdb; ipdb.set_trace()
-    pass
+    # make the compartment
+    agent_id = '0'
+    compartment = TransportMetabolism({
+        'agent_id': agent_id,
+        'divide': False})
+
+    # run simulation
+    sim_settings = {
+        # 'initial_state': initial_state,
+        'environment': {
+            'volume': environment_volume,
+            'ports': {
+                'fields': ('fields',),
+                'external': ('boundary', 'external'),
+                'dimensions': ('dimensions',),
+                'global': ('boundary',),
+            }},
+        'timeline': {
+            'timeline': timeline,
+            'ports': {
+                'external': ('boundary', 'external'),
+                'global': ('boundary',)}}}
+    timeseries = simulate_compartment_in_experiment(compartment, sim_settings)
+
+    # plot
+    plot_config = {
+        'end_time': total_time,
+        'environment_volume': environment_volume}
+    analyze_transport_metabolism(timeseries, plot_config, out_dir)
 
 
 # figure 5c
