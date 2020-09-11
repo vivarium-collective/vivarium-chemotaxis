@@ -19,7 +19,6 @@ from vivarium.core.composition import (
     agent_environment_experiment,
     plot_simulation_output,
     plot_agents_multigen,
-    EXPERIMENT_OUT_DIR,
 )
 
 # vivarium-cell imports
@@ -74,6 +73,13 @@ from cell.plots.multibody_physics import (
 from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
 from chemotaxis.plots.transport_metabolism import analyze_transport_metabolism
 
+# directories
+from chemotaxis import EXPERIMENT_OUT_DIR
+
+
+# figure 3b
+def growth_division_experiment(out_dir='out'):
+    pass
 
 
 # figure 5a
@@ -513,6 +519,7 @@ def run_chemotaxis_experiment(out_dir='out'):
 # put all the experiments for the paper in a dictionary
 # for easy access by main
 experiments_library = {
+    '3b': growth_division_experiment,
     '5a': BiGG_metabolism,
     '5b': transport_metabolism,
     '5c': transport_metabolism_environment,
