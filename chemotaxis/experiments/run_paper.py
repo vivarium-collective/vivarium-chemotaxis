@@ -9,6 +9,7 @@ with different chemotactic agents and environments.
 
 import os
 import argparse
+import uuid
 
 # vivarium-core imports
 from vivarium.library.units import units
@@ -134,12 +135,107 @@ def transport_metabolism(out_dir='out'):
     analyze_transport_metabolism(timeseries, plot_config, out_dir)
 
 
+def make_agent_ids(agents_config):
+    agent_ids = []
+    for config in agents_config:
+        number = config.get('number', 1)
+        if 'name' in config:
+            name = config['name']
+            if number > 1:
+                new_agent_ids = [name + '_' + str(num) for num in range(number)]
+            else:
+                new_agent_ids = [name]
+        else:
+            new_agent_ids = [str(uuid.uuid1()) for num in range(number)]
+        config['ids'] = new_agent_ids
+        agent_ids.extend(new_agent_ids)
+    return agent_ids
+
+
 # figure 5c
 def transport_metabolism_environment(out_dir='out'):
+    n_agents = 2
+    total_time = 100
+    bounds = [20, 20]
+    emit_step = 20
+    emit_fields = ['glc__D_e', 'lcts_e']
+
+    # agent configuration
+    agents_config = [{
+        'name': 'transport_metabolism',
+        'type': TransportMetabolismExpression,
+        'number': n_agents,
+        'config': {
+            'agents_path': ('..', '..', 'agents'),
+            'fields_path': ('..', '..', 'fields'),
+            'dimensions_path': ('..', '..', 'dimensions'),
+            'metabolism': {'time_step': 10},
+            'transport': {'time_step': 10}}}]
+    # add agent_ids
+    agent_ids = make_agent_ids(agents_config)
+
+    # TODO -- get initial agent_state from transport
+    # import ipdb; ipdb.set_trace()
 
 
-    import ipdb; ipdb.set_trace()
-    pass
+    initial_agent_state = {
+        'boundary': {
+            'location': [8, 8],
+            'external': {
+                'glc__D_e': 1.0,
+                'lcts_e': 1.0}}}
+
+    # environment configuration
+    environment_config = {
+        'type': Lattice,
+        'config': get_iAF1260b_environment(
+            # time_step=process_time_step,
+            bounds=bounds,
+            depth=6000.0,
+            diffusion=1e-2,
+            scale_concentration=5,
+            keep_fields_emit=emit_fields)}
+
+    # make the experiment
+    experiment_settings = {
+        'experiment_name': 'transport_metabolism_environment',
+        'description': '..',
+        'total_time': total_time,
+        'emit_step': emit_step}
+
+    experiment = agent_environment_experiment(
+        agents_config=agents_config,
+        environment_config=environment_config,
+        initial_agent_state=initial_agent_state,
+        settings=experiment_settings,
+    )
+
+    # run simulation
+    experiment.update(total_time)
+    data = experiment.emitter.get_data()
+
+    ## plot output
+    # extract data
+    multibody_config = environment_config['config']['multibody']
+    agents = {time: time_data['agents'] for time, time_data in data.items()}
+    fields = {time: time_data['fields'] for time, time_data in data.items()}
+    plot_data = {
+        'agents': agents,
+        'fields': fields,
+        'config': multibody_config}
+
+    # multigen plot
+    plot_settings = {}
+    plot_agents_multigen(data, plot_settings, out_dir)
+
+    # make tag and snapshot plots
+    plot_config = {
+        'fields': emit_fields,
+        'tagged_molecules': [('cytoplasm', 'LacY')],
+        'n_snapshots': 5,
+        'out_dir': out_dir}
+    plot_tags(plot_data, plot_config)
+    plot_snapshots(plot_data, plot_config)
 
 
 # figure 6a
@@ -169,7 +265,6 @@ def flagella_expression_network(out_dir='out'):
 
 # function to make initial state for flagella expression processes
 def make_flagella_expression_initial_state():
-    ## make the initial state
     flagella_data = FlagellaChromosome()
     chromosome_config = flagella_data.chromosome_config
 
