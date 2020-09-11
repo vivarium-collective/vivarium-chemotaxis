@@ -205,7 +205,7 @@ class TransportMetabolismExpression(Generator):
         mass_deriver = TreeMass({})
 
         # Division
-        division_condition = DivisionVolume({})
+        division_condition = DivisionVolume(config['division'])
 
         processes = {
             'transport': transport,

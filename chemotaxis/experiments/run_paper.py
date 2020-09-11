@@ -77,6 +77,27 @@ from chemotaxis.plots.transport_metabolism import analyze_transport_metabolism
 from chemotaxis import EXPERIMENT_OUT_DIR
 
 
+
+
+
+def make_agent_ids(agents_config):
+    agent_ids = []
+    for config in agents_config:
+        number = config.get('number', 1)
+        if 'name' in config:
+            name = config['name']
+            if number > 1:
+                new_agent_ids = [name + '_' + str(num) for num in range(number)]
+            else:
+                new_agent_ids = [name]
+        else:
+            new_agent_ids = [str(uuid.uuid1()) for num in range(number)]
+        config['ids'] = new_agent_ids
+        agent_ids.extend(new_agent_ids)
+    return agent_ids
+
+
+
 # figure 3b
 def growth_division_experiment(out_dir='out'):
     pass
@@ -144,23 +165,6 @@ def transport_metabolism(out_dir='out'):
     analyze_transport_metabolism(timeseries, plot_config, out_dir)
 
 
-def make_agent_ids(agents_config):
-    agent_ids = []
-    for config in agents_config:
-        number = config.get('number', 1)
-        if 'name' in config:
-            name = config['name']
-            if number > 1:
-                new_agent_ids = [name + '_' + str(num) for num in range(number)]
-            else:
-                new_agent_ids = [name]
-        else:
-            new_agent_ids = [str(uuid.uuid1()) for num in range(number)]
-        config['ids'] = new_agent_ids
-        agent_ids.extend(new_agent_ids)
-    return agent_ids
-
-
 # figure 5c
 def transport_metabolism_environment(out_dir='out'):
     n_agents = 1
@@ -180,7 +184,9 @@ def transport_metabolism_environment(out_dir='out'):
             'fields_path': ('..', '..', 'fields'),
             'dimensions_path': ('..', '..', 'dimensions'),
             'metabolism': {'time_step': 10},
-            'transport': {'time_step': 10}}}]
+            'transport': {'time_step': 10},
+            'division': {'division_volume': 1.3 * units.fL}
+        }}]
     # add agent_ids
     agent_ids = make_agent_ids(agents_config)
 
