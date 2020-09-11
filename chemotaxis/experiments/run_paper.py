@@ -30,14 +30,17 @@ from cell.processes.metabolism import (
 from cell.processes.transcription import UNBOUND_RNAP_KEY
 from cell.processes.translation import UNBOUND_RIBOSOME_KEY
 from cell.composites.lattice import Lattice
+from cell.composites.static_lattice import StaticLattice
 from cell.experiments.lattice_experiment import get_iAF1260b_environment
 
-# chemotaxis imports
+# chemotaxis process imports
 from chemotaxis.processes.flagella_motor import run_variable_flagella
 from chemotaxis.processes.chemoreceptor_cluster import (
     test_receptor,
     get_pulse_timeline,
 )
+
+# chemotaxis composite imports
 from chemotaxis.composites.chemotaxis_flagella import (
     test_variable_chemotaxis,
     get_chemotaxis_timeline,
@@ -50,8 +53,7 @@ from chemotaxis.composites.transport_metabolism import (
     TransportMetabolismExpression,
     get_metabolism_initial_external_state,
 )
-
-from chemotaxis.plots.chemotaxis_experiments import plot_chemotaxis_experiment
+from chemotaxis.composites.chemotaxis_master import ChemotaxisMaster
 
 # data
 from chemotaxis.data.chromosomes.flagella_chromosome import FlagellaChromosome
@@ -59,6 +61,7 @@ from cell.data.nucleotides import nucleotides
 from cell.data.amino_acids import amino_acids
 
 # plots
+from chemotaxis.plots.chemotaxis_experiments import plot_chemotaxis_experiment
 from cell.plots.metabolism import plot_exchanges
 from cell.plots.gene_expression import (
     plot_timeseries_heatmaps,
@@ -154,10 +157,11 @@ def make_agent_ids(agents_config):
 
 # figure 5c
 def transport_metabolism_environment(out_dir='out'):
-    n_agents = 2
-    total_time = 100
+    n_agents = 1
+    total_time = 5000
+    process_time_step = 10  # TODO -- pass time_step to compartment, processes
     bounds = [20, 20]
-    emit_step = 20
+    emit_step = 100
     emit_fields = ['glc__D_e', 'lcts_e']
 
     # agent configuration
@@ -199,7 +203,11 @@ def transport_metabolism_environment(out_dir='out'):
     # make the experiment
     experiment_settings = {
         'experiment_name': 'transport_metabolism_environment',
-        'description': '..',
+        'description': 'glucose-lactose diauxic shifters are placed in a shallow environment with glucose and '
+                       'lactose. They start off with no internal LacY and uptake only glucose, but LacY is '
+                       'expressed upon depletion of glucose they begin to uptake lactose. Cells have an iAF1260b '
+                       'BiGG metabolism, kinetic transport of glucose and lactose, and ode-based gene expression '
+                       'of LacY',
         'total_time': total_time,
         'emit_step': emit_step}
 
@@ -207,8 +215,7 @@ def transport_metabolism_environment(out_dir='out'):
         agents_config=agents_config,
         environment_config=environment_config,
         initial_agent_state=initial_agent_state,
-        settings=experiment_settings,
-    )
+        settings=experiment_settings)
 
     # run simulation
     experiment.update(total_time)
@@ -426,8 +433,81 @@ def run_chemotaxis_transduction(out_dir='out'):
         out_dir=out_dir,
         timeline=get_chemotaxis_timeline(
             timestep=0.1,
-            total_time=90),
-    )
+            total_time=90))
+
+
+def get_exponential_env_config():
+    # TODO -- lowercase.  put this somewhere else?
+
+    DEFAULT_LIGAND_ID = 'glc__D_e'  # BiGG id for external glucose
+    DEFAULT_BOUNDS = [1000, 3000]
+    DEFAULT_AGENT_LOCATION = [0.5, 0.1]
+
+    # exponential field parameters
+    FIELD_SCALE = 4.0
+    EXPONENTIAL_BASE = 1.3e2
+    FIELD_CENTER = [0.5, 0.0]
+
+    # multibody process config
+    multibody_config = {
+        'bounds': DEFAULT_BOUNDS}
+
+    # static field config
+    field_config = {
+        'molecules': [DEFAULT_LIGAND_ID],
+        'gradient': {
+            'type': 'exponential',
+            'molecules': {
+                DEFAULT_LIGAND_ID: {
+                    'center': FIELD_CENTER,
+                    'scale': FIELD_SCALE,
+                    'base': EXPONENTIAL_BASE}}},
+        'bounds': DEFAULT_BOUNDS}
+
+    return {
+        'multibody': multibody_config,
+        'field': field_config}
+
+
+# figure 7d
+def run_chemotaxis_experiment(out_dir='out'):
+    total_time = 6000
+    emit_step = 10
+
+    ## make the experiment
+    # configure
+    agents_config = {
+        'ids': ['chemotaxis_master'],
+        'type': ChemotaxisMaster,
+        'config': {
+            'agents_path': ('..', '..', 'agents'),
+            'fields_path': ('..', '..', 'fields'),
+            'dimensions_path': ('..', '..', 'dimensions'),
+        }}
+
+    environment_config = {
+        'type': StaticLattice,
+        'config': get_exponential_env_config(),
+    }
+
+    # use agent_environment_experiment to make the experiment
+    experiment_settings = {
+        'experiment_name': 'chemotaxis_experiment',
+        'description': '..',
+        'total_time': total_time,
+        'emit_step': emit_step}
+    experiment = agent_environment_experiment(
+        agents_config=agents_config,
+        environment_config=environment_config,
+        initial_agent_state=initial_agent_state,
+        settings=experiment_settings)
+
+    ## run the experiment
+    experiment.update(total_time)
+    data = experiment.emitter.get_data()
+
+
+    import ipdb; ipdb.set_trace()
 
 
 # put all the experiments for the paper in a dictionary
@@ -442,7 +522,10 @@ experiments_library = {
     '7a': variable_flagella,
     '7b': run_chemoreceptor_pulse,
     '7c': run_chemotaxis_transduction,
-    '7': ['7a', '7b', '7c'],
+    '7d': run_chemotaxis_experiment,
+    '5': ['5a', '5b', '5c'],
+    '6': ['6a', '6b', '6c'],
+    '7': ['7a', '7b', '7c', '7d'],
 }
 
 def make_dir(out_dir):
