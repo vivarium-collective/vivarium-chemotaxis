@@ -44,7 +44,7 @@ def run_to_steady_state(receptor, state, timestep):
 
 
 class ReceptorCluster(Process):
-    '''Models the activity of a chemoreceptor cluster
+    """Models the activity of a chemoreceptor cluster
 
        This :term:`process class` models the activity of a chemoreceptor cluster
        composed of Tsr and Tar amino acid chemoreceptors. The model is a
@@ -88,7 +88,7 @@ class ReceptorCluster(Process):
            * K_Tar_on = 12e-3  # Tar to Asp (Emonet05)
            * K_Tar_off = 1.7e-3  # Tar to Asp (Emonet05)
            * (Endres & Wingreen, 2006) has dissociation constants for serine binding, NiCl2 binding
-       '''
+       """
 
     name = NAME
     defaults = {

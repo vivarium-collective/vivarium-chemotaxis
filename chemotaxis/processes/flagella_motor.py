@@ -1,8 +1,8 @@
-'''
+"""
 ==========================
 Flagella Motor Processes
 ==========================
-'''
+"""
 
 import os
 import copy
@@ -264,14 +264,14 @@ class FlagellaMotor(Process):
 
 
     def update_flagellum(self, motor_state, cw_bias, CheY_P, timestep):
-        '''
+        """
         Rotational state of an individual flagellum from:
             Sneddon, M. W., Pontius, W., & Emonet, T. (2012).
             Stochastic coordination of multiple actuators reduces
             latency and improves chemotactic response in bacteria.
 
         # TODO -- normal, semi, curly states from Sneddon
-        '''
+        """
         g_0 = self.parameters['g_0']  # (k_B/T) free energy barrier for CCW-->CW
         g_1 = self.parameters['g_1']  # (k_B/T) free energy barrier for CW-->CCW
         K_D = self.parameters['K_D']  # binding constant of CheY-P to base of the motor

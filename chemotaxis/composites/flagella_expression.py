@@ -1,4 +1,8 @@
-from __future__ import absolute_import, division, print_function
+"""
+==============================
+Flagella Expression Composites
+==============================
+"""
 
 import os
 import argparse
@@ -63,6 +67,7 @@ def default_metabolism_config():
         }})
     return metabolism_config
 
+
 flagella_schema_override = {
     'transcription': {
         'proteins': {
@@ -82,15 +87,14 @@ flagella_schema_override = {
     },
 }
 
+
 def get_flagella_expression_config(config):
     flagella_data = FlagellaChromosome(config)
     chromosome_config = flagella_data.chromosome_config
     sequences = flagella_data.chromosome.product_sequences()
 
     return {
-
         'transcription': {
-
             'sequence': chromosome_config['sequence'],
             'templates': chromosome_config['promoters'],
             'genes': chromosome_config['genes'],
@@ -100,7 +104,6 @@ def get_flagella_expression_config(config):
             'elongation_rate': 50},
 
         'translation': {
-
             'sequences': flagella_data.protein_sequences,
             'templates': flagella_data.transcript_templates,
             'concentration_keys': ['CRP', 'flhDC', 'fliA'],
@@ -109,7 +112,6 @@ def get_flagella_expression_config(config):
             'polymerase_occlusion': 50},
 
         'degradation': {
-
             'sequences': sequences,
             'catalytic_rates': {
                 'endoRNAse': 0.02},
@@ -127,6 +129,7 @@ def get_flagella_expression_config(config):
 
         '_schema': copy.deepcopy(flagella_schema_override)
     }
+
 
 def get_flagella_initial_state(ports={}):
     flagella_data = FlagellaChromosome()
@@ -161,16 +164,17 @@ def get_flagella_initial_state(ports={}):
             }
     }
 
+
 def get_flagella_expression_compartment(config):
-    '''
+    """
     Make a gene expression compartment with flagella expression data
-    '''
+    """
     flagella_expression_config = get_flagella_expression_config(config)
     return GeneExpression(flagella_expression_config)
 
 
 
-## flagella expression with metabolism
+# flagella expression with metabolism
 def get_flagella_metabolism_initial_state(ports={}):
     flagella_data = FlagellaChromosome()
     chromosome_config = flagella_data.chromosome_config
@@ -196,7 +200,7 @@ def get_flagella_metabolism_initial_state(ports={}):
     }
 
 class FlagellaExpressionMetabolism(Generator):
-    ''' Flagella stochastic expression with metabolism '''
+    """ Flagella stochastic expression with metabolism """
 
     name = 'flagella_expression_metabolism'
     defaults = get_flagella_expression_config({})

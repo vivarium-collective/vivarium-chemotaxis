@@ -1,4 +1,8 @@
-from __future__ import absolute_import, division, print_function
+"""
+==================================================
+Transport Metabolism and Gene Expression Composite
+==================================================
+"""
 
 import os
 import argparse
