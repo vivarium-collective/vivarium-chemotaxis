@@ -15,12 +15,12 @@ from vivarium.core.composition import (
     save_flat_timeseries,
     load_timeseries,
     assert_timeseries_close,
+    plot_simulation_output,
 )
 
 # processes
 from vivarium.processes.meta_division import MetaDivision
 from vivarium.processes.tree_mass import TreeMass
-from chemotaxis.plots.transport_metabolism import analyze_transport_metabolism
 from cell.processes.division_volume import DivisionVolume
 from cell.processes.metabolism import (
     Metabolism,
@@ -30,6 +30,9 @@ from cell.processes.convenience_kinetics import ConvenienceKinetics
 from cell.processes.ode_expression import (
     ODE_expression,
     get_lacy_config)
+
+# plots
+from chemotaxis.plots.transport_metabolism import plot_glc_lcts_environment
 
 # directories
 from chemotaxis import COMPOSITE_OUT_DIR, REFERENCE_DATA_DIR
@@ -353,7 +356,18 @@ if __name__ == '__main__':
     print('mass growth: {}'.format(mass_ts[-1] / mass_ts[1]))
 
     # plot
-    config ={
-        'end_time': total_time,
+    # simulation plot
+    plot_settings = {
+        'max_rows': 30,
+        'remove_flat': True,
+        'remove_zeros': True,
+        'skip_ports': ['null', 'reactions']}
+    plot_simulation_output(timeseries, plot_settings, out_dir)
+
+    # glucose-lactose plot
+    settings = {
+        'internal_path': ('cytoplasm',),
+        'external_path': ('boundary', 'external'),
+        'global_path': ('boundary',),
         'environment_volume': environment_volume}
-    analyze_transport_metabolism(timeseries, config, out_dir)
+    plot_glc_lcts_environment(timeseries, settings, out_dir)

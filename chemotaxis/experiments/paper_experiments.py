@@ -71,7 +71,7 @@ from cell.plots.multibody_physics import (
     plot_tags
 )
 from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
-from chemotaxis.plots.transport_metabolism import analyze_transport_metabolism
+from chemotaxis.plots.transport_metabolism import plot_glc_lcts_environment
 from chemotaxis.plots.flagella_activity import plot_signal_transduction
 
 
@@ -181,11 +181,12 @@ def transport_metabolism(out_dir='out'):
     timeseries = simulate_compartment_in_experiment(compartment, sim_settings)
 
     # plot
-    plot_config = {
-        'end_time': total_time,
-        'environment_volume': environment_volume,
-    }
-    analyze_transport_metabolism(timeseries, plot_config, out_dir)
+    plot_settings = {
+        'internal_path': ('cytoplasm',),
+        'external_path': ('boundary', 'external'),
+        'global_path': ('boundary',),
+        'environment_volume': plot_settings}
+    plot_glc_lcts_environment(timeseries, settings, out_dir)
 
 
 # figure 5c

@@ -2,7 +2,7 @@ import os
 
 import matplotlib.pyplot as plt
 
-from vivarium.core.composition import set_axes, plot_simulation_output
+from vivarium.core.composition import set_axes
 from vivarium.library.dict_utils import get_value_from_path
 
 
@@ -85,23 +85,3 @@ def plot_glc_lcts_environment(timeseries, settings={}, out_dir='out'):
     plt.subplots_adjust(wspace=0.6, hspace=0.5)
     plt.savefig(fig_path, bbox_inches='tight')
     plt.close()
-
-
-def analyze_transport_metabolism(timeseries, config={}, out_dir='out'):
-    environment_volume = config.get('environment_volume', None)
-
-    # simulation plot
-    plot_settings = {
-        'max_rows': 30,
-        'remove_flat': True,
-        'remove_zeros': True,
-        'skip_ports': ['null', 'reactions']}
-    plot_simulation_output(timeseries, plot_settings, out_dir)
-
-    # glucose-lactose plot
-    settings = {
-        'internal_path': ('cytoplasm',),
-        'external_path': ('boundary', 'external'),
-        'global_path': ('boundary',),
-        'environment_volume': environment_volume}
-    plot_glc_lcts_environment(timeseries, settings, out_dir)
