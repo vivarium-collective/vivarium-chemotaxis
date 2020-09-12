@@ -1,11 +1,11 @@
-'''
+"""
 ====================
 Chemotaxis Experiments
 ====================
 
 Chemotaxis provides several pre-configured :py:class:`Experiments`
 with different chemotactic agents and environments.
-'''
+"""
 
 import os
 import argparse
@@ -19,7 +19,7 @@ from vivarium.core.composition import (
     simulate_process_in_experiment,
     simulate_compartment_in_experiment,
     agent_environment_experiment,
-    plot_simulation_output,
+    make_agent_ids,
     plot_agents_multigen,
 )
 from vivarium.core.emitter import time_indexed_timeseries_from_data
@@ -36,14 +36,14 @@ from cell.composites.lattice import Lattice
 from cell.composites.static_lattice import StaticLattice
 from cell.experiments.lattice_experiment import get_iAF1260b_environment
 
-# chemotaxis process imports
+# chemotaxis processes
 from chemotaxis.processes.flagella_motor import run_variable_flagella
 from chemotaxis.processes.chemoreceptor_cluster import (
     ReceptorCluster,
     get_pulse_timeline,
 )
 
-# chemotaxis composite imports
+# chemotaxis composites
 from chemotaxis.composites.chemotaxis_minimal import ChemotaxisMinimal
 from chemotaxis.composites.chemotaxis_flagella import (
     ChemotaxisVariableFlagella,
@@ -82,29 +82,6 @@ from chemotaxis.plots.flagella_activity import plot_signal_transduction
 
 # directories
 from chemotaxis import EXPERIMENT_OUT_DIR
-
-
-
-
-# TODO -- move to composition
-def make_agent_ids(agents_config):
-    agent_ids = []
-    for config in agents_config:
-        number = config.get('number', 1)
-        if 'name' in config:
-            name = config['name']
-            if number > 1:
-                new_agent_ids = [name + '_' + str(num) for num in range(number)]
-            else:
-                new_agent_ids = [name]
-        else:
-            new_agent_ids = [str(uuid.uuid1()) for num in range(number)]
-        config['ids'] = new_agent_ids
-        agent_ids.extend(new_agent_ids)
-    return agent_ids
-
-
-
 
 
 
@@ -292,12 +269,12 @@ def transport_metabolism_environment(out_dir='out'):
 
 # figure 6a
 def flagella_expression_network(out_dir='out'):
-    '''
+    """
     Make a network plot of the flagella expression processes.
     This saves an networkx plot with a default layout, along with
     node and edge list files of the network for analysis by network
     visualization software.
-    '''
+    """
 
     # load the compartment and pull out the processes
     flagella_compartment = get_flagella_expression_compartment({})

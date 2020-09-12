@@ -313,14 +313,15 @@ class ChemotaxisExpressionFlagella(Generator):
         }
 
 
+# TODO -- merge this with get_exponential_random_timeline
 def get_chemotaxis_timeline(
-    environment_port=DEFAULT_ENVIRONMENT_PORT,
-    ligand_id=DEFAULT_LIGAND,
-    initial_conc=DEFAULT_INITIAL_LIGAND,
-    total_time=10,
-    timestep=1,
-    base=1+3e-4,
-    speed=14,
+        environment_port=DEFAULT_ENVIRONMENT_PORT,
+        ligand_id=DEFAULT_LIGAND,
+        initial_conc=DEFAULT_INITIAL_LIGAND,
+        total_time=10,
+        timestep=1,
+        base=1+3e-4,
+        speed=14,
 ):
     return get_exponential_random_timeline({
         'ligand': ligand_id,
@@ -331,12 +332,10 @@ def get_chemotaxis_timeline(
         'base': base,
         'speed': speed})
 
-def get_baseline_config(
-    n_flagella=5
-):
+
+def get_baseline_config(n_flagella=5):
     return {
         'agents_path': ('agents',),  # Note -- should go two level up for experiments with environment
-        # 'growth_rate': 0.0001,
         'receptor': {
             'ligand_id': DEFAULT_LIGAND,
             'initial_ligand': DEFAULT_INITIAL_LIGAND,

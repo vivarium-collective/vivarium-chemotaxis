@@ -45,4 +45,3 @@ def plot_receptor_output(output, out_dir='out', filename='response'):
     fig_path = os.path.join(out_dir, filename)
     plt.subplots_adjust(wspace=0.7, hspace=0.4)
     plt.savefig(fig_path + '.png', bbox_inches='tight')
-    
