@@ -28,7 +28,7 @@ def add_arguments(experiments_library):
     return parser.parse_args()
 
 
-def workflow(experiments_library):
+def control(experiments_library):
     """
     Execute experiments from the command line
     """

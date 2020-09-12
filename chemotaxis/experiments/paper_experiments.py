@@ -7,9 +7,6 @@ Chemotaxis provides several pre-configured :py:class:`Experiments`
 with different chemotactic agents and environments.
 """
 
-import os
-import argparse
-
 import numpy as np
 
 # vivarium-core imports
@@ -24,7 +21,7 @@ from vivarium.core.composition import (
 from vivarium.core.emitter import time_indexed_timeseries_from_data
 
 # experiment workflow
-from chemotaxis.experiments.workflow import workflow
+from chemotaxis.experiments.control import control
 
 # vivarium-cell imports
 from cell.processes.metabolism import (
@@ -112,6 +109,9 @@ def growth_division_experiment(out_dir='out'):
 
 # figure 5a
 def BiGG_metabolism(out_dir='out'):
+    total_time = 2500
+    env_volume = 1e-5 * units.L
+
     # configure metabolism process iAF1260b BiGG model
     process_config = get_iAF1260b_config()
     metabolism = Metabolism(process_config)
@@ -122,15 +122,21 @@ def BiGG_metabolism(out_dir='out'):
     # run simulation with the helper function simulate_process_in_experiment
     sim_settings = {
         'environment': {
-            'volume': 1e-5 * units.L,
+            'volume': env_volume,
             'concentrations': external_concentrations,
         },
-        'total_time': 2500,
+        'total_time': total_time,
     }
     timeseries = simulate_process_in_experiment(metabolism, sim_settings)
 
     # plot
-    plot_exchanges(timeseries, sim_settings, out_dir)
+    plot_config = {
+        'environment': {
+            'volume': env_volume
+        },
+        'legend': False,
+    }
+    plot_exchanges(timeseries, plot_config, out_dir)
 
 
 # figure 5b
@@ -714,4 +720,4 @@ experiments_library = {
 
 
 if __name__ == '__main__':
-    workflow(experiments_library)
+    control(experiments_library)
