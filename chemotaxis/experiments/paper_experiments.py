@@ -185,8 +185,8 @@ def transport_metabolism(out_dir='out'):
         'internal_path': ('cytoplasm',),
         'external_path': ('boundary', 'external'),
         'global_path': ('boundary',),
-        'environment_volume': plot_settings}
-    plot_glc_lcts_environment(timeseries, settings, out_dir)
+        'environment_volume': environment_volume}
+    plot_glc_lcts_environment(timeseries, plot_settings, out_dir)
 
 
 # figure 5c
