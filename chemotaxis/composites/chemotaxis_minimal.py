@@ -25,6 +25,7 @@ from chemotaxis import COMPOSITE_OUT_DIR
 
 NAME = 'chemotaxis_minimal'
 
+
 class ChemotaxisMinimal(Generator):
 
     defaults = {

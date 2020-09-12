@@ -199,6 +199,7 @@ def get_flagella_metabolism_initial_state(ports={}):
             }
     }
 
+
 class FlagellaExpressionMetabolism(Generator):
     """ Flagella stochastic expression with metabolism """
 

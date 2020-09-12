@@ -33,7 +33,8 @@ from cell.processes.translation import UNBOUND_RIBOSOME_KEY
 from cell.processes.static_field import make_field
 from cell.composites.lattice import Lattice
 from cell.composites.static_lattice import StaticLattice
-from cell.experiments.lattice_experiment import get_iAF1260b_environment
+from cell.composites.growth_division import GrowthDivision
+from cell.experiments.lattice_experiment import get_iAF1260b_environment, get_lattice_config  # TODO -- get this in a better way...
 
 # chemotaxis processes
 from chemotaxis.processes.flagella_motor import run_variable_flagella
@@ -45,10 +46,7 @@ from chemotaxis.processes.chemoreceptor_cluster import (
 
 # chemotaxis composites
 from chemotaxis.composites.chemotaxis_minimal import ChemotaxisMinimal
-from chemotaxis.composites.flagella_expression import (
-    FlagellaExpressionMetabolism,
-    get_flagella_expression_compartment,
-)
+from chemotaxis.composites.flagella_expression import FlagellaExpressionMetabolism
 from chemotaxis.composites.transport_metabolism import (
     TransportMetabolismExpression,
     get_metabolism_initial_external_state,
@@ -83,7 +81,32 @@ from chemotaxis import EXPERIMENT_OUT_DIR
 
 # figure 3b
 def growth_division_experiment(out_dir='out'):
-    pass
+    total_time = 18000
+    agents_config = {
+        'name': 'growth_division',
+        'type': GrowthDivision,
+        'config': {
+            'agents_path': ('..', '..', 'agents'),
+            'fields_path': ('..', '..', 'fields'),
+            'dimensions_path': ('..', '..', 'dimensions'),
+        }
+    }
+    environment_config = {
+        'type': Lattice,
+        'config': get_lattice_config(
+            bounds=[30, 30],
+            jitter_force=1e-5,
+        )
+    }
+    # experiment_config = {
+    #     'experiment_name': experiment_name,
+    #     'description': description,
+    #     'total_time': total_time,
+    #     'emit_step': emit_step,
+    #     'emitter': emitter,
+    #     'agent_names': agent_names,
+    #     'return_raw_data': return_raw_data
+    # }
 
 
 # figure 5a
@@ -162,9 +185,9 @@ def transport_metabolism(out_dir='out'):
 def transport_metabolism_environment(out_dir='out'):
     n_agents = 1
     total_time = 5000
+    emit_step = 100
     process_time_step = 10  # TODO -- pass time_step to compartment, processes
     bounds = [20, 20]
-    emit_step = 100
     emit_fields = ['glc__D_e', 'lcts_e']
 
     # agent configuration
@@ -191,9 +214,6 @@ def transport_metabolism_environment(out_dir='out'):
     agent_ids = make_agent_ids(agents_config)
 
     # TODO -- get initial agent_state from transport
-    # import ipdb; ipdb.set_trace()
-
-
     initial_agent_state = {
         'boundary': {
             'location': [8, 8],
@@ -273,7 +293,7 @@ def flagella_expression_network(out_dir='out'):
     """
 
     # load the compartment and pull out the processes
-    flagella_compartment = get_flagella_expression_compartment({})
+    flagella_compartment = FlagellaExpressionMetabolism()
     flagella_expression_network = flagella_compartment.generate()
     flagella_expression_processes = flagella_expression_network['processes']
 
@@ -323,7 +343,7 @@ def flagella_just_in_time(out_dir='out'):
 
     # make the compartment
     compartment_config = {}
-    compartment = get_flagella_expression_compartment(compartment_config)
+    compartment = FlagellaExpressionMetabolism(compartment_config)
 
     # get the initial state
     initial_state = make_flagella_expression_initial_state()
@@ -687,6 +707,8 @@ experiments_library = {
     '5': ['5a', '5b', '5c'],
     '6': ['6a', '6b', '6c'],
     '7': ['7a', '7b', '7c', '7d'],
+    'all': ['3b', '5a', '5b', '5c', '6a', '6b', '6c', '7a', '7b', '7c', '7d'],
+
 }
 
 
@@ -730,7 +752,10 @@ def main():
                 control_out_dir = os.path.join(out_dir, sub_experiment_id)
                 make_dir(control_out_dir)
                 exp = experiments_library[sub_experiment_id]
-                exp(control_out_dir)
+                try:
+                    exp(control_out_dir)
+                except:
+                    print('{} experiment failed'.format(sub_experiment_id))
     else:
         print('provide experiment number')
 

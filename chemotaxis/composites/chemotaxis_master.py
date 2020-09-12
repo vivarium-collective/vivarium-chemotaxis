@@ -16,6 +16,7 @@ from vivarium.core.composition import (
 )
 
 # processes
+from vivarium.processes.meta_division import MetaDivision
 from cell.processes.metabolism import (
     Metabolism,
     get_iAF1260b_config
@@ -25,11 +26,10 @@ from cell.processes.transcription import Transcription
 from cell.processes.translation import Translation
 from cell.processes.degradation import RnaDegradation
 from cell.processes.complexation import Complexation
-from cell.processes.membrane_potential import MembranePotential
 from cell.processes.division_volume import DivisionVolume
 from chemotaxis.processes.chemoreceptor_cluster import ReceptorCluster
 from chemotaxis.processes.flagella_motor import FlagellaMotor
-from vivarium.processes.meta_division import MetaDivision
+from chemotaxis.processes.membrane_potential import MembranePotential
 
 # composites
 from chemotaxis.composites.flagella_expression import get_flagella_expression_config
@@ -257,6 +257,7 @@ def run_chemotaxis_master(out_dir):
         timeseries,
         gene_exp_plot_config,
         out_dir)
+
 
 def test_chemotaxis_master(total_time=5):
     compartment = ChemotaxisMaster({})

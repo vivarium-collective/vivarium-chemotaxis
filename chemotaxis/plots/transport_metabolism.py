@@ -84,6 +84,7 @@ def plot_glc_lcts_environment(timeseries, settings={}, out_dir='out'):
     fig_path = os.path.join(out_dir, 'glc_lcts_environment')
     plt.subplots_adjust(wspace=0.6, hspace=0.5)
     plt.savefig(fig_path, bbox_inches='tight')
+    plt.close()
 
 
 def analyze_transport_metabolism(timeseries, config={}, out_dir='out'):
