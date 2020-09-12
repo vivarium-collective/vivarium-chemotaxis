@@ -1,8 +1,8 @@
-'''
+"""
 ==========================
 Flagella Motor Processes
 ==========================
-'''
+"""
 
 import os
 import copy
@@ -16,32 +16,44 @@ from vivarium.core.process import Process
 from vivarium.core.composition import (
     simulate_process_in_experiment,
     plot_simulation_output,
-    PROCESS_OUT_DIR,
 )
 from vivarium.core.emitter import timeseries_from_data
 
 # plots
 from chemotaxis.plots.flagella_activity import plot_activity
 
+# directories
+from chemotaxis import PROCESS_OUT_DIR
+
 
 NAME = 'flagella_motor'
 
 
 class FlagellaMotor(Process):
-    '''
-    Model of flagellarmotor activity
-    '''
+    """ Flagellar motor activity
+
+    Generates thrust and torque based on number of flagella and their motor states.
+
+    CheY phosphorylation model from:
+        Kollmann, M., Lovdok, L., Bartholome, K., Timmer, J., & Sourjik, V. (2005).
+        Design principles of a bacterial signalling network. Nature.
+
+    Veto model of motor activity from:
+        Mears, P. J., Koirala, S., Rao, C. V., Golding, I., & Chemla, Y. R. (2014).
+        Escherichia coli swimming is robust against variations in flagellar number. Elife.
+
+    """ 
 
     name = NAME
     initial_pmf = 170  # PMF ~170mV at pH 7, ~140mV at pH 7.7 (Berg H, E. coli in motion, 2004, pg 113)
     defaults = {
         'time_step': 0.01,
 
-        # Vladimirov parameters
+        #  CheY phosphorylation parameters
         # 'k_A': 5.0,  #
         'k_y': 100.0,  # 1/uM/s
         'k_z': 30.0,  # / CheZ,
-        'gamma_Y': 0.1,  # rate constant
+        'gamma_y': 0.1,  # rate constant
         'k_s': 0.45,  # scaling coefficient
         'adapt_precision': 8,  # scales CheY_P to cluster activity
 
@@ -50,9 +62,6 @@ class FlagellaMotor(Process):
         'n_motors': 5,
         'cw_to_ccw': 0.83,  # 1/s (Block1983) motor bias, assumed to be constant
         'cw_to_ccw_leak': 0.25,  # rate of spontaneous transition to tumble
-
-        # parameters for multibody physics
-        'tumble_jitter': 120.0,
 
         # rotational state of individual flagella
         # parameters from Sneddon, Pontius, and Emonet (2012)
@@ -64,8 +73,8 @@ class FlagellaMotor(Process):
         # motile force parameters
         'flagellum_thrust': 25,  # (pN) (Berg H, E. coli in motion, 2004, pg 113)
         'tumble_jitter': 120.0,
-        'tumble_scaling': 1 / initial_pmf,
-        'run_scaling': 1 / initial_pmf,
+        'tumble_scaling': 1.4 / initial_pmf,
+        'run_scaling': 1.4 / initial_pmf,
 
         # initial state
         'initial_state': {
@@ -180,13 +189,13 @@ class FlagellaMotor(Process):
         k_y = self.parameters['k_y']
         k_s = self.parameters['k_s']
         k_z = self.parameters['k_z']
-        gamma_Y = self.parameters['gamma_Y']
+        gamma_y = self.parameters['gamma_y']
         mb_0 = self.parameters['mb_0']
         cw_to_ccw = self.parameters['cw_to_ccw']
 
         ## Kinase activity
         # relative steady-state concentration of phosphorylated CheY.
-        new_CheY_P = adapt_precision * k_y * k_s * P_on / (k_y * k_s * P_on + k_z + gamma_Y)  # CheZ cancels out of k_z
+        new_CheY_P = adapt_precision * k_y * k_s * P_on / (k_y * k_s * P_on + k_z + gamma_y)  # CheZ cancels out of k_z
         dCheY_P = new_CheY_P - CheY_P_0
         CheY_P = max(new_CheY_P, 0.0)  # keep value positive
         CheY = max(CheY_0 - dCheY_P, 0.0)  # keep value positive
@@ -198,15 +207,6 @@ class FlagellaMotor(Process):
         # don't let cw_bias get under leak value
         if cw_bias < self.parameters['cw_to_ccw_leak']:
             cw_bias = self.parameters['cw_to_ccw_leak']
-
-
-
-
-        # import ipdb; ipdb.set_trace()
-
-
-
-
 
         ## update flagella
         # update number of flagella
@@ -264,14 +264,14 @@ class FlagellaMotor(Process):
 
 
     def update_flagellum(self, motor_state, cw_bias, CheY_P, timestep):
-        '''
+        """
         Rotational state of an individual flagellum from:
             Sneddon, M. W., Pontius, W., & Emonet, T. (2012).
             Stochastic coordination of multiple actuators reduces
             latency and improves chemotactic response in bacteria.
 
         # TODO -- normal, semi, curly states from Sneddon
-        '''
+        """
         g_0 = self.parameters['g_0']  # (k_B/T) free energy barrier for CCW-->CW
         g_1 = self.parameters['g_1']  # (k_B/T) free energy barrier for CW-->CCW
         K_D = self.parameters['K_D']  # binding constant of CheY-P to base of the motor
@@ -303,17 +303,19 @@ class FlagellaMotor(Process):
         return new_motor_state
 
     def tumble(self, n_flagella, PMF):
-        thrust = self.parameters['tumble_scaling'] * PMF * self.parameters['flagellum_thrust'] * n_flagella
+        # thrust scales with lg(n_flagella) because only the thickness of the bundle is affected
+        thrust = self.parameters['tumble_scaling'] * PMF * self.parameters['flagellum_thrust'] * math.log(n_flagella + 1)
         torque = random.normalvariate(0, self.parameters['tumble_jitter'])
         return [thrust, torque]
 
     def run(self, n_flagella, PMF):
-        thrust = self.parameters['run_scaling'] * PMF * self.parameters['flagellum_thrust'] * n_flagella
+        # thrust scales with lg(n_flagella) because only the thickness of the bundle is affected
+        thrust = self.parameters['run_scaling'] * PMF * self.parameters['flagellum_thrust'] * math.log(n_flagella + 1)
         torque = 0.0
         return [thrust, torque]
 
 
-# testing functions
+# test functions
 def get_chemoreceptor_timeline(
         total_time=2,
         time_step=0.01,
@@ -359,8 +361,11 @@ def run_variable_flagella(out_dir='out'):
         rate=2.0,
     )
     timeline_flagella = [
-        (1, {('internal_counts', 'flagella'): 4}),
-        (2, {('internal_counts', 'flagella'): 5}),
+        (0.5, {('internal_counts', 'flagella'): 1}),
+        (1.0, {('internal_counts', 'flagella'): 2}),
+        (1.5, {('internal_counts', 'flagella'): 3}),
+        (2.0, {('internal_counts', 'flagella'): 4}),
+        (2.5, {('internal_counts', 'flagella'): 5}),
     ]
     timeline.extend(timeline_flagella)
 

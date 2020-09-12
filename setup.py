@@ -13,7 +13,7 @@ setup(
     version='0.0.1',
     packages=[
         'chemotaxis',
-        'chemotaxis.compartments',
+        'chemotaxis.composites',
         'chemotaxis.experiments',
         'chemotaxis.processes'],
     author='Eran Agmon, Ryan Spangler',

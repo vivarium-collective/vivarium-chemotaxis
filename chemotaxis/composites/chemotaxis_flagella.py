@@ -1,23 +1,20 @@
-from __future__ import absolute_import, division, print_function
+"""
+==============================
+Chemotaxis Flagella Composites
+==============================
+"""
 
 import os
 import sys
-import copy
-import random
 import argparse
 
-from vivarium.library.dict_utils import deep_merge
 from vivarium.library.units import units
 from vivarium.core.process import Generator
 from vivarium.core.composition import (
     plot_compartment_topology,
     simulate_compartment_in_experiment,
     plot_simulation_output,
-    COMPARTMENT_OUT_DIR
 )
-
-# data
-from cell.data.amino_acids import amino_acids
 
 # processes
 from chemotaxis.processes.chemoreceptor_cluster import (
@@ -33,8 +30,8 @@ from cell.processes.complexation import Complexation
 from cell.processes.growth_protein import GrowthProtein
 from cell.processes.derive_globals import DeriveGlobals
 from cell.processes.ode_expression import ODE_expression, get_flagella_expression
-from chemotaxis.processes.flagella_activity import FlagellaActivity
-from chemotaxis.compartments.flagella_expression import (
+from chemotaxis.processes.flagella_motor import FlagellaMotor
+from chemotaxis.composites.flagella_expression import (
     get_flagella_expression_config,
     get_flagella_initial_state,
     plot_gene_expression_output,
@@ -42,6 +39,10 @@ from chemotaxis.compartments.flagella_expression import (
 
 # plots
 from chemotaxis.plots.flagella_activity import plot_signal_transduction
+
+# directories
+from chemotaxis import COMPOSITE_OUT_DIR
+
 
 NAME = 'chemotaxis_flagella'
 
@@ -51,6 +52,10 @@ DEFAULT_INITIAL_LIGAND = 1e-2
 
 
 class ChemotaxisVariableFlagella(Generator):
+    """
+    A composite of the ReceptorCluster and FlagellaMotor processes
+    """
+
     n_flagella = 5
     time_step = 0.01
     defaults = {
@@ -70,7 +75,7 @@ class ChemotaxisVariableFlagella(Generator):
 
     def generate_processes(self, config):
         receptor = ReceptorCluster(config['receptor'])
-        flagella = FlagellaActivity(config['flagella'])
+        flagella = FlagellaMotor(config['flagella'])
 
         return {
             'receptor': receptor,
@@ -93,6 +98,14 @@ class ChemotaxisVariableFlagella(Generator):
 
 
 class ChemotaxisODEExpressionFlagella(Generator):
+    """
+    A composite of the ReceptorCluster, FlagellaMotor, ODE_expression,
+    and GrowthProtein processes.
+
+    ODE_expression is configured to express flagella, which sets the number
+    of flagella in FlagellaMotor.
+    """
+
     ligand_id = 'MeAsp'
     initial_ligand = DEFAULT_INITIAL_LIGAND
     n_flagella = 5
@@ -138,7 +151,7 @@ class ChemotaxisODEExpressionFlagella(Generator):
 
         return {
             'receptor': ReceptorCluster(config['receptor']),
-            'flagella': FlagellaActivity(config['flagella']),
+            'flagella': FlagellaMotor(config['flagella']),
             'expression': ODE_expression(config['expression']),
             'growth': GrowthProtein(config['growth']),
             'division': MetaDivision(division_config),
@@ -178,6 +191,15 @@ class ChemotaxisODEExpressionFlagella(Generator):
 
 
 class ChemotaxisExpressionFlagella(Generator):
+    """
+    A composite of the ReceptorCluster, FlagellaMotor, GrowthProtein
+    and stochastic gene expression processes: Translation, Transcription,
+    Complexation, and Degradation.
+
+    The gene expression processes express flagella based on sequence and
+    transcription unit data.
+    """
+
     ligand_id = 'MeAsp'
     initial_ligand = 0.1
     n_flagella = 5
@@ -223,7 +245,7 @@ class ChemotaxisExpressionFlagella(Generator):
 
         return {
             'receptor': ReceptorCluster(config['receptor']),
-            'flagella': FlagellaActivity(config['flagella']),
+            'flagella': FlagellaMotor(config['flagella']),
             'transcription': Transcription(config['transcription']),
             'translation': Translation(config['translation']),
             'degradation': RnaDegradation(config['degradation']),
@@ -295,14 +317,15 @@ class ChemotaxisExpressionFlagella(Generator):
         }
 
 
-def get_timeline(
-    environment_port=DEFAULT_ENVIRONMENT_PORT,
-    ligand_id=DEFAULT_LIGAND,
-    initial_conc=DEFAULT_INITIAL_LIGAND,
-    total_time=10,
-    timestep=1,
-    base=1+3e-4,
-    speed=14,
+# TODO -- merge this with get_exponential_random_timeline
+def get_chemotaxis_timeline(
+        environment_port=DEFAULT_ENVIRONMENT_PORT,
+        ligand_id=DEFAULT_LIGAND,
+        initial_conc=DEFAULT_INITIAL_LIGAND,
+        total_time=10,
+        timestep=1,
+        base=1+3e-4,
+        speed=14,
 ):
     return get_exponential_random_timeline({
         'ligand': ligand_id,
@@ -313,12 +336,10 @@ def get_timeline(
         'base': base,
         'speed': speed})
 
-def get_baseline_config(
-    n_flagella=5
-):
+
+def get_baseline_config(n_flagella=5):
     return {
         'agents_path': ('agents',),  # Note -- should go two level up for experiments with environment
-        # 'growth_rate': 0.0001,
         'receptor': {
             'ligand_id': DEFAULT_LIGAND,
             'initial_ligand': DEFAULT_INITIAL_LIGAND,
@@ -361,7 +382,7 @@ def test_ode_expression_chemotaxis(
 
     # run experiment
     initial_state = {}
-    timeline = get_timeline(total_time=total_time)
+    timeline = get_chemotaxis_timeline(total_time=total_time)
     experiment_settings = {
         'initial_state': initial_state,
         'timeline': {
@@ -397,7 +418,7 @@ def test_expression_chemotaxis(
     # run experiment
     initial_state = get_flagella_initial_state({
         'molecules': 'internal'})
-    timeline = get_timeline(total_time=total_time)
+    timeline = get_chemotaxis_timeline(total_time=total_time)
     experiment_settings = {
         'initial_state': initial_state,
         'timeline': {
@@ -427,7 +448,7 @@ def test_expression_chemotaxis(
 
 def test_variable_chemotaxis(
         n_flagella=5,
-        total_time=10,
+        timeline=get_chemotaxis_timeline(total_time=10),
         out_dir='out'
 ):
     # make the compartment
@@ -439,7 +460,6 @@ def test_variable_chemotaxis(
 
     # run experiment
     initial_state = {}
-    timeline = get_timeline(total_time=total_time)
     experiment_settings = {
         'initial_state': initial_state,
         'timeline': {
@@ -462,7 +482,7 @@ def make_dir(out_dir):
 
 
 if __name__ == '__main__':
-    out_dir = os.path.join(COMPARTMENT_OUT_DIR, NAME)
+    out_dir = os.path.join(COMPOSITE_OUT_DIR, NAME)
     make_dir(out_dir)
 
     parser = argparse.ArgumentParser(description='variable flagella')
@@ -478,7 +498,7 @@ if __name__ == '__main__':
         make_dir(variable_out_dir)
         test_variable_chemotaxis(
             n_flagella=args.flagella,
-            total_time=90,
+            timeline=get_chemotaxis_timeline(total_time=90),
             out_dir=variable_out_dir)
     elif args.ode:
         # ODE flagella expression

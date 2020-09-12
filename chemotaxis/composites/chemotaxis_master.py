@@ -1,46 +1,59 @@
-from __future__ import absolute_import, division, print_function
+"""
+===========================
+Chemotaxis Master Composite
+===========================
+"""
 
 import os
 
+# core imports
 from vivarium.core.process import Generator
 from vivarium.core.composition import (
     simulate_compartment_in_experiment,
     plot_simulation_output,
     plot_compartment_topology,
-    COMPARTMENT_OUT_DIR
 )
-from cell.compartments.gene_expression import plot_gene_expression_output
-from chemotaxis.compartments.flagella_expression import get_flagella_expression_config
 
 # processes
 from cell.processes.metabolism import (
     Metabolism,
     get_iAF1260b_config
 )
-from cell.processes.convenience_kinetics import (
-    ConvenienceKinetics,
-    get_glc_lct_config
-)
+from cell.processes.convenience_kinetics import ConvenienceKinetics
 from cell.processes.transcription import Transcription
 from cell.processes.translation import Translation
 from cell.processes.degradation import RnaDegradation
 from cell.processes.complexation import Complexation
+from cell.processes.membrane_potential import MembranePotential
 from cell.processes.division_volume import DivisionVolume
 from chemotaxis.processes.chemoreceptor_cluster import ReceptorCluster
-from chemotaxis.processes.flagella_activity import FlagellaActivity
-from chemotaxis.processes.membrane_potential import MembranePotential
+from chemotaxis.processes.flagella_motor import FlagellaMotor
 
-# compartments
-from cell.compartments.master import default_metabolism_config
-from chemotaxis.compartments.flagella_expression import get_flagella_expression_config
+# composites
+from chemotaxis.composites.flagella_expression import get_flagella_expression_config
+from chemotaxis.composites.transport_metabolism import default_transport_config
+
+# plots
+from cell.plots.gene_expression import plot_gene_expression_output
+
+# directories
+from chemotaxis import COMPOSITE_OUT_DIR
+
 
 NAME = 'chemotaxis_master'
 
 
-def metabolism_timestep_config(time_step=1):
-    config = default_metabolism_config()
-    config.update({'time_step': time_step})
-    return config
+def get_metabolism_config(time_step=1):
+    metabolism_config = get_iAF1260b_config()
+    metabolism_config.update({
+        'time_step': time_step,
+        'moma': False,
+        'tolerance': {
+            'EX_glc__D_e': [1.05, 1.0],
+            'EX_lcts_e': [1.05, 1.0]}
+        })
+    return metabolism_config
+
 
 class ChemotaxisMaster(Generator):
 
@@ -48,8 +61,8 @@ class ChemotaxisMaster(Generator):
         'dimensions_path': ('dimensions',),
         'fields_path': ('fields',),
         'boundary_path': ('boundary',),
-        'transport': get_glc_lct_config(),
-        'metabolism': metabolism_timestep_config(10),
+        'transport': default_transport_config(),
+        'metabolism': get_metabolism_config(10),
         'transcription': get_flagella_expression_config({})['transcription'],
         'translation': get_flagella_expression_config({})['translation'],
         'degradation': get_flagella_expression_config({})['degradation'],
@@ -81,7 +94,7 @@ class ChemotaxisMaster(Generator):
 
         # chemotaxis -- flagella activity, receptor activity, and PMF
         receptor = ReceptorCluster(config['receptor'])
-        flagella = FlagellaActivity(config['flagella'])
+        flagella = FlagellaMotor(config['flagella'])
         PMF = MembranePotential(config['PMF'])
 
         # Division
@@ -226,7 +239,7 @@ def test_chemotaxis_master(total_time=5):
 
 
 if __name__ == '__main__':
-    out_dir = os.path.join(COMPARTMENT_OUT_DIR, NAME)
+    out_dir = os.path.join(COMPOSITE_OUT_DIR, NAME)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 

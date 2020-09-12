@@ -1,34 +1,31 @@
-'''
-==========================
-Vladimirov Motor Processes
-==========================
-'''
-
-from __future__ import absolute_import, division, print_function
+"""
+=======================
+Coarse Motor Processes
+=======================
+"""
 
 import os
 import random
-import copy
 import math
 
 import numpy as np
 from numpy import linspace
-import matplotlib.pyplot as plt
 
+# vivarium-core imports
 from vivarium.core.process import Process
-from vivarium.core.composition import (
-    simulate_process_in_experiment,
-    PROCESS_OUT_DIR,
-)
-from chemotaxis.plots.coarse_motor import (
-    plot_variable_receptor,
-    plot_motor_control,
-)
+
+# plots
+from chemotaxis.plots.coarse_motor import plot_variable_receptor
+
+# directories
+from chemotaxis import PROCESS_OUT_DIR
+
 
 NAME = 'coarse_motor'
 
+
 class MotorActivity(Process):
-    ''' Model of motor activity
+    """ Model of motor activity
 
     Based on the model described in:
         Vladimirov, N., Lovdok, L., Lebiedz, D., & Sourjik, V. (2008).
@@ -45,25 +42,29 @@ class MotorActivity(Process):
     but subsequent methylation returns CheA activity to its original level.
 
     TODO -- add CheB phosphorylation
-    '''
+    """
 
     name = NAME
     defaults = {
         'time_step': 0.1,
-        # Vladimirov parameters
+
+        #  CheY phosphorylation parameters
         # 'k_A': 5.0,  #
         'k_y': 100.0,  # 1/uM/s
         'k_z': 30.0,  # / CheZ,
         'gamma_Y': 0.1,  # rate constant
         'k_s': 0.45,  # scaling coefficient
         'adapt_precision': 3,  # scales CheY_P to cluster activity
+
         # motor
         'mb_0': 0.65,  # steady state motor bias (Cluzel et al 2000)
         'n_motors': 5,
         'cw_to_ccw': 0.83,  # 1/s (Block1983) motor bias, assumed to be constant
         'cw_to_ccw_leak': 0.25,  # rate of spontaneous transition to tumble
+
         # parameters for multibody physics
         'tumble_jitter': 120.0,
+
         # initial state
         'initial_state': {
             'internal': {
@@ -172,30 +173,21 @@ class MotorActivity(Process):
             'external': {
                 'thrust': thrust,
                 'torque': torque
-            }}
+            }
+        }
 
 def tumble(tumble_jitter=120.0):
-    thrust = 100  # pN
-    # average = 160
-    # sigma = 10
-    # torque = random.choice([-1, 1]) * random.normalvariate(average, sigma)
+    thrust = 100  # (pN)
     torque = random.normalvariate(0, tumble_jitter)
     return [thrust, torque]
 
 def run():
     # average thrust = 200 pN according to:
     # Berg, Howard C. E. coli in Motion. Under "Torque-Speed Dependence"
-    thrust = 250  # pN
+    thrust = 250  # (pN)
     torque = 0.0
     return [thrust, torque]
 
-
-def test_motor_control(total_time=10):
-    motor = MotorActivity({})
-    experiment_settings = {
-        'total_time': total_time,
-        'timestep': 0.01}
-    return simulate_process_in_experiment(motor, experiment_settings)
 
 def test_variable_receptor():
     motor = MotorActivity()
@@ -234,9 +226,6 @@ if __name__ == '__main__':
     out_dir = os.path.join(PROCESS_OUT_DIR, NAME)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-
-    output1 = test_motor_control(200)
-    plot_motor_control(output1, out_dir)
 
     output2 = test_variable_receptor()
     plot_variable_receptor(output2, out_dir)
