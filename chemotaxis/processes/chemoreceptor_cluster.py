@@ -1,4 +1,8 @@
-from __future__ import absolute_import, division, print_function
+"""
+=====================
+Chemoreceptor Cluster
+=====================
+"""
 
 import os
 import math
@@ -17,16 +21,7 @@ from chemotaxis import PROCESS_OUT_DIR
 
 
 NAME = 'chemoreceptor_cluster'
-
 STEADY_STATE_DELTA = 1e-6
-
-INITIAL_INTERNAL_STATE = {
-    'n_methyl': 2.0,  # initial number of methyl groups on receptor cluster (0 to 8)
-    'chemoreceptor_activity': 1./3.,  # initial probability of receptor cluster being on
-    'CheR': 0.00016,  # (mM) wild type concentration. 0.16 uM = 0.00016 mM
-    'CheB': 0.00028,  # (mM) wild type concentration. 0.28 uM = 0.00028 mM. [CheR]:[CheB]=0.16:0.28
-    'CheB_P': 0.0,  # phosphorylated CheB
-}
 
 
 def run_step(receptor, state, timestep):
@@ -99,7 +94,13 @@ class ReceptorCluster(Process):
     defaults = {
         'ligand_id': 'MeAsp',
         'initial_ligand': 5.0,
-        'initial_internal_state': INITIAL_INTERNAL_STATE,
+        'initial_internal_state': {
+            'n_methyl': 2.0,  # initial number of methyl groups on receptor cluster (0 to 8)
+            'chemoreceptor_activity': 1./3.,  # initial probability of receptor cluster being on
+            'CheR': 0.00016,  # (mM) wild type concentration. 0.16 uM = 0.00016 mM
+            'CheB': 0.00028,  # (mM) wild type concentration. 0.28 uM = 0.00028 mM. [CheR]:[CheB]=0.16:0.28
+            'CheB_P': 0.0,  # phosphorylated CheB
+        },
         # Parameters from Endres and Wingreen 2006.
         'n_Tar': 6,
         'n_Tsr': 12,
@@ -127,7 +128,10 @@ class ReceptorCluster(Process):
         run_to_steady_state(self, self.initial_state, 1.0)
 
     def ports_schema(self):
-        ports = ['internal', 'external']
+        ports = [
+            'internal',
+            'external',
+        ]
         schema = {port: {} for port in ports}
 
         # external
@@ -137,21 +141,17 @@ class ReceptorCluster(Process):
                 '_emit': True}
 
         # internal
+        set_update = ['chemoreceptor_activity', 'n_methyl']
         for state in list(self.initial_state['internal'].keys()):
             schema['internal'][state] = {
                 '_default': self.initial_state['internal'][state],
                 '_emit': True}
-            # set updater
-            if state in ['chemoreceptor_activity', 'n_methyl']:
+            if state in set_update:
                 schema['internal'][state]['_updater'] = 'set'
 
         return schema
 
     def next_update(self, timestep, states):
-        '''
-        Monod-Wyman-Changeux model for mixed cluster activity from:
-            Endres & Wingreen. (2006). Precise adaptation in bacterial chemotaxis through "assistance neighborhoods"
-        '''
 
         # parameters
         n_Tar = self.parameters['n_Tar']
@@ -201,20 +201,19 @@ class ReceptorCluster(Process):
             offset_energy = -3.0
 
         # free energy of the receptors.
-        # TODO -- generalize to other ligands (repellents). See Endres & Wingreen 2006 eqn 9 in supporting info
         Tar_free_energy = n_Tar * (offset_energy + math.log((1+ligand_conc/K_Tar_off) / (1+ligand_conc/K_Tar_on)))
         Tsr_free_energy = n_Tsr * (offset_energy + math.log((1+ligand_conc/K_Tsr_off) / (1+ligand_conc/K_Tsr_on)))
 
         # free energy of receptor clusters
-        cluster_free_energy = Tar_free_energy + Tsr_free_energy  #  free energy of the cluster
-        P_on = 1.0/(1.0 + math.exp(cluster_free_energy))  # probability that receptor cluster is ON (CheA is phosphorylated). Higher free energy --> activity less probably
+        cluster_free_energy = Tar_free_energy + Tsr_free_energy
+        P_on = 1.0/(1.0 + math.exp(cluster_free_energy))  # probability that receptor cluster is ON
 
-        update = {
+        return {
             'internal': {
                 'chemoreceptor_activity': P_on,
                 'n_methyl': n_methyl,
-            }}
-        return update
+            }
+        }
 
 
 # tests and analyses of process
@@ -229,26 +228,6 @@ def get_pulse_timeline(ligand='MeAsp'):
         (600, {('external', ligand): 0.0}),
         (700, {('external', ligand): 0.0})]
     return timeline
-
-def get_linear_step_timeline(config):
-    time = config.get('time', 100)
-    slope = config.get('slope', 2e-3)  # mM/um
-    speed = config.get('speed', 14)     # um/s
-    conc_0 = config.get('initial_conc', 0)  # mM
-    ligand = config.get('ligand', 'MeAsp')
-    env_port = config.get('environment_port', 'external')
-
-    return [(t, {(env_port, ligand): conc_0 + slope*t*speed}) for t in range(time)]
-
-def get_exponential_step_timeline(config):
-    time = config.get('time', 100)
-    base = config.get('base', 1+1e-4)  # mM/um
-    speed = config.get('speed', 14)     # um/s
-    conc_0 = config.get('initial_conc', 0)  # mM
-    ligand = config.get('ligand', 'MeAsp')
-    env_port = config.get('environment_port', 'external')
-
-    return [(t, {(env_port, ligand): conc_0 + base**(t*speed) - 1}) for t in range(time)]
 
 def get_exponential_random_timeline(config):
     # exponential space with random direction changes
@@ -297,22 +276,6 @@ if __name__ == '__main__':
     timeline = get_pulse_timeline()
     timeseries = test_receptor(timeline)
     plot_receptor_output(timeseries, out_dir, 'pulse')
-
-    linear_config = {
-        'time': 10,
-        'slope': 1e-3,
-        'speed': 14}
-    timeline2 = get_linear_step_timeline(linear_config)
-    output2 = test_receptor(timeline2)
-    plot_receptor_output(output2, out_dir, 'linear')
-
-    exponential_config = {
-        'time': 10,
-        'base': 1+4e-4,
-        'speed': 14}
-    timeline3 = get_exponential_step_timeline(exponential_config)
-    output3 = test_receptor(timeline3)
-    plot_receptor_output(output3, out_dir, 'exponential_4e-4')
 
     exponential_random_config = {
         'time': 60,

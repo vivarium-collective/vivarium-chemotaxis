@@ -315,7 +315,7 @@ class FlagellaMotor(Process):
         return [thrust, torque]
 
 
-# testing functions
+# test functions
 def get_chemoreceptor_timeline(
         total_time=2,
         time_step=0.01,

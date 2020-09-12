@@ -1,10 +1,8 @@
 '''
-==========================
+=======================
 Coarse Motor Processes
-==========================
+=======================
 '''
-
-from __future__ import absolute_import, division, print_function
 
 import os
 import random
@@ -179,30 +177,21 @@ class MotorActivity(Process):
             'external': {
                 'thrust': thrust,
                 'torque': torque
-            }}
+            }
+        }
 
 def tumble(tumble_jitter=120.0):
-    thrust = 100  # pN
-    # average = 160
-    # sigma = 10
-    # torque = random.choice([-1, 1]) * random.normalvariate(average, sigma)
+    thrust = 100  # (pN)
     torque = random.normalvariate(0, tumble_jitter)
     return [thrust, torque]
 
 def run():
     # average thrust = 200 pN according to:
     # Berg, Howard C. E. coli in Motion. Under "Torque-Speed Dependence"
-    thrust = 250  # pN
+    thrust = 250  # (pN)
     torque = 0.0
     return [thrust, torque]
 
-
-def test_motor_control(total_time=10):
-    motor = MotorActivity({})
-    experiment_settings = {
-        'total_time': total_time,
-        'timestep': 0.01}
-    return simulate_process_in_experiment(motor, experiment_settings)
 
 def test_variable_receptor():
     motor = MotorActivity()
@@ -241,9 +230,6 @@ if __name__ == '__main__':
     out_dir = os.path.join(PROCESS_OUT_DIR, NAME)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-
-    output1 = test_motor_control(200)
-    plot_motor_control(output1, out_dir)
 
     output2 = test_variable_receptor()
     plot_variable_receptor(output2, out_dir)
