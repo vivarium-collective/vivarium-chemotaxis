@@ -11,6 +11,8 @@ import os
 import argparse
 import uuid
 
+import numpy as np
+
 # vivarium-core imports
 from vivarium.library.units import units
 from vivarium.core.composition import (
@@ -20,6 +22,7 @@ from vivarium.core.composition import (
     plot_simulation_output,
     plot_agents_multigen,
 )
+from vivarium.core.emitter import time_indexed_timeseries_from_data
 
 # vivarium-cell imports
 from cell.processes.metabolism import (
@@ -28,6 +31,7 @@ from cell.processes.metabolism import (
 )
 from cell.processes.transcription import UNBOUND_RNAP_KEY
 from cell.processes.translation import UNBOUND_RIBOSOME_KEY
+from cell.processes.static_field import make_field
 from cell.composites.lattice import Lattice
 from cell.composites.static_lattice import StaticLattice
 from cell.experiments.lattice_experiment import get_iAF1260b_environment
@@ -40,6 +44,7 @@ from chemotaxis.processes.chemoreceptor_cluster import (
 )
 
 # chemotaxis composite imports
+from chemotaxis.composites.chemotaxis_minimal import ChemotaxisMinimal
 from chemotaxis.composites.chemotaxis_flagella import (
     ChemotaxisVariableFlagella,
     get_chemotaxis_timeline,
@@ -67,6 +72,7 @@ from cell.plots.gene_expression import (
     gene_network_plot,
 )
 from cell.plots.multibody_physics import (
+    plot_agent_trajectory,
     plot_snapshots,
     plot_tags
 )
@@ -431,6 +437,33 @@ def run_flagella_metabolism_experiment(out_dir='out'):
 # figure 7a
 def variable_flagella(out_dir='out'):
     run_variable_flagella(out_dir)
+    # time_step = 0.01
+    # # make timeline with both chemoreceptor variation and flagella counts
+    # timeline = get_chemoreceptor_timeline(
+    #     total_time=3,
+    #     time_step=time_step,
+    #     rate=2.0,
+    # )
+    # timeline_flagella = [
+    #     (0.5, {('internal_counts', 'flagella'): 1}),
+    #     (1.0, {('internal_counts', 'flagella'): 2}),
+    #     (1.5, {('internal_counts', 'flagella'): 3}),
+    #     (2.0, {('internal_counts', 'flagella'): 4}),
+    #     (2.5, {('internal_counts', 'flagella'): 5}),
+    # ]
+    # timeline.extend(timeline_flagella)
+    #
+    # # run simulation
+    # data = test_flagella_motor(
+    #     timeline=timeline,
+    #     time_step=time_step,
+    # )
+    #
+    # # plot
+    # plot_settings = {}
+    # timeseries = timeseries_from_data(data)
+    # plot_simulation_output(timeseries, plot_settings, out_dir)
+    # plot_activity(data, plot_settings, out_dir)
 
 
 # figure 7b
@@ -475,59 +508,109 @@ def run_chemotaxis_transduction(out_dir='out'):
 
 
 
-def get_exponential_env_config():
-    # TODO -- lowercase.  put this somewhere else?
+# helper functions for chemotaxis
+def single_agent_config(config):
+    width = 1
+    length = 2
+    # volume = volume_from_length(length, width)
+    bounds = config.get('bounds')
+    location = config.get('location')
+    location = [loc * bounds[n] for n, loc in enumerate(location)]
+    return {'boundary': {
+        'location': location,
+        # 'angle': np.random.uniform(0, 2 * PI),
+        # 'volume': volume,
+        'length': length,
+        'width': width,
+        'mass': 1339 * units.fg,
+        'thrust': 0,
+        'torque': 0}}
 
-    DEFAULT_LIGAND_ID = 'glc__D_e'  # BiGG id for external glucose
-    DEFAULT_BOUNDS = [1000, 3000]
-    DEFAULT_AGENT_LOCATION = [0.5, 0.1]
-
-    # exponential field parameters
-    FIELD_SCALE = 4.0
-    EXPONENTIAL_BASE = 1.3e2
-    FIELD_CENTER = [0.5, 0.0]
-
-    # multibody process config
-    multibody_config = {
-        'bounds': DEFAULT_BOUNDS}
-
-    # static field config
-    field_config = {
-        'molecules': [DEFAULT_LIGAND_ID],
-        'gradient': {
-            'type': 'exponential',
-            'molecules': {
-                DEFAULT_LIGAND_ID: {
-                    'center': FIELD_CENTER,
-                    'scale': FIELD_SCALE,
-                    'base': EXPONENTIAL_BASE}}},
-        'bounds': DEFAULT_BOUNDS}
-
+def agent_body_config(config):
+    agent_ids = config['agent_ids']
+    agent_config = {
+        agent_id: single_agent_config(config)
+        for agent_id in agent_ids}
     return {
-        'multibody': multibody_config,
-        'field': field_config}
+        'agents': agent_config}
 
 
 # figure 7d
 def run_chemotaxis_experiment(out_dir='out'):
-    total_time = 6000
-    emit_step = 10
+    total_time = 30
+    emit_step = 5
+    time_step = 0.001
+    tumble_jitter = 4000  # why tumble jitter?
 
-    ## make the experiment
-    # configure
-    agents_config = {
-        'ids': ['chemotaxis_master'],
-        'type': ChemotaxisMaster,
+    ligand_id = 'glc__D_e'  # BiGG id for external glucose
+    bounds = [1000, 3000]
+    initial_agent_location = [0.5, 0.1]
+
+    # exponential field parameters
+    # TODO -- not uppercase!
+    FIELD_SCALE = 4.0
+    EXPONENTIAL_BASE = 1.3e2
+    FIELD_CENTER = [0.5, 0.0]
+    LOC_DX = (initial_agent_location[0] - FIELD_CENTER[0]) * bounds[0]
+    LOC_DY = (initial_agent_location[1] - FIELD_CENTER[1]) * bounds[1]
+    DIST = np.sqrt(LOC_DX ** 2 + LOC_DY ** 2)
+    INITIAL_LIGAND = FIELD_SCALE * EXPONENTIAL_BASE ** (DIST / 1000)
+
+    # configure agents
+    agents_config = [{
+        'number': 2,
+        'name': 'receptor + motor',
+        'type': ChemotaxisMinimal,
         'config': {
+            'ligand_id': ligand_id,
+            'initial_ligand': INITIAL_LIGAND,
+            'external_path': ('global',),
             'agents_path': ('..', '..', 'agents'),
-            'fields_path': ('..', '..', 'fields'),
-            'dimensions_path': ('..', '..', 'dimensions'),
-        }}
+            'daughter_path': tuple(),
+            'receptor': {
+                'time_step': time_step},
+            'motor': {
+                'tumble_jitter': tumble_jitter,
+                'time_step': time_step}
+        }
+    }]
+    agent_ids = make_agent_ids(agents_config)
+    # agents_config = {
+    #     'ids': ['chemotaxis_master'],
+    #     'type': ChemotaxisMaster,
+    #     'config': {
+    #         'agents_path': ('..', '..', 'agents'),
+    #         'fields_path': ('..', '..', 'fields'),
+    #         'dimensions_path': ('..', '..', 'dimensions')}}
 
+    # configure environment
     environment_config = {
         'type': StaticLattice,
-        'config': get_exponential_env_config(),
+        'config': {
+            'multibody': {
+                'bounds': bounds
+            },
+            'field': {
+                'molecules': [ligand_id],
+                'gradient': {
+                    'type': 'exponential',
+                    'molecules': {
+                        ligand_id: {
+                            'center': FIELD_CENTER,
+                            'scale': FIELD_SCALE,
+                            'base': EXPONENTIAL_BASE}}},
+                'bounds': bounds
+            }
+        }
     }
+
+    # initialize state
+    initial_state = {}
+    initial_agent_body = agent_body_config({
+        'bounds': bounds,
+        'agent_ids': agent_ids,
+        'location': initial_agent_location})
+    initial_state.update(initial_agent_body)
 
     # use agent_environment_experiment to make the experiment
     experiment_settings = {
@@ -538,15 +621,23 @@ def run_chemotaxis_experiment(out_dir='out'):
     experiment = agent_environment_experiment(
         agents_config=agents_config,
         environment_config=environment_config,
-        initial_agent_state=initial_agent_state,
+        initial_state=initial_state,
         settings=experiment_settings)
 
-    ## run the experiment
+    # run the experiment
     experiment.update(total_time)
     data = experiment.emitter.get_data()
 
+    # plot trajectory
+    field_config = environment_config['config']['field']
+    indexed_timeseries = time_indexed_timeseries_from_data(data)
+    field = make_field(field_config)
+    trajectory_config = {
+        'bounds': field_config['bounds'],
+        'field': field,
+        'rotate_90': True}
+    plot_agent_trajectory(indexed_timeseries, trajectory_config, out_dir, 'trajectory')
 
-    import ipdb; ipdb.set_trace()
 
 
 # put all the experiments for the paper in a dictionary
