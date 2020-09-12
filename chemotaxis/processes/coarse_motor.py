@@ -1,8 +1,8 @@
-'''
+"""
 =======================
 Coarse Motor Processes
 =======================
-'''
+"""
 
 import os
 import random
@@ -25,7 +25,7 @@ NAME = 'coarse_motor'
 
 
 class MotorActivity(Process):
-    ''' Model of motor activity
+    """ Model of motor activity
 
     Based on the model described in:
         Vladimirov, N., Lovdok, L., Lebiedz, D., & Sourjik, V. (2008).
@@ -42,7 +42,7 @@ class MotorActivity(Process):
     but subsequent methylation returns CheA activity to its original level.
 
     TODO -- add CheB phosphorylation
-    '''
+    """
 
     name = NAME
     defaults = {

@@ -1,4 +1,8 @@
-from __future__ import absolute_import, division, print_function
+"""
+==============================
+Chemotaxis Flagella Composites
+==============================
+"""
 
 import os
 import sys

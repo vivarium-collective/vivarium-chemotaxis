@@ -9,7 +9,6 @@ with different chemotactic agents and environments.
 
 import os
 import argparse
-import uuid
 
 import numpy as np
 

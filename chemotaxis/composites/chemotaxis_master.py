@@ -1,4 +1,8 @@
-from __future__ import absolute_import, division, print_function
+"""
+===========================
+Chemotaxis Master Composite
+===========================
+"""
 
 import os
 
