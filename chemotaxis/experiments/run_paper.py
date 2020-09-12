@@ -41,7 +41,7 @@ from chemotaxis.processes.chemoreceptor_cluster import (
 
 # chemotaxis composite imports
 from chemotaxis.composites.chemotaxis_flagella import (
-    test_variable_chemotaxis,
+    ChemotaxisVariableFlagella,
     get_chemotaxis_timeline,
 )
 from chemotaxis.composites.flagella_expression import (
@@ -72,6 +72,7 @@ from cell.plots.multibody_physics import (
 )
 from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
 from chemotaxis.plots.transport_metabolism import analyze_transport_metabolism
+from chemotaxis.plots.flagella_activity import plot_signal_transduction
 
 # directories
 from chemotaxis import EXPERIMENT_OUT_DIR
@@ -441,11 +442,37 @@ def run_chemoreceptor_pulse(out_dir='out'):
 
 # figure 7c
 def run_chemotaxis_transduction(out_dir='out'):
-    test_variable_chemotaxis(
-        out_dir=out_dir,
-        timeline=get_chemotaxis_timeline(
-            timestep=0.1,
-            total_time=90))
+    n_flagella = 5
+    ligand_id = 'MeAsp'
+    total_time = 90
+
+    # configure the compartment
+    config = {
+        'receptor': {
+            'ligand_id': 'MeAsp',
+            'initial_ligand': 1e-2},
+        'flagella': {
+            'n_flagella': n_flagella}}
+    compartment = ChemotaxisVariableFlagella(config)
+
+    # make a timeline
+    timeline = get_chemotaxis_timeline(
+        ligand_id=ligand_id,
+        timestep=0.1,
+        total_time=total_time)
+
+    # run experiment
+    experiment_settings = {
+        'timeline': {
+            'timeline': timeline,
+            'ports': {'external': ('boundary', 'external')}}}
+    timeseries = simulate_compartment_in_experiment(
+        compartment,
+        experiment_settings)
+
+    # plot
+    plot_signal_transduction(timeseries, out_dir)
+
 
 
 def get_exponential_env_config():
