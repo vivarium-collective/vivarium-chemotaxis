@@ -27,8 +27,6 @@ from cell.processes.metabolism import (
     Metabolism,
     get_iAF1260b_config,
 )
-from cell.processes.transcription import UNBOUND_RNAP_KEY
-from cell.processes.translation import UNBOUND_RIBOSOME_KEY
 from cell.processes.static_field import make_field
 from cell.composites.lattice import Lattice
 from cell.composites.static_lattice import StaticLattice
@@ -36,7 +34,10 @@ from cell.composites.growth_division import GrowthDivision
 from cell.experiments.lattice_experiment import get_iAF1260b_environment, get_lattice_config  # TODO -- get this in a better way...
 
 # chemotaxis processes
-from chemotaxis.processes.flagella_motor import run_variable_flagella
+from chemotaxis.processes.flagella_motor import (
+    FlagellaMotor,
+    get_chemoreceptor_activity_timeline
+)
 from chemotaxis.processes.chemoreceptor_cluster import (
     ReceptorCluster,
     get_pulse_timeline,
@@ -69,7 +70,10 @@ from cell.plots.gene_expression import (
 from cell.plots.multibody_physics import plot_agent_trajectory
 from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
 from chemotaxis.plots.transport_metabolism import plot_glc_lcts_environment
-from chemotaxis.plots.flagella_activity import plot_signal_transduction
+from chemotaxis.plots.flagella_activity import (
+    plot_signal_transduction,
+    plot_activity,
+)
 
 
 # figure 3b
@@ -421,34 +425,36 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
 
 # figure 7a
 def variable_flagella(out_dir='out'):
-    run_variable_flagella(out_dir)
-    # time_step = 0.01
-    # # make timeline with both chemoreceptor variation and flagella counts
-    # timeline = get_chemoreceptor_timeline(
-    #     total_time=3,
-    #     time_step=time_step,
-    #     rate=2.0,
-    # )
-    # timeline_flagella = [
-    #     (0.5, {('internal_counts', 'flagella'): 1}),
-    #     (1.0, {('internal_counts', 'flagella'): 2}),
-    #     (1.5, {('internal_counts', 'flagella'): 3}),
-    #     (2.0, {('internal_counts', 'flagella'): 4}),
-    #     (2.5, {('internal_counts', 'flagella'): 5}),
-    # ]
-    # timeline.extend(timeline_flagella)
-    #
-    # # run simulation
-    # data = test_flagella_motor(
-    #     timeline=timeline,
-    #     time_step=time_step,
-    # )
-    #
-    # # plot
-    # plot_settings = {}
-    # timeseries = timeseries_from_data(data)
-    # plot_simulation_output(timeseries, plot_settings, out_dir)
-    # plot_activity(data, plot_settings, out_dir)
+    total_time = 80
+    time_step = 0.01
+    initial_flagella = 1
+
+    # make timeline with varying chemoreceptor activity and flagella counts
+    timeline = get_chemoreceptor_activity_timeline(
+        total_time=total_time,
+        time_step=time_step,
+        rate=2.0,
+    )
+    timeline_flagella = [
+        (20, {('internal_counts', 'flagella'): initial_flagella + 1}),
+        (40, {('internal_counts', 'flagella'): initial_flagella + 2}),
+        (60, {('internal_counts', 'flagella'): initial_flagella + 3}),
+    ]
+    timeline.extend(timeline_flagella)
+
+    # run simulation
+    process_config = {'n_flagella': initial_flagella}
+    process = FlagellaMotor(process_config)
+    settings = {
+        'return_raw_data': True,
+        'timeline': {
+            'timeline': timeline,
+            'time_step': time_step}}
+    data = simulate_process_in_experiment(process, settings)
+
+    # plot
+    plot_settings = {}
+    plot_activity(data, plot_settings, out_dir)
 
 
 # figure 7b
