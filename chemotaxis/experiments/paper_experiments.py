@@ -497,15 +497,17 @@ def run_chemoreceptor_pulse(out_dir='out'):
 
 # figure 7c
 def run_chemotaxis_transduction(out_dir='out'):
+    total_time = 60
+    time_step = 0.1
     n_flagella = 5
     ligand_id = 'MeAsp'
-    total_time = 90
+    initial_ligand = 1e-2
 
     # configure the compartment
     compartment_config = {
         'receptor': {
-            'ligand_id': 'MeAsp',
-            'initial_ligand': 1e-2,
+            'ligand_id': ligand_id,
+            'initial_ligand': initial_ligand,
         },
         'flagella': {
             'n_flagella': n_flagella,
@@ -513,10 +515,11 @@ def run_chemotaxis_transduction(out_dir='out'):
     }
     compartment = ChemotaxisMaster(compartment_config)
 
-    # make a timeline
+    # make a timeline of external ligand concentrations
     timeline = get_brownian_ligand_timeline(
         ligand_id=ligand_id,
-        timestep=0.1,
+        initial_conc=initial_ligand,
+        timestep=time_step,
         total_time=total_time,
     )
 
@@ -525,12 +528,14 @@ def run_chemotaxis_transduction(out_dir='out'):
         'timeline': {
             'timeline': timeline,
             'ports': {'external': ('boundary', 'external')}}}
+
     timeseries = simulate_compartment_in_experiment(
         compartment,
         experiment_settings)
 
     # plot
-    plot_signal_transduction(timeseries, out_dir)
+    plot_config = {'ligand_id': ligand_id}
+    plot_signal_transduction(timeseries, plot_config, out_dir)
 
 
 

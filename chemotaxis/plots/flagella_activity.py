@@ -191,8 +191,12 @@ def plot_motor_PMF(output, out_dir='out', figname='motor_PMF'):
     plt.savefig(fig_path + '.png', bbox_inches='tight')
 
 
-def plot_signal_transduction(timeseries, out_dir='out', filename='signal_transduction'):
-    ligand = timeseries['boundary']['external']
+def plot_signal_transduction(timeseries, plot_config, out_dir='out', filename='signal_transduction'):
+    if plot_config.get('ligand_id'):
+        ligand_id = plot_config['ligand_id']
+        ligand = {ligand_id: timeseries['boundary']['external'][ligand_id]}
+    else:
+        ligand = timeseries['boundary']['external']
     chemoreceptor_activity = timeseries['internal']['chemoreceptor_activity']
     CheY_P = timeseries['internal']['CheY_P']
     cw_bias = timeseries['internal']['cw_bias']

@@ -22,7 +22,7 @@ from chemotaxis import PROCESS_OUT_DIR
 
 NAME = 'chemoreceptor_cluster'
 STEADY_STATE_DELTA = 1e-6
-DEFAULT_ENVIRONMENT_PORT = 'external'
+DEFAULT_ENVIRONMENT_PORT = ('external',)
 DEFAULT_LIGAND = 'MeAsp'
 DEFAULT_INITIAL_LIGAND = 1e-2
 
@@ -240,16 +240,16 @@ def get_exponential_random_timeline(config):
     speed = config.get('speed', 14)     # um/s
     conc_0 = config.get('initial_conc', 0)  # mM
     ligand = config.get('ligand', 'MeAsp')
-    env_port = config.get('environment_port', 'external')
+    env_port = config.get('environment_port', DEFAULT_ENVIRONMENT_PORT)
 
     conc = conc_0
-    timeline = [(0, {(env_port, ligand): conc})]
+    timeline = [(0, {env_port + (ligand,): conc})]
     t = 0
     while t < time:
         conc += base**(random.choice((-1, 1)) * speed) - 1
         if conc<0:
             conc = 0
-        timeline.append((t, {(env_port, ligand): conc}))
+        timeline.append((t, {env_port + (ligand,): conc}))
         t += timestep
     return timeline
 

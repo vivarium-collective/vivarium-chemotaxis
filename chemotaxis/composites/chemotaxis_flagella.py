@@ -453,7 +453,8 @@ def test_variable_chemotaxis(
     # plot
     plot_timeseries(timeseries, out_dir)
 
-    plot_signal_transduction(timeseries, out_dir)
+    plot_config = {}
+    plot_signal_transduction(timeseries, plot_config, out_dir)
 
 
 def make_dir(out_dir):
