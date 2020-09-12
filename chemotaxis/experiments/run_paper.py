@@ -23,6 +23,9 @@ from vivarium.core.composition import (
 )
 from vivarium.core.emitter import time_indexed_timeseries_from_data
 
+# experiment workflow
+from chemotaxis.experiments.workflow import workflow
+
 # vivarium-cell imports
 from cell.processes.metabolism import (
     Metabolism,
@@ -74,8 +77,6 @@ from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
 from chemotaxis.plots.transport_metabolism import analyze_transport_metabolism
 from chemotaxis.plots.flagella_activity import plot_signal_transduction
 
-# directories
-from chemotaxis import EXPERIMENT_OUT_DIR
 
 
 
@@ -712,53 +713,5 @@ experiments_library = {
 }
 
 
-def make_dir(out_dir):
-    if not os.path.exists(out_dir):
-        os.makedirs(out_dir)
-
-
-def add_arguments():
-    parser = argparse.ArgumentParser(description='chemotaxis paper experiments')
-    parser.add_argument(
-        'experiment_id',
-        type=str,
-        choices=list(experiments_library.keys()),
-        help='experiment id corresponds to figure number from chemotaxis paper')
-    return parser.parse_args()
-
-
-def main():
-    """
-    Execute experiments from the command line
-    """
-
-    out_dir = os.path.join(EXPERIMENT_OUT_DIR, 'chemotaxis')
-    make_dir(out_dir)
-
-    args = add_arguments()
-
-    if args.experiment_id:
-        # retrieve preset experiment
-        experiment_id = str(args.experiment_id)
-        experiment_type = experiments_library[experiment_id]
-
-        if callable(experiment_type):
-            control_out_dir = os.path.join(out_dir, experiment_id)
-            make_dir(control_out_dir)
-            experiment_type(control_out_dir)
-        elif isinstance(experiment_type, list):
-            # iterate over list with multiple experiments
-            for sub_experiment_id in experiment_type:
-                control_out_dir = os.path.join(out_dir, sub_experiment_id)
-                make_dir(control_out_dir)
-                exp = experiments_library[sub_experiment_id]
-                try:
-                    exp(control_out_dir)
-                except:
-                    print('{} experiment failed'.format(sub_experiment_id))
-    else:
-        print('provide experiment number')
-
-
 if __name__ == '__main__':
-    main()
+    workflow(experiments_library)
