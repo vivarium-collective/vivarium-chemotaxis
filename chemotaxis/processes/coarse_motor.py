@@ -13,13 +13,9 @@ from numpy import linspace
 
 # vivarium-core imports
 from vivarium.core.process import Process
-from vivarium.core.composition import simulate_process_in_experiment
 
 # plots
-from chemotaxis.plots.coarse_motor import (
-    plot_variable_receptor,
-    plot_motor_control,
-)
+from chemotaxis.plots.coarse_motor import plot_variable_receptor
 
 # directories
 from chemotaxis import PROCESS_OUT_DIR
