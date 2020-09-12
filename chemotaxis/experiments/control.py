@@ -11,7 +11,10 @@ import argparse
 
 # directories
 from cell.plots.multibody_physics import plot_tags, plot_snapshots
-from vivarium.core.composition import plot_agents_multigen
+from vivarium.core.composition import (
+    plot_agents_multigen,
+    plot_compartment_topology,
+)
 
 from chemotaxis import EXPERIMENT_OUT_DIR
 
@@ -21,6 +24,7 @@ def plot_control(data, config, out_dir='out'):
     environment_config = config.get('environment_config')
     emit_fields = config.get('emit_fields')
     tagged_molecules = config.get('tagged_molecules')
+    topology_network = config.get('topology_network')
 
     # extract data
     multibody_config = environment_config['config']['multibody']
@@ -52,6 +56,14 @@ def plot_control(data, config, out_dir='out'):
             'out_dir': out_dir}
         plot_snapshots(plot_data, plot_config)
 
+    # topology network
+    if topology_network:
+        compartment = topology_network['compartment']
+        settings = {'show_ports': True}
+        plot_compartment_topology(
+            compartment,
+            settings,
+            out_dir)
 
 
 def make_dir(out_dir):

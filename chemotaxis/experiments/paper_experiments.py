@@ -16,7 +16,6 @@ from vivarium.core.composition import (
     simulate_compartment_in_experiment,
     agent_environment_experiment,
     make_agent_ids,
-    plot_agents_multigen,
 )
 from vivarium.core.emitter import time_indexed_timeseries_from_data
 
@@ -46,7 +45,10 @@ from chemotaxis.processes.chemoreceptor_cluster import (
 
 # chemotaxis composites
 from chemotaxis.composites.chemotaxis_minimal import ChemotaxisMinimal
-from chemotaxis.composites.flagella_expression import FlagellaExpressionMetabolism
+from chemotaxis.composites.flagella_expression import (
+    FlagellaExpressionMetabolism,
+    get_flagella_metabolism_initial_state,
+)
 from chemotaxis.composites.transport_metabolism import (
     TransportMetabolismExpression,
     get_metabolism_initial_external_state,
@@ -113,6 +115,9 @@ def growth_division_experiment(out_dir='out'):
     plot_config = {
         'environment_config': environment_config,
         'emit_fields': emit_fields,
+        'topology_network': {
+            'compartment': GrowthDivision({})
+        }
     }
     plot_control(data, plot_config, out_dir)
 
@@ -309,38 +314,6 @@ def flagella_expression_network(out_dir='out'):
     gene_network_plot(data, out_dir)
 
 
-# function to make initial state for flagella expression processes
-def make_flagella_expression_initial_state():
-    flagella_data = FlagellaChromosome()
-    chromosome_config = flagella_data.chromosome_config
-
-    molecules = {}
-    for nucleotide in nucleotides.values():
-        molecules[nucleotide] = 5000000
-    for amino_acid in amino_acids.values():
-        molecules[amino_acid] = 1000000
-
-    return {
-        'molecules': molecules,
-        'transcripts': {
-            gene: 0
-            for gene in chromosome_config['genes'].keys()
-        },
-        'proteins': {
-            'CpxR': 10,
-            'CRP': 10,
-            'Fnr': 10,
-            'endoRNAse': 1,
-            'flagella': 4,
-            UNBOUND_RIBOSOME_KEY: 100,  # e. coli has ~ 20000 ribosomes
-            UNBOUND_RNAP_KEY: 100
-        },
-        'boundary': {
-            'location': [8, 8]
-        }
-    }
-
-
 # figure 6b
 def flagella_just_in_time(out_dir='out'):
 
@@ -349,7 +322,7 @@ def flagella_just_in_time(out_dir='out'):
     compartment = FlagellaExpressionMetabolism(compartment_config)
 
     # get the initial state
-    initial_state = make_flagella_expression_initial_state()
+    initial_state = get_flagella_metabolism_initial_state()
 
     # run simulation
     settings = {
@@ -381,11 +354,11 @@ def flagella_just_in_time(out_dir='out'):
 
 
 # figure 6c
-def run_flagella_metabolism_experiment(out_dir='out'):
+def run_heterogeneous_flagella_experiment(out_dir='out'):
 
-    total_time = 6000
-    emit_step = 10
-    process_time_step = 10
+    total_time = 12000
+    emit_step = 120
+    process_time_step = 60
     bounds = [17, 17]
     tagged_molecules = [('proteins', 'flagella')]
     emit_fields = ['glc__D_e']
@@ -399,6 +372,7 @@ def run_flagella_metabolism_experiment(out_dir='out'):
             'agents_path': ('..', '..', 'agents'),
             'fields_path': ('..', '..', 'fields'),
             'dimensions_path': ('..', '..', 'dimensions'),
+            'transport': {},
         }}
     environment_config = {
         'type': Lattice,
@@ -406,14 +380,15 @@ def run_flagella_metabolism_experiment(out_dir='out'):
             time_step=process_time_step,
             bounds=bounds,
             depth=6000.0,
-            diffusion=1e-2,
-            scale_concentration=5,
+            # diffusion=1e-2,
+            # scale_concentration=5,
             keep_fields_emit=emit_fields,
         )
     }
 
     # initial state
-    initial_agent_state = make_flagella_expression_initial_state()
+    initial_agent_state = get_flagella_metabolism_initial_state()
+    initial_agent_state.update({'boundary': {'location': [8, 8]}})
 
     # use agent_environment_experiment to make the experiment
     experiment_settings = {
@@ -432,12 +407,14 @@ def run_flagella_metabolism_experiment(out_dir='out'):
     experiment.update(total_time)
     data = experiment.emitter.get_data()
 
-    # plot output
     # plots
     plot_config = {
         'environment_config': environment_config,
         'tagged_molecules': tagged_molecules,
         'emit_fields': emit_fields,
+        'topology_network': {
+            'compartment': FlagellaExpressionMetabolism({})
+        }
     }
     plot_control(data, plot_config, out_dir)
 
@@ -692,7 +669,7 @@ experiments_library = {
     '5c': transport_metabolism_environment,
     '6a': flagella_expression_network,
     '6b': flagella_just_in_time,
-    '6c': run_flagella_metabolism_experiment,
+    '6c': run_heterogeneous_flagella_experiment,
     '7a': variable_flagella,
     '7b': run_chemoreceptor_pulse,
     '7c': run_chemotaxis_transduction,
