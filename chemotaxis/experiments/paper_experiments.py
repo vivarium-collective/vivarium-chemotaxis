@@ -21,7 +21,7 @@ from vivarium.core.composition import (
 from vivarium.core.emitter import time_indexed_timeseries_from_data
 
 # experiment workflow
-from chemotaxis.experiments.control import control
+from chemotaxis.experiments.control import control, plot_control
 
 # vivarium-cell imports
 from cell.processes.metabolism import (
@@ -59,29 +59,25 @@ from cell.data.nucleotides import nucleotides
 from cell.data.amino_acids import amino_acids
 
 # plots
-from chemotaxis.plots.chemotaxis_experiments import plot_chemotaxis_experiment
 from cell.plots.metabolism import plot_exchanges
 from cell.plots.gene_expression import (
     plot_timeseries_heatmaps,
     gene_network_plot,
 )
-from cell.plots.multibody_physics import (
-    plot_agent_trajectory,
-    plot_snapshots,
-    plot_tags
-)
+from cell.plots.multibody_physics import plot_agent_trajectory
 from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
 from chemotaxis.plots.transport_metabolism import plot_glc_lcts_environment
 from chemotaxis.plots.flagella_activity import plot_signal_transduction
 
 
-
-
 # figure 3b
 def growth_division_experiment(out_dir='out'):
     total_time = 18000
+    emit_step = 100
+    emit_fields = ['glc__D_e']
+
     agents_config = {
-        'name': 'growth_division',
+        'ids': ['growth_division'],
         'type': GrowthDivision,
         'config': {
             'agents_path': ('..', '..', 'agents'),
@@ -93,18 +89,32 @@ def growth_division_experiment(out_dir='out'):
         'type': Lattice,
         'config': get_lattice_config(
             bounds=[30, 30],
-            jitter_force=1e-5,
+            keep_fields_emit=emit_fields,
         )
     }
-    # experiment_config = {
-    #     'experiment_name': experiment_name,
-    #     'description': description,
-    #     'total_time': total_time,
-    #     'emit_step': emit_step,
-    #     'emitter': emitter,
-    #     'agent_names': agent_names,
-    #     'return_raw_data': return_raw_data
-    # }
+
+    # make the experiment
+    experiment_settings = {
+        'experiment_name': 'growth_division_experiment',
+        'description': 'simple growth_division agents are placed in a lattice'
+                       ' environment and grown.',
+        'total_time': total_time,
+        'emit_step': emit_step}
+    experiment = agent_environment_experiment(
+        agents_config=agents_config,
+        environment_config=environment_config,
+        settings=experiment_settings)
+
+    # run simulation
+    experiment.update(total_time)
+    data = experiment.emitter.get_data()
+
+    # plots
+    plot_config = {
+        'environment_config': environment_config,
+        'emit_fields': emit_fields,
+    }
+    plot_control(data, plot_config, out_dir)
 
 
 # figure 5a
@@ -197,6 +207,7 @@ def transport_metabolism_environment(out_dir='out'):
     process_time_step = 10  # TODO -- pass time_step to compartment, processes
     bounds = [20, 20]
     emit_fields = ['glc__D_e', 'lcts_e']
+    tagged_molecules = [('cytoplasm', 'LacY')]
 
     # agent configuration
     agents_config = [{
@@ -266,29 +277,13 @@ def transport_metabolism_environment(out_dir='out'):
     experiment.update(total_time)
     data = experiment.emitter.get_data()
 
-    ## plot output
-    # extract data
-    multibody_config = environment_config['config']['multibody']
-    agents = {time: time_data['agents'] for time, time_data in data.items()}
-    fields = {time: time_data['fields'] for time, time_data in data.items()}
-    plot_data = {
-        'agents': agents,
-        'fields': fields,
-        'config': multibody_config,
-    }
-
-    # multigen plot
-    plot_settings = {}
-    plot_agents_multigen(data, plot_settings, out_dir)
-
-    # make tag and snapshot plots
+    # plot output
     plot_config = {
-        'fields': emit_fields,
-        'tagged_molecules': [('cytoplasm', 'LacY')],
-        'n_snapshots': 5,
-        'out_dir': out_dir}
-    plot_tags(plot_data, plot_config)
-    plot_snapshots(plot_data, plot_config)
+        'environment_config': environment_config,
+        'emit_fields': emit_fields,
+        'tagged_molecules': tagged_molecules,
+    }
+    plot_control(data, plot_config, out_dir)
 
 
 # figure 6a
@@ -392,6 +387,7 @@ def run_flagella_metabolism_experiment(out_dir='out'):
     emit_step = 10
     process_time_step = 10
     bounds = [17, 17]
+    tagged_molecules = [('proteins', 'flagella')]
     emit_fields = ['glc__D_e']
 
     # configurations
@@ -437,29 +433,13 @@ def run_flagella_metabolism_experiment(out_dir='out'):
     data = experiment.emitter.get_data()
 
     # plot output
-    # extract data
-    multibody_config = environment_config['config']['multibody']
-    agents = {time: time_data['agents'] for time, time_data in data.items()}
-    fields = {time: time_data['fields'] for time, time_data in data.items()}
-    plot_data = {
-        'agents': agents,
-        'fields': fields,
-        'config': multibody_config,
-    }
-
-    # multigen plot
-    plot_settings = {}
-    plot_agents_multigen(data, plot_settings, out_dir)
-
-    # make tag and snapshot plots
+    # plots
     plot_config = {
-        'fields': emit_fields,
-        'tagged_molecules': [('proteins', 'flagella')],
-        'n_snapshots': 5,
-        'out_dir': out_dir,
+        'environment_config': environment_config,
+        'tagged_molecules': tagged_molecules,
+        'emit_fields': emit_fields,
     }
-    plot_tags(plot_data, plot_config)
-    plot_snapshots(plot_data, plot_config)
+    plot_control(data, plot_config, out_dir)
 
 
 # figure 7a

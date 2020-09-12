@@ -10,7 +10,48 @@ import os
 import argparse
 
 # directories
+from cell.plots.multibody_physics import plot_tags, plot_snapshots
+from vivarium.core.composition import plot_agents_multigen
+
 from chemotaxis import EXPERIMENT_OUT_DIR
+
+
+
+def plot_control(data, config, out_dir='out'):
+    environment_config = config.get('environment_config')
+    emit_fields = config.get('emit_fields')
+    tagged_molecules = config.get('tagged_molecules')
+
+    # extract data
+    multibody_config = environment_config['config']['multibody']
+    agents = {time: time_data['agents'] for time, time_data in data.items()}
+    fields = {time: time_data['fields'] for time, time_data in data.items()}
+    plot_data = {
+        'agents': agents,
+        'fields': fields,
+        'config': multibody_config,
+    }
+
+    # multigen plot
+    plot_settings = {}
+    plot_agents_multigen(data, plot_settings, out_dir)
+
+    # tag plot
+    if tagged_molecules:
+        plot_config = {
+            'tagged_molecules': tagged_molecules,
+            'n_snapshots': 5,
+            'out_dir': out_dir}
+        plot_tags(plot_data, plot_config)
+
+    # snapshot plot
+    if emit_fields:
+        plot_config = {
+            'fields': emit_fields,
+            'n_snapshots': 5,
+            'out_dir': out_dir}
+        plot_snapshots(plot_data, plot_config)
+
 
 
 def make_dir(out_dir):
