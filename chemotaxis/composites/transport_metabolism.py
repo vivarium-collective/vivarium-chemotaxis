@@ -5,9 +5,10 @@ import argparse
 
 from vivarium.library.units import units
 from vivarium.core.process import Generator
+from vivarium.core.emitter import path_timeseries_from_embedded_timeseries
 from vivarium.core.composition import (
     simulate_compartment_in_experiment,
-    save_timeseries,
+    save_flat_timeseries,
     load_timeseries,
     assert_timeseries_close,
 )
@@ -279,10 +280,11 @@ def test_txp_mtb_ge(out_dir='out'):
         env_volume=1e-12,
         total_time=10
     )
-    save_timeseries(timeseries, out_dir)
+    path_timeseries = path_timeseries_from_embedded_timeseries(timeseries)
+    save_flat_timeseries(path_timeseries, out_dir)
     reference = load_timeseries(
         os.path.join(REFERENCE_DATA_DIR, NAME + '.csv'))
-    assert_timeseries_close(timeseries, reference)
+    assert_timeseries_close(path_timeseries, reference)
 
 
 def run_txp_mtb_ge(
