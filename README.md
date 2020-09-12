@@ -29,10 +29,11 @@ $ python chemotaxis/composites/chemotaxis_flagella.py
 ```
 
 ## experiments
-All experiments from the paper "A Multi-Scale Approach to Modeling E. coli Chemotaxis" are available in the same file.
-Run them from the command line by specifying the figure number ('3b', '5a', '5b', '5c', '6a', '6b', '6c', '7a', '7b', '7c', '7d')
+All experiments from the paper "A Multi-Scale Approach to Modeling E. coli Chemotaxis" 
+are available in the file `chemotaxis/experiments/paper_experiments.py`. Run them from 
+the command line by specifying the corresponding figure number.
 ```
-$ python chemotaxis/experiments/paper_experiments.py 7a
+$ python chemotaxis/experiments/paper_experiments.py 7b
 ``` 
 
 ## tests

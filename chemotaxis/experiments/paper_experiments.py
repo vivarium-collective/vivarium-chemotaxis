@@ -1,10 +1,18 @@
 """
-====================
-Chemotaxis Experiments
-====================
+=============================
+Chemotaxis Paper Experiments
+=============================
 
-Chemotaxis provides several pre-configured :py:class:`Experiments`
-with different chemotactic agents and environments.
+Includes functions for configuring, running, and plotting all experiments reported in the paper:
+    Agmon, E. and Spangler, R.K., "A Multi-Scale Approach to Modeling E. coli Chemotaxis"
+
+These experiments can be triggered from the command line by entering the figure number.
+Available experiments include: '3b', '5a', '5b', '5c', '6a', '6b', '6c', '7a', '7b', '7c', '7d'.
+
+```
+$ python chemotaxis/experiments/paper_experiments.py 7a
+```
+
 """
 
 import numpy as np
@@ -78,12 +86,14 @@ from chemotaxis.plots.flagella_activity import (
 
 # figure 3b
 def growth_division_experiment(out_dir='out'):
-    total_time = 18000
+    total_time = 21000
     emit_step = 100
+    env_time_step = 60
     emit_fields = ['glc__D_e']
+    initial_agent_id = 'growth_division'
 
     agents_config = {
-        'ids': ['growth_division'],
+        'ids': [initial_agent_id],
         'type': GrowthDivision,
         'config': {
             'agents_path': ('..', '..', 'agents'),
@@ -94,6 +104,7 @@ def growth_division_experiment(out_dir='out'):
     environment_config = {
         'type': Lattice,
         'config': get_lattice_config(
+            time_step=env_time_step,
             bounds=[30, 30],
             keep_fields_emit=emit_fields,
         )
@@ -120,7 +131,7 @@ def growth_division_experiment(out_dir='out'):
         'environment_config': environment_config,
         'emit_fields': emit_fields,
         'topology_network': {
-            'compartment': GrowthDivision({})
+            'compartment': GrowthDivision({'agent_id': initial_agent_id})
         }
     }
     plot_control(data, plot_config, out_dir)
@@ -129,7 +140,7 @@ def growth_division_experiment(out_dir='out'):
 # figure 5a
 def BiGG_metabolism(out_dir='out'):
     total_time = 2500
-    env_volume = 1e-5 * units.L
+    env_volume = 1e-13 * units.L
 
     # configure metabolism process iAF1260b BiGG model
     process_config = get_iAF1260b_config()

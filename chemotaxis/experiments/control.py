@@ -1,9 +1,9 @@
 """
 ====================
-Experiment Workflow
+Experiment Control
 ====================
 
-Handles experiment specifications for run_papers.py
+Handles experiment specifications for `paper_experiments.py`
 """
 
 import os
