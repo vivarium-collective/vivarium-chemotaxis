@@ -19,12 +19,12 @@ from vivarium.core.composition import (
 # processes
 from chemotaxis.processes.chemoreceptor_cluster import (
     ReceptorCluster,
-    get_exponential_random_timeline
+    get_brownian_ligand_timeline
 )
 from vivarium.processes.meta_division import MetaDivision
 from vivarium.processes.tree_mass import TreeMass
-from cell.processes.transcription import Transcription, UNBOUND_RNAP_KEY
-from cell.processes.translation import Translation, UNBOUND_RIBOSOME_KEY
+from cell.processes.transcription import Transcription
+from cell.processes.translation import Translation
 from cell.processes.degradation import RnaDegradation
 from cell.processes.complexation import Complexation
 from cell.processes.growth_protein import GrowthProtein
@@ -317,26 +317,6 @@ class ChemotaxisExpressionFlagella(Generator):
         }
 
 
-# TODO -- merge this with get_exponential_random_timeline
-def get_chemotaxis_timeline(
-        environment_port=DEFAULT_ENVIRONMENT_PORT,
-        ligand_id=DEFAULT_LIGAND,
-        initial_conc=DEFAULT_INITIAL_LIGAND,
-        total_time=10,
-        timestep=1,
-        base=1+3e-4,
-        speed=14,
-):
-    return get_exponential_random_timeline({
-        'ligand': ligand_id,
-        'environment_port': environment_port,
-        'time': total_time,
-        'timestep': timestep,
-        'initial_conc': initial_conc,
-        'base': base,
-        'speed': speed})
-
-
 def get_baseline_config(n_flagella=5):
     return {
         'agents_path': ('agents',),  # Note -- should go two level up for experiments with environment
@@ -382,7 +362,7 @@ def test_ode_expression_chemotaxis(
 
     # run experiment
     initial_state = {}
-    timeline = get_chemotaxis_timeline(total_time=total_time)
+    timeline = get_brownian_ligand_timeline(total_time=total_time)
     experiment_settings = {
         'initial_state': initial_state,
         'timeline': {
@@ -418,7 +398,7 @@ def test_expression_chemotaxis(
     # run experiment
     initial_state = get_flagella_initial_state({
         'molecules': 'internal'})
-    timeline = get_chemotaxis_timeline(total_time=total_time)
+    timeline = get_brownian_ligand_timeline(total_time=total_time)
     experiment_settings = {
         'initial_state': initial_state,
         'timeline': {
@@ -448,7 +428,7 @@ def test_expression_chemotaxis(
 
 def test_variable_chemotaxis(
         n_flagella=5,
-        timeline=get_chemotaxis_timeline(total_time=10),
+        timeline=get_brownian_ligand_timeline(total_time=10),
         out_dir='out'
 ):
     # make the compartment
@@ -498,7 +478,7 @@ if __name__ == '__main__':
         make_dir(variable_out_dir)
         test_variable_chemotaxis(
             n_flagella=args.flagella,
-            timeline=get_chemotaxis_timeline(total_time=90),
+            timeline=get_brownian_ligand_timeline(total_time=90),
             out_dir=variable_out_dir)
     elif args.ode:
         # ODE flagella expression

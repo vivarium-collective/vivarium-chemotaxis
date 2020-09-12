@@ -22,6 +22,9 @@ from chemotaxis import PROCESS_OUT_DIR
 
 NAME = 'chemoreceptor_cluster'
 STEADY_STATE_DELTA = 1e-6
+DEFAULT_ENVIRONMENT_PORT = 'external'
+DEFAULT_LIGAND = 'MeAsp'
+DEFAULT_INITIAL_LIGAND = 1e-2
 
 
 def run_step(receptor, state, timestep):
@@ -248,8 +251,27 @@ def get_exponential_random_timeline(config):
             conc = 0
         timeline.append((t, {(env_port, ligand): conc}))
         t += timestep
-
     return timeline
+
+
+def get_brownian_ligand_timeline(
+        environment_port=DEFAULT_ENVIRONMENT_PORT,
+        ligand_id=DEFAULT_LIGAND,
+        initial_conc=DEFAULT_INITIAL_LIGAND,
+        total_time=10,
+        timestep=1,
+        base=1+3e-4,
+        speed=14,
+):
+    return get_exponential_random_timeline({
+        'ligand': ligand_id,
+        'environment_port': environment_port,
+        'time': total_time,
+        'timestep': timestep,
+        'initial_conc': initial_conc,
+        'base': base,
+        'speed': speed})
+
 
 def test_receptor(timeline=get_pulse_timeline(), timestep = 1):
     ligand = 'MeAsp'

@@ -5,6 +5,7 @@ Chemotaxis Master Composite
 """
 
 import os
+import uuid
 
 # core imports
 from vivarium.core.process import Generator
@@ -28,6 +29,7 @@ from cell.processes.membrane_potential import MembranePotential
 from cell.processes.division_volume import DivisionVolume
 from chemotaxis.processes.chemoreceptor_cluster import ReceptorCluster
 from chemotaxis.processes.flagella_motor import FlagellaMotor
+from vivarium.processes.meta_division import MetaDivision
 
 # composites
 from chemotaxis.composites.flagella_expression import get_flagella_expression_config
@@ -61,6 +63,8 @@ class ChemotaxisMaster(Generator):
         'dimensions_path': ('dimensions',),
         'fields_path': ('fields',),
         'boundary_path': ('boundary',),
+        'agents_path': ('agents',),
+        'daughter_path': tuple(),
         'transport': default_transport_config(),
         'metabolism': get_metabolism_config(10),
         'transcription': get_flagella_expression_config({})['transcription'],
@@ -71,14 +75,20 @@ class ChemotaxisMaster(Generator):
         'flagella': {'n_flagella': 5},
         'PMF': {},
         'division': {},
+        'divide': True,
     }
 
     def __init__(self, config=None):
         super(ChemotaxisMaster, self).__init__(config)
+        if 'agent_id' not in self.config:
+            self.config['agent_id'] = str(uuid.uuid1())
 
     def generate_processes(self, config):
+        daughter_path = config['daughter_path']
+        agent_id = config['agent_id']
+
         # Transport
-        transport = ConvenienceKinetics(config.get('transport'))
+        transport = ConvenienceKinetics(config['transport'])
 
         # Metabolism
         # add target fluxes from transport
@@ -99,12 +109,10 @@ class ChemotaxisMaster(Generator):
 
         # Division
         # get initial volume from metabolism
-        if 'division' not in config:
-            config['division'] = {}
         config['division']['initial_state'] = metabolism.initial_state
-        division = DivisionVolume(config['division'])
+        division_condition = DivisionVolume(config['division'])
 
-        return {
+        processes = {
             'metabolism': metabolism,
             'transport': transport,
             'transcription': transcription,
@@ -114,15 +122,27 @@ class ChemotaxisMaster(Generator):
             'receptor': receptor,
             'flagella': flagella,
             'PMF': PMF,
-            'division': division,
+            'division': division_condition,
         }
+        # divide process set to true, add meta-division processes
+        if config['divide']:
+            meta_division_config = dict(
+                {},
+                daughter_path=daughter_path,
+                agent_id=agent_id,
+                compartment=self)
+            meta_division = MetaDivision(meta_division_config)
+            processes['meta_division'] = meta_division
+
+        return processes
 
     def generate_topology(self, config):
         dimensions_path = config['dimensions_path']
         fields_path = config['fields_path']
         boundary_path = config['boundary_path']
+        agents_path = config['agents_path']
         external_path = boundary_path + ('external',)
-        return {
+        topology = {
             'transport': {
                 'internal': ('internal',),
                 'external': external_path,
@@ -187,12 +207,20 @@ class ChemotaxisMaster(Generator):
                 'global': boundary_path,
             }
         }
+        if config['divide']:
+            topology.update({
+                'meta_division': {
+                    'global': boundary_path,
+                    'agents': agents_path,
+                }})
+        return topology
+
 
 def run_chemotaxis_master(out_dir):
     total_time = 10
 
     # make the compartment
-    compartment = ChemotaxisMaster({})
+    compartment = ChemotaxisMaster({'agent_id': '0'})
 
     # save the topology network
     settings = {'show_ports': True}

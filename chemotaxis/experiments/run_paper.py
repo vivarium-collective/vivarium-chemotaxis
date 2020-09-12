@@ -40,14 +40,11 @@ from chemotaxis.processes.flagella_motor import run_variable_flagella
 from chemotaxis.processes.chemoreceptor_cluster import (
     ReceptorCluster,
     get_pulse_timeline,
+    get_brownian_ligand_timeline,
 )
 
 # chemotaxis composites
 from chemotaxis.composites.chemotaxis_minimal import ChemotaxisMinimal
-from chemotaxis.composites.chemotaxis_flagella import (
-    ChemotaxisVariableFlagella,
-    get_chemotaxis_timeline,
-)
 from chemotaxis.composites.flagella_expression import (
     FlagellaExpressionMetabolism,
     get_flagella_expression_compartment,
@@ -506,10 +503,10 @@ def run_chemotaxis_transduction(out_dir='out'):
             'n_flagella': n_flagella,
         },
     }
-    compartment = ChemotaxisVariableFlagella(compartment_config)
+    compartment = ChemotaxisMaster(compartment_config)
 
     # make a timeline
-    timeline = get_chemotaxis_timeline(
+    timeline = get_brownian_ligand_timeline(
         ligand_id=ligand_id,
         timestep=0.1,
         total_time=total_time,
