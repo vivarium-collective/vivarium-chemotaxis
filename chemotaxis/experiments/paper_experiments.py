@@ -37,7 +37,7 @@ from chemotaxis.experiments.control import (
 from cell.processes.metabolism import (
     Metabolism,
     get_minimal_media_iAF1260b,
-    # get_iAF1260b_config,
+    get_iAF1260b_config,
 )
 from cell.processes.static_field import make_field
 from cell.composites.lattice import (
@@ -92,9 +92,10 @@ from chemotaxis.plots.flagella_activity import (
 
 # figure 3b
 def growth_division_experiment(out_dir='out'):
-    total_time = 21000
+    total_time = 210 #00
     emit_step = 100
     env_time_step = 60
+    media = get_minimal_media_iAF1260b()
     emit_fields = ['glc__D_e']
     initial_agent_id = 'growth_division'
 
@@ -112,9 +113,13 @@ def growth_division_experiment(out_dir='out'):
         'config': make_lattice_config(
             time_step=env_time_step,
             bounds=[30, 30],
+            concentrations=media,
             keep_fields_emit=emit_fields,
         )
     }
+
+
+    import ipdb; ipdb.set_trace()
 
     # make the experiment
     experiment_settings = {
