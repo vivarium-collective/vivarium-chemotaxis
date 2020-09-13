@@ -95,7 +95,7 @@ def growth_division_experiment(out_dir='out'):
     total_time = 210 #00
     emit_step = 100
     env_time_step = 60
-    media = get_minimal_media_iAF1260b()
+    fields = ['glc__D_e', 'lcts_e']
     emit_fields = ['glc__D_e']
     initial_agent_id = 'growth_division'
 
@@ -113,13 +113,10 @@ def growth_division_experiment(out_dir='out'):
         'config': make_lattice_config(
             time_step=env_time_step,
             bounds=[30, 30],
-            concentrations=media,
+            molecules=fields,
             keep_fields_emit=emit_fields,
         )
     }
-
-
-    import ipdb; ipdb.set_trace()
 
     # make the experiment
     experiment_settings = {
@@ -237,8 +234,8 @@ def transport_metabolism(out_dir='out'):
 # figure 5c
 def transport_metabolism_environment(out_dir='out'):
     n_agents = 1
-    total_time = 5000
-    emit_step = 100
+    total_time = 100  #5000
+    emit_step = 10  #100
     process_time_step = 10  # TODO -- pass time_step to compartment, processes
     bounds = [30, 30]
     emit_fields = ['glc__D_e', 'lcts_e']
@@ -280,18 +277,24 @@ def transport_metabolism_environment(out_dir='out'):
     }
 
     # environment configuration
+    media = get_minimal_media_iAF1260b(
+        scale_concentration=100,
+        override_initial=initial_external,
+    )
     environment_config = {
         'type': Lattice,
-        'config': get_iAF1260b_environment(
+        'config': make_lattice_config(
             time_step=process_time_step,
             bounds=bounds,
             n_bins=[40, 40],
             depth=20.0,
-            # diffusion=1e-2,
-            scale_concentration=100,
-            override_initial=initial_external,
-            keep_fields_emit=emit_fields)
+            concentrations=media,
+            keep_fields_emit=emit_fields,
+        )
     }
+
+
+    import ipdb; ipdb.set_trace()
 
     # make the experiment
     experiment_settings = {
@@ -407,10 +410,12 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
             'transport': {},
         }
     }
+    media = get_minimal_media_iAF1260b()
     environment_config = {
         'type': Lattice,
-        'config': get_iAF1260b_environment(
+        'config': make_lattice_config(
             time_step=process_time_step,
+            concentrations=media,
             bounds=bounds,
             depth=6000.0,
             keep_fields_emit=emit_fields)
