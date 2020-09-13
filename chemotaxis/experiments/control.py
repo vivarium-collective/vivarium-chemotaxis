@@ -20,6 +20,7 @@ from chemotaxis import EXPERIMENT_OUT_DIR
 
 
 
+
 def plot_control(data, config, out_dir='out'):
     environment_config = config.get('environment_config')
     emit_fields = config.get('emit_fields')

@@ -25,7 +25,7 @@ from cell.processes.division_volume import DivisionVolume
 from cell.processes.metabolism import (
     Metabolism,
     get_iAF1260b_config,
-    get_minimal_media_BiGG)
+    get_minimal_media_iAF1260b)
 from cell.processes.convenience_kinetics import ConvenienceKinetics
 from cell.processes.ode_expression import (
     ODE_expression,
@@ -297,7 +297,7 @@ def test_txp_mtb_ge(out_dir='out'):
 def run_txp_mtb_ge(
     env_volume=1e-12,
     total_time=10,
-    minimal_media=get_minimal_media_BiGG()
+    minimal_media=get_minimal_media_iAF1260b()
 ):
     # make the compartment
     compartment = TransportMetabolismExpression({
@@ -339,7 +339,7 @@ if __name__ == '__main__':
             override={'glc__D_e': 1.0, 'lcts_e': 1.0})
         environment_volume = 1e-13
     else:
-        minimal_media = get_minimal_media_BiGG()
+        minimal_media = get_minimal_media_iAF1260b()
         environment_volume = 1e-6
 
     # simulate
