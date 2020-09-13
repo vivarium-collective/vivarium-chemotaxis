@@ -53,14 +53,12 @@ from chemotaxis import COMPOSITE_OUT_DIR, REFERENCE_DATA_DIR
 
 
 NAME = 'flagella_gene_expression'
-COMPARTMENT_TIMESTEP = 10.0
 
 
 def default_metabolism_config():
     metabolism_config = get_iAF1260b_config()
     metabolism_config.update({
         'initial_mass': 1339.0,  # fg of metabolite pools
-        'time_step': COMPARTMENT_TIMESTEP,
         'tolerance': {
             'EX_glc__D_e': [1.05, 1.0],
             'EX_lcts_e': [1.05, 1.0],
@@ -175,29 +173,25 @@ def get_flagella_expression_compartment(config):
 
 
 # flagella expression with metabolism
-def get_flagella_metabolism_initial_state(ports={}):
+def get_flagella_metabolism_initial_state():
     flagella_data = FlagellaChromosome()
     chromosome_config = flagella_data.chromosome_config
-     # molecules are set by metabolism
     return {
-        ports.get(
-            'transcripts',
-            'transcripts'): {
-                gene: 0
-                for gene in chromosome_config['genes'].keys()
+        'transcripts': {
+            gene: 0
+            for gene in chromosome_config['genes'].keys()
         },
-        ports.get(
-            'proteins',
-            'proteins'): {
-                'CpxR': 10,
-                'CRP': 10,
-                'Fnr': 10,
-                'endoRNAse': 1,
-                'flagella': 8,
-                UNBOUND_RIBOSOME_KEY: 100,  # e. coli has ~ 20000 ribosomes
-                UNBOUND_RNAP_KEY: 100
-            }
+        'proteins': {
+            'CpxR': 10,
+            'CRP': 10,
+            'Fnr': 10,
+            'endoRNAse': 1,
+            'flagella': 8,
+            UNBOUND_RIBOSOME_KEY: 100,  # e. coli has ~ 20000 ribosomes
+            UNBOUND_RNAP_KEY: 100
+        },
     }
+
 
 class FlagellaExpressionMetabolism(Generator):
     """ Flagella stochastic expression with metabolism """
@@ -213,7 +207,7 @@ class FlagellaExpressionMetabolism(Generator):
         'transport': default_transport_config(),
         'metabolism': default_metabolism_config(),
         'initial_mass': 0.0 * units.fg,
-        'time_step': COMPARTMENT_TIMESTEP,
+        'time_step': 10,
         'divide': True,
     })
 
@@ -272,7 +266,6 @@ class FlagellaExpressionMetabolism(Generator):
             'complexation': complexation,
             'division': division_condition
         }
-
         # divide process set to true, add meta-division processes
         if config['divide']:
             meta_division_config = dict(
@@ -343,7 +336,6 @@ class FlagellaExpressionMetabolism(Generator):
             'division': {
                 'global': boundary_path,
             },
-
         }
         if config['divide']:
             topology.update({
@@ -368,7 +360,7 @@ def run_flagella_compartment(
         # a cell cycle of 2520 sec is expected to express 8 flagella.
         # 2 flagella expected in approximately 630 seconds.
         'total_time': 2520,
-        'emit_step': COMPARTMENT_TIMESTEP,
+        'emit_step': 10,
         'verbose': True,
         'initial_state': initial_state}
     timeseries = simulate_compartment_in_experiment(compartment, settings)
@@ -424,7 +416,7 @@ def test_flagella_metabolism(seed=1):
     # run simulation
     settings = {
         'total_time': 60,
-        'emit_step': COMPARTMENT_TIMESTEP,
+        'emit_step': 10,
         'initial_state': initial_state,
     }
     timeseries = simulate_compartment_in_experiment(compartment, settings)
@@ -508,4 +500,3 @@ if __name__ == '__main__':
             get_flagella_initial_state(),
             out_dir
         )
-

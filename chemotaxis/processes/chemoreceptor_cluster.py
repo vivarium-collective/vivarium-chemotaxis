@@ -22,6 +22,9 @@ from chemotaxis import PROCESS_OUT_DIR
 
 NAME = 'chemoreceptor_cluster'
 STEADY_STATE_DELTA = 1e-6
+DEFAULT_ENVIRONMENT_PORT = ('external',)
+DEFAULT_LIGAND = 'MeAsp'
+DEFAULT_INITIAL_LIGAND = 1e-2
 
 
 def run_step(receptor, state, timestep):
@@ -237,19 +240,38 @@ def get_exponential_random_timeline(config):
     speed = config.get('speed', 14)     # um/s
     conc_0 = config.get('initial_conc', 0)  # mM
     ligand = config.get('ligand', 'MeAsp')
-    env_port = config.get('environment_port', 'external')
+    env_port = config.get('environment_port', DEFAULT_ENVIRONMENT_PORT)
 
     conc = conc_0
-    timeline = [(0, {(env_port, ligand): conc})]
+    timeline = [(0, {env_port + (ligand,): conc})]
     t = 0
     while t < time:
         conc += base**(random.choice((-1, 1)) * speed) - 1
         if conc<0:
             conc = 0
-        timeline.append((t, {(env_port, ligand): conc}))
+        timeline.append((t, {env_port + (ligand,): conc}))
         t += timestep
-
     return timeline
+
+
+def get_brownian_ligand_timeline(
+        environment_port=DEFAULT_ENVIRONMENT_PORT,
+        ligand_id=DEFAULT_LIGAND,
+        initial_conc=DEFAULT_INITIAL_LIGAND,
+        total_time=10,
+        timestep=1,
+        base=1+3e-4,
+        speed=14,
+):
+    return get_exponential_random_timeline({
+        'ligand': ligand_id,
+        'environment_port': environment_port,
+        'time': total_time,
+        'timestep': timestep,
+        'initial_conc': initial_conc,
+        'base': base,
+        'speed': speed})
+
 
 def test_receptor(timeline=get_pulse_timeline(), timestep = 1):
     ligand = 'MeAsp'
@@ -275,7 +297,7 @@ if __name__ == '__main__':
 
     timeline = get_pulse_timeline()
     timeseries = test_receptor(timeline)
-    plot_receptor_output(timeseries, out_dir, 'pulse')
+    plot_receptor_output(timeseries, {}, out_dir, 'pulse')
 
     exponential_random_config = {
         'time': 60,
@@ -283,4 +305,4 @@ if __name__ == '__main__':
         'speed': 14}
     timeline4 = get_exponential_random_timeline(exponential_random_config)
     output4 = test_receptor(timeline4, 0.1)
-    plot_receptor_output(output4, out_dir, 'exponential_random')
+    plot_receptor_output(output4, {}, out_dir, 'exponential_random')

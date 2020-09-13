@@ -316,7 +316,7 @@ class FlagellaMotor(Process):
 
 
 # test functions
-def get_chemoreceptor_timeline(
+def get_chemoreceptor_activity_timeline(
         total_time=2,
         time_step=0.01,
         rate=1.0,
@@ -336,50 +336,35 @@ def get_chemoreceptor_timeline(
     return timeline
 
 
-default_timeline = [(10, {})]
-default_params = {'n_flagella': 3}
-def test_flagella_motor(
-        timeline=default_timeline,
-        time_step=0.01,
-        parameters=default_params
-):
-    motor = FlagellaMotor(parameters)
+def test_variable_flagella(out_dir='out'):
+    total_time = 30
+    time_step = 0.01
+    initial_flagella = 2
+
+    # make timeline
+    timeline = get_chemoreceptor_activity_timeline(
+        total_time=total_time,
+        time_step=time_step,
+        rate=2.0,
+    )
+    timeline_flagella = [
+        (10, {('internal_counts', 'flagella'): initial_flagella + 1}),
+        (20, {('internal_counts', 'flagella'): initial_flagella + 2}),
+    ]
+    timeline.extend(timeline_flagella)
+
+    # run simulation
+    process_config = {'n_flagella': initial_flagella}
+    process = FlagellaMotor(process_config)
     settings = {
         'return_raw_data': True,
         'timeline': {
             'timeline': timeline,
             'time_step': time_step}}
-    return simulate_process_in_experiment(motor, settings)
+    raw_data = simulate_process_in_experiment(process, settings)
 
+    return raw_data
 
-def run_variable_flagella(out_dir='out'):
-    time_step = 0.01
-    # make timeline with both chemoreceptor variation and flagella counts
-    timeline = get_chemoreceptor_timeline(
-        total_time=3,
-        time_step=time_step,
-        rate=2.0,
-    )
-    timeline_flagella = [
-        (0.5, {('internal_counts', 'flagella'): 1}),
-        (1.0, {('internal_counts', 'flagella'): 2}),
-        (1.5, {('internal_counts', 'flagella'): 3}),
-        (2.0, {('internal_counts', 'flagella'): 4}),
-        (2.5, {('internal_counts', 'flagella'): 5}),
-    ]
-    timeline.extend(timeline_flagella)
-
-    # run simulation
-    data = test_flagella_motor(
-        timeline=timeline,
-        time_step=time_step,
-    )
-
-    # plot
-    plot_settings = {}
-    timeseries = timeseries_from_data(data)
-    plot_simulation_output(timeseries, plot_settings, out_dir)
-    plot_activity(data, plot_settings, out_dir)
 
 
 if __name__ == '__main__':
@@ -387,4 +372,10 @@ if __name__ == '__main__':
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    run_variable_flagella(out_dir)
+    data = test_variable_flagella(out_dir)
+
+    # plot
+    plot_settings = {}
+    timeseries = timeseries_from_data(data)
+    plot_simulation_output(timeseries, plot_settings, out_dir)
+    plot_activity(data, plot_settings, out_dir)

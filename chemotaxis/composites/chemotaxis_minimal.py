@@ -25,6 +25,7 @@ from chemotaxis import COMPOSITE_OUT_DIR
 
 NAME = 'chemotaxis_minimal'
 
+
 class ChemotaxisMinimal(Generator):
 
     defaults = {
@@ -69,14 +70,42 @@ class ChemotaxisMinimal(Generator):
                 'internal': ('cell',)}}
 
 
-def get_chemotaxis_config(config={}):
-    ligand_id = config.get('ligand_id', 'MeAsp')
-    initial_ligand = config.get('initial_ligand', 5.0)
-    external_path = config.get('external_path', 'external')
-    return {
-        'external_path': (external_path,),
+
+def test_chemotaxis_minimal(total_time=10):
+    environment_port = ('external',)
+    ligand_id = 'MeAsp'
+    initial_conc = 0
+    time_step = 0.1
+
+    # make the compartment
+    compartment_config = {
+        'external_path': (environment_port,),
         'ligand_id': ligand_id,
-        'initial_ligand': initial_ligand}
+        'initial_ligand': initial_conc}
+    compartment = ChemotaxisMinimal(compartment_config)
+
+    # configure timeline
+    exponential_random_config = {
+        'ligand': ligand_id,
+        'environment_port': environment_port,
+        'time': total_time,
+        'timestep': time_step,
+        'initial_conc': initial_conc,
+        'base': 1 + 4e-4,
+        'speed': 14,
+    }
+    timeline = get_exponential_random_timeline(exponential_random_config)
+
+    # run experiment
+    experiment_settings = {
+        'timeline': {
+            'timeline': timeline,
+            'ports': {'external': ('boundary', 'external')}},
+        'timestep': time_step,
+        'total_time': total_time}
+    timeseries = simulate_compartment_in_experiment(compartment, experiment_settings)
+
+    return timeseries
 
 
 if __name__ == '__main__':
@@ -84,38 +113,10 @@ if __name__ == '__main__':
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    environment_port = 'external'
-    ligand_id = 'MeAsp'
-    initial_conc = 0
-    total_time = 60
+    # run the composite
+    timeseries = test_chemotaxis_minimal(total_time=60)
 
-    # configure timeline
-    exponential_random_config = {
-        'ligand': ligand_id,
-        'environment_port': environment_port,
-        'time': total_time,
-        'timestep': 1,
-        'initial_conc': initial_conc,
-        'base': 1+4e-4,
-        'speed': 14}
-
-    # make the compartment
-    config = {
-        'ligand_id': ligand_id,
-        'initial_ligand': initial_conc,
-        'external_path': environment_port}
-    compartment = ChemotaxisMinimal(get_chemotaxis_config(config))
-
-    # run experiment
-    experiment_settings = {
-        'timeline': {
-            'timeline': get_exponential_random_timeline(exponential_random_config),
-            'ports': {'external': ('boundary', 'external')}},
-        'timestep': 0.01,
-        'total_time': 100}
-    timeseries = simulate_compartment_in_experiment(compartment, experiment_settings)
-
-    # plot settings for the simulations
+    # plot
     plot_settings = {
         'max_rows': 20,
         'remove_zeros': True,

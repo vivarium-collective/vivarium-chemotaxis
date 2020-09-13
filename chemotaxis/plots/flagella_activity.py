@@ -18,6 +18,8 @@ def plot_activity(
         timeseries = data
     else:
         timeseries = timeseries_from_data(data)
+    aspect_ratio = settings.get('aspect_ratio', 1)
+    fontsize = settings.get('fontsize', 12)
 
     CheY_vec = timeseries['internal']['CheY']
     CheY_P_vec = timeseries['internal']['CheY_P']
@@ -81,8 +83,10 @@ def plot_activity(
     # plot results
     cols = 1
     rows = 5
-    plt.figure(figsize=(3.0 * cols, 1.5 * rows))
-    plt.rc('font', size=12)
+    width = 6
+    height = width / aspect_ratio
+    plt.figure(figsize=(width, height))
+    plt.rc('font', size=fontsize)
 
     # define subplots
     ax1 = plt.subplot(rows, cols, 1)
@@ -123,7 +127,7 @@ def plot_activity(
         ax3.set_yticks(list(range(1, len(flagella_ids) + 1)))
         ax3.set_xticks([])
         ax3.set_ylabel('flagella #')
-        ax3.tick_params(axis='both', labelsize=10)
+        ax3.tick_params(axis='both', labelsize=fontsize)
 
         # legend
         ax3.legend(
@@ -191,8 +195,14 @@ def plot_motor_PMF(output, out_dir='out', figname='motor_PMF'):
     plt.savefig(fig_path + '.png', bbox_inches='tight')
 
 
-def plot_signal_transduction(timeseries, out_dir='out', filename='signal_transduction'):
-    ligand = timeseries['boundary']['external']
+def plot_signal_transduction(timeseries, plot_config, out_dir='out', filename='signal_transduction'):
+    if plot_config.get('ligand_id'):
+        ligand_id = plot_config['ligand_id']
+        ligand = {ligand_id: timeseries['boundary']['external'][ligand_id]}
+    else:
+        ligand = timeseries['boundary']['external']
+    aspect_ratio = plot_config.get('aspect_ratio', 1)
+    fontsize = plot_config.get('fontsize', 12)
     chemoreceptor_activity = timeseries['internal']['chemoreceptor_activity']
     CheY_P = timeseries['internal']['CheY_P']
     cw_bias = timeseries['internal']['cw_bias']
@@ -216,7 +226,9 @@ def plot_signal_transduction(timeseries, out_dir='out', filename='signal_transdu
     # plot results
     cols = 1
     rows = 5
-    plt.figure(figsize=(3.0 * cols, 1.5 * rows))
+    width = 6
+    height = width / aspect_ratio
+    plt.figure(figsize=(width, height))
     plt.rc('font', size=12)
 
     ax1 = plt.subplot(rows, cols, 1)
@@ -244,31 +256,31 @@ def plot_signal_transduction(timeseries, out_dir='out', filename='signal_transdu
     ax1.spines['right'].set_visible(False)
     ax1.spines['top'].set_visible(False)
     ax1.tick_params(right=False, top=False)
-    ax1.set_ylabel("external ligand \n (mM) ", fontsize=10)
+    ax1.set_ylabel("external ligand \n (mM) ", fontsize=fontsize)
 
     ax2.set_xticklabels([])
     ax2.spines['right'].set_visible(False)
     ax2.spines['top'].set_visible(False)
     ax2.tick_params(right=False, top=False)
-    ax2.set_ylabel("cluster activity \n P(on)", fontsize=10)
+    ax2.set_ylabel("cluster activity \n P(on)", fontsize=fontsize)
 
     ax3.set_xticklabels([])
     ax3.spines['right'].set_visible(False)
     ax3.spines['top'].set_visible(False)
     ax3.tick_params(right=False, top=False)
-    ax3.set_ylabel("CheY-P", fontsize=10)
+    ax3.set_ylabel("CheY-P", fontsize=fontsize)
 
     ax4.set_xticklabels([])
     ax4.spines['right'].set_visible(False)
     ax4.spines['top'].set_visible(False)
     ax4.tick_params(right=False, top=False)
-    ax4.set_ylabel("CW bias", fontsize=10)
+    ax4.set_ylabel("CW bias", fontsize=fontsize)
 
     ax5.spines['right'].set_visible(False)
     ax5.spines['top'].set_visible(False)
     ax5.tick_params(right=False, top=False)
-    ax5.set_xlabel("time (s)", fontsize=12)
-    ax5.set_ylabel("motile state", fontsize=10)
+    ax5.set_xlabel("time (s)", fontsize=fontsize)
+    ax5.set_ylabel("motile state", fontsize=fontsize)
 
     # legend
     ax5.legend(
