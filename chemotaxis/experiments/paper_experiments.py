@@ -165,6 +165,7 @@ def BiGG_metabolism(out_dir='out'):
             'volume': env_volume
         },
         'legend': False,
+        'aspect_ratio': 0.7,
     }
     plot_exchanges(timeseries, plot_config, out_dir)
 
@@ -215,7 +216,8 @@ def transport_metabolism(out_dir='out'):
         'internal_path': ('cytoplasm',),
         'external_path': ('boundary', 'external'),
         'global_path': ('boundary',),
-        'environment_volume': environment_volume}
+        'environment_volume': environment_volume,
+        'aspect_ratio': 0.35}
     plot_glc_lcts_environment(timeseries, plot_settings, out_dir)
 
 
@@ -464,7 +466,7 @@ def variable_flagella(out_dir='out'):
     data = simulate_process_in_experiment(process, settings)
 
     # plot
-    plot_settings = {}
+    plot_settings = {'aspect_ratio': 0.4}
     plot_activity(data, plot_settings, out_dir)
 
 
@@ -483,17 +485,18 @@ def run_chemoreceptor_pulse(out_dir='out'):
     experiment_settings = {
         'timeline': {
             'timeline': timeline}}
-    timeseries =  simulate_process_in_experiment(receptor, experiment_settings)
+    timeseries = simulate_process_in_experiment(receptor, experiment_settings)
 
     # plot
-    plot_receptor_output(timeseries, out_dir, 'pulse')
+    plot_settings = {'aspect_ratio': 0.4}
+    plot_receptor_output(timeseries, plot_settings, out_dir, 'pulse')
 
 
 # figure 7c
 def run_chemotaxis_transduction(out_dir='out'):
     total_time = 60
     time_step = 0.1
-    n_flagella = 5
+    n_flagella = 4
     ligand_id = 'MeAsp'
     initial_ligand = 1e-2
 
@@ -502,9 +505,11 @@ def run_chemotaxis_transduction(out_dir='out'):
         'receptor': {
             'ligand_id': ligand_id,
             'initial_ligand': initial_ligand,
+            'time_step': time_step
         },
         'flagella': {
             'n_flagella': n_flagella,
+            'time_step': time_step,
         },
     }
     compartment = ChemotaxisMaster(compartment_config)
@@ -515,20 +520,23 @@ def run_chemotaxis_transduction(out_dir='out'):
         initial_conc=initial_ligand,
         timestep=time_step,
         total_time=total_time,
-    )
+        speed=8)
 
     # run experiment
     experiment_settings = {
+        'emit_step': time_step,
         'timeline': {
             'timeline': timeline,
+            'time_step': time_step,
             'ports': {'external': ('boundary', 'external')}}}
-
     timeseries = simulate_compartment_in_experiment(
         compartment,
         experiment_settings)
 
     # plot
-    plot_config = {'ligand_id': ligand_id}
+    plot_config = {
+        'ligand_id': ligand_id,
+        'aspect_ratio': 0.4}
     plot_signal_transduction(timeseries, plot_config, out_dir)
 
 

@@ -297,7 +297,7 @@ if __name__ == '__main__':
 
     timeline = get_pulse_timeline()
     timeseries = test_receptor(timeline)
-    plot_receptor_output(timeseries, out_dir, 'pulse')
+    plot_receptor_output(timeseries, {}, out_dir, 'pulse')
 
     exponential_random_config = {
         'time': 60,
@@ -305,4 +305,4 @@ if __name__ == '__main__':
         'speed': 14}
     timeline4 = get_exponential_random_timeline(exponential_random_config)
     output4 = test_receptor(timeline4, 0.1)
-    plot_receptor_output(output4, out_dir, 'exponential_random')
+    plot_receptor_output(output4, {}, out_dir, 'exponential_random')
