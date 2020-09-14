@@ -75,7 +75,7 @@ def lacy_expression_config():
         ('external', 'glc__D_e'),
         ('internal', 'lcts_p')]
     regulation = {
-        'lacy_RNA': 'if (external, glc__D_e) > 0.05 and (internal, lcts_p) < 0.05'}  # inhibited in this condition
+        'lacy_RNA': 'if (external, glc__D_e) > 0.01 and (internal, lcts_p) < 0.05'}  # inhibited in this condition
     transcription_leak = {
         'rate': 5e-5,
         'magnitude': 1e-6}

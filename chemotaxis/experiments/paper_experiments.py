@@ -292,7 +292,7 @@ def transport_metabolism_environment(out_dir='out'):
             bounds=bounds,
             n_bins=[40, 40],
             depth=50.0,
-            diffusion=1e-4,
+            diffusion=1e-3,
             concentrations=media,
             keep_fields_emit=emit_fields,
         )
@@ -307,6 +307,7 @@ def transport_metabolism_environment(out_dir='out'):
                        'of LacY',
         'total_time': total_time,
         'emit_step': emit_step,
+        'emitter': {'type': 'database'},
     }
     experiment = agent_environment_experiment(
         agents_config=agents_config,
