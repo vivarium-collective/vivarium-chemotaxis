@@ -291,6 +291,7 @@ def transport_metabolism_environment(out_dir='out'):
             time_step=10,
             bounds=bounds,
             n_bins=[40, 40],
+            jitter_force=5e-3,
             depth=50.0,
             diffusion=1e-3,
             concentrations=media,
