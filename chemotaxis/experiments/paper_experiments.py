@@ -92,8 +92,8 @@ from chemotaxis.plots.flagella_activity import (
 
 # figure 3b
 def growth_division_experiment(out_dir='out'):
-    total_time = 210 #00
-    emit_step = 100
+    total_time = 21000
+    emit_step = 120
     env_time_step = 60
     fields = ['glc__D_e', 'lcts_e']
     emit_fields = ['glc__D_e']
@@ -115,6 +115,7 @@ def growth_division_experiment(out_dir='out'):
             bounds=[30, 30],
             molecules=fields,
             keep_fields_emit=emit_fields,
+            # parallel=True,
         )
     }
 
@@ -234,8 +235,8 @@ def transport_metabolism(out_dir='out'):
 # figure 5c
 def transport_metabolism_environment(out_dir='out'):
     n_agents = 1
-    total_time = 100  #5000
-    emit_step = 10  #100
+    total_time = 5000
+    emit_step = 100
     process_time_step = 10  # TODO -- pass time_step to compartment, processes
     bounds = [30, 30]
     emit_fields = ['glc__D_e', 'lcts_e']
@@ -292,10 +293,6 @@ def transport_metabolism_environment(out_dir='out'):
             keep_fields_emit=emit_fields,
         )
     }
-
-
-    import ipdb; ipdb.set_trace()
-
     # make the experiment
     experiment_settings = {
         'experiment_name': 'transport_metabolism_environment',
