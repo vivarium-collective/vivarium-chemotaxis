@@ -408,9 +408,13 @@ def flagella_expression_network(out_dir='out'):
 
 # figure 6b
 def flagella_just_in_time(out_dir='out'):
+    total_time = 2500
 
     # make the compartment
-    compartment_config = {}
+    compartment_config = {
+        'transport': {'time_step': 60},
+        'metabolism': {'time_step': 60},
+    }
     compartment = FlagellaExpressionMetabolism(compartment_config)
 
     # get the initial state
@@ -418,11 +422,9 @@ def flagella_just_in_time(out_dir='out'):
 
     # run simulation
     settings = {
-        # a cell cycle of 2520 sec is expected to express 8 flagella.
-        # 2 flagella expected in approximately 630 seconds.
-        'total_time': 500,
+        # a cell cycle of 2500 sec is expected to express 4 flagella.
+        'total_time': total_time,
         'emit_step': 10.0,
-        'verbose': True,
         'initial_state': initial_state,
     }
     timeseries = simulate_compartment_in_experiment(compartment, settings)
@@ -443,6 +445,7 @@ def flagella_just_in_time(out_dir='out'):
         }
     }
     plot_timeseries_heatmaps(timeseries, plot_config, out_dir)
+    plot_simulation_output(timeseries, {}, out_dir)
 
 
 # figure 6c

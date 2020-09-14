@@ -204,11 +204,12 @@ class ChemotaxisExpressionFlagella(Generator):
     n_flagella = 5
     initial_mass = 1339.0 * units.fg
     growth_rate = 0.000275
+    flagella_expression_config = get_flagella_expression_config({})
     defaults = {
-        'transcription': get_flagella_expression_config({})['transcription'],
-        'translation': get_flagella_expression_config({})['translation'],
-        'degradation': get_flagella_expression_config({})['degradation'],
-        'complexation': get_flagella_expression_config({})['complexation'],
+        'transcription': flagella_expression_config['transcription'],
+        'translation': flagella_expression_config['translation'],
+        'degradation': flagella_expression_config['degradation'],
+        'complexation': flagella_expression_config['complexation'],
         'receptor': {
             'ligand_id': ligand_id,
             'initial_ligand': initial_ligand

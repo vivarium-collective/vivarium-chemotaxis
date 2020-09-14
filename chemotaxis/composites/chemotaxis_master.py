@@ -59,6 +59,7 @@ def get_metabolism_config(time_step=1):
 
 class ChemotaxisMaster(Generator):
 
+    flagella_expression_config = get_flagella_expression_config({})
     defaults = {
         'dimensions_path': ('dimensions',),
         'fields_path': ('fields',),
@@ -67,10 +68,10 @@ class ChemotaxisMaster(Generator):
         'daughter_path': tuple(),
         'transport': glucose_lactose_transport_config(),
         'metabolism': get_metabolism_config(10),
-        'transcription': get_flagella_expression_config({})['transcription'],
-        'translation': get_flagella_expression_config({})['translation'],
-        'degradation': get_flagella_expression_config({})['degradation'],
-        'complexation': get_flagella_expression_config({})['complexation'],
+        'transcription': flagella_expression_config['transcription'],
+        'translation': flagella_expression_config['translation'],
+        'degradation': flagella_expression_config['degradation'],
+        'complexation': flagella_expression_config['complexation'],
         'receptor': {'ligand': 'MeAsp'},
         'flagella': {'n_flagella': 5},
         'PMF': {},

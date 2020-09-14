@@ -207,7 +207,7 @@ class FlagellaExpressionMetabolism(Generator):
         'transport': glucose_lactose_transport_config(),
         'metabolism': default_metabolism_config(),
         'initial_mass': 0.0 * units.fg,
-        'time_step': 10,
+        'expression_time_step': 10,
         'divide': True,
     })
 
@@ -227,10 +227,10 @@ class FlagellaExpressionMetabolism(Generator):
         complexation_config = config['complexation']
 
         # update expression timestep
-        transcription_config.update({'time_step': config['time_step']})
-        translation_config.update({'time_step': config['time_step']})
-        degradation_config.update({'time_step': config['time_step']})
-        complexation_config.update({'time_step': config['time_step']})
+        transcription_config.update({'time_step': config['expression_time_step']})
+        translation_config.update({'time_step': config['expression_time_step']})
+        degradation_config.update({'time_step': config['expression_time_step']})
+        complexation_config.update({'time_step': config['expression_time_step']})
 
         # make the expression processes
         transcription = Transcription(transcription_config)
@@ -242,14 +242,12 @@ class FlagellaExpressionMetabolism(Generator):
 
         # Transport
         transport_config = config['transport']
-        transport_config.update({'time_step': config['time_step']})
         transport = ConvenienceKinetics(transport_config)
         target_fluxes = transport.kinetic_rate_laws.reaction_ids
 
         # Metabolism
         # add target fluxes from transport
         metabolism_config = config.get('metabolism')
-        metabolism_config.update({'time_step': config['time_step']})
         metabolism_config.update({'constrained_reaction_ids': target_fluxes})
         metabolism = Metabolism(metabolism_config)
 
@@ -357,11 +355,8 @@ def run_flagella_compartment(
 
     # run simulation
     settings = {
-        # a cell cycle of 2520 sec is expected to express 8 flagella.
-        # 2 flagella expected in approximately 630 seconds.
-        'total_time': 2520,
+        'total_time': 2500,
         'emit_step': 10,
-        'verbose': True,
         'initial_state': initial_state}
     timeseries = simulate_compartment_in_experiment(compartment, settings)
 
