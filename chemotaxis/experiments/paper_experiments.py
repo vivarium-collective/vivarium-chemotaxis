@@ -23,6 +23,7 @@ from vivarium.core.composition import (
     simulate_process_in_experiment,
     simulate_compartment_in_experiment,
     agent_environment_experiment,
+    plot_simulation_output,
     make_agent_ids,
 )
 from vivarium.core.emitter import time_indexed_timeseries_from_data
@@ -66,7 +67,9 @@ from chemotaxis.composites.flagella_expression import (
 )
 from chemotaxis.composites.transport_metabolism import (
     TransportMetabolismExpression,
+    ODE_expression,
     get_metabolism_initial_external_state,
+    lacy_expression_config,
 )
 from chemotaxis.composites.chemotaxis_master import ChemotaxisMaster
 
@@ -183,7 +186,7 @@ def BiGG_metabolism(out_dir='out'):
 
 # figure 5b
 def transport_metabolism(out_dir='out'):
-    total_time = 3000
+    total_time = 6000
     environment_volume = 1e-13 * units.L
     initial_concentrations = {
         'glc__D_e': 1.0,
@@ -195,7 +198,12 @@ def transport_metabolism(out_dir='out'):
         'agent_id': '0',
         'metabolism': {'time_step': 10},
         'transport': {'time_step': 10},
-        'expression': {'time_step': 1},
+        'expression': {
+            'time_step': 1,
+            'transcription_leak': {
+                'rate': 5e-3,  # increased leak rate makes more frequent bursts (for a better plot)
+            },
+        },
         'divide': False,
     }
     compartment = TransportMetabolismExpression(compartment_config)
@@ -233,6 +241,7 @@ def transport_metabolism(out_dir='out'):
         'aspect_ratio': 0.7,
     }
     plot_glc_lcts_environment(timeseries, plot_settings, out_dir)
+    plot_simulation_output(timeseries, {}, out_dir)
 
 
 # figure 5c
@@ -327,6 +336,51 @@ def transport_metabolism_environment(out_dir='out'):
         'tagged_molecules': tagged_molecules,
     }
     plot_control(data, plot_config, out_dir)
+
+
+# figure 5d
+def lacy_expression(out_dir='out'):
+    """ two experiments for ODE-based LacY expression
+
+    These experiments use only the ode_expression process,
+    and no transport from the resulting proteins
+        * experiment 1: external glucose starts high and drops to 0.0
+        * experiment 2: external glucose starts high and drops to 0.0 along with an increase in internal lactose.
+    """
+
+    lacy_expression = lacy_expression_config()
+    process = ODE_expression(lacy_expression)
+
+    total_time = 8000
+    shift_time1 = int(total_time / 5)
+    shift_time2 = int(4 * total_time / 5)
+
+    # timeline 1
+    timeline1 = [
+        (0, {('external', 'glc__D_e'): 10}),
+        (shift_time1, {('external', 'glc__D_e'): 0.0}),
+        (shift_time2, {('external', 'glc__D_e'): 10.}),
+        (total_time, {})]
+
+    # timeline 2
+    timeline2 = [
+        (0, {('external', 'glc__D_e'): 10}),
+        (shift_time1, {
+            ('external', 'glc__D_e'): 0,
+            ('internal', 'lcts_p'): 0.1
+        }),
+        (shift_time2, {('external', 'glc__D_e'): 0.1}),
+        (total_time, {})]
+
+    # experiment 1 -- simulate and plot
+    settings1 = {'timeline': {'timeline': timeline1}}
+    timeseries1 = simulate_process_in_experiment(process, settings1)
+    plot_simulation_output(timeseries1, {}, out_dir, 'experiment_1')
+
+    # experiment 2 -- simulate and plot
+    settings2 = {'timeline': {'timeline': timeline2}}
+    timeseries2 = simulate_process_in_experiment(process, settings2)
+    plot_simulation_output(timeseries2, {}, out_dir, 'experiment_2')
 
 
 # figure 6a
@@ -717,6 +771,7 @@ experiments_library = {
     '5a': BiGG_metabolism,
     '5b': transport_metabolism,
     '5c': transport_metabolism_environment,
+    '5d': lacy_expression,
     '6a': flagella_expression_network,
     '6b': flagella_just_in_time,
     '6c': run_heterogeneous_flagella_experiment,
@@ -724,12 +779,12 @@ experiments_library = {
     '7b': run_chemoreceptor_pulse,
     '7c': run_chemotaxis_transduction,
     '7d': run_chemotaxis_experiment,
-    '5': ['5a', '5b', '5c'],
+    '5': ['5a', '5b', '5c', '5d'],
     '6': ['6a', '6b', '6c'],
     '7': ['7a', '7b', '7c', '7d'],
     'all': [
         '3b',
-        '5a', '5b', '5c',
+        '5a', '5b', '5c', '5d',
         '6a', '6b', '6c',
         '7a', '7b', '7c', '7d'],
 }

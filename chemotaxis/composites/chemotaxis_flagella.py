@@ -11,7 +11,6 @@ import argparse
 from vivarium.library.units import units
 from vivarium.core.process import Generator
 from vivarium.core.composition import (
-    plot_compartment_topology,
     simulate_compartment_in_experiment,
     plot_simulation_output,
 )
@@ -356,9 +355,6 @@ def test_ode_expression_chemotaxis(
     config = get_baseline_config(n_flagella)
     compartment = ChemotaxisODEExpressionFlagella(config)
 
-    # save the topology network
-    plot_compartment_topology(compartment, {}, out_dir)
-
     # run experiment
     initial_state = {}
     timeline = get_brownian_ligand_timeline(total_time=total_time)
@@ -387,9 +383,6 @@ def test_expression_chemotaxis(
     config = get_baseline_config(n_flagella)
     compartment = ChemotaxisExpressionFlagella(config)
 
-    # save the topology network
-    plot_compartment_topology(compartment, {}, out_dir)
-
     # run experiment
     initial_state = get_flagella_initial_state({
         'molecules': 'internal'})
@@ -414,9 +407,6 @@ def test_variable_chemotaxis(
     # make the compartment
     config = get_baseline_config(n_flagella)
     compartment = ChemotaxisVariableFlagella(config)
-
-    # save the topology network
-    plot_compartment_topology(compartment, {}, out_dir)
 
     # run experiment
     initial_state = {}

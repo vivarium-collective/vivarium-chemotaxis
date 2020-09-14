@@ -43,12 +43,12 @@ NAME = 'transport_metabolism'
 def default_metabolism_config():
     config = get_iAF1260b_config()
 
-    # set flux bond tolerance for reactions in ode_expression's lacy_config
+    # flux bound tolerance for reactions in glucose_lactose_transport_config
     metabolism_config = {
         'initial_mass': 1339.0,  # fg of metabolite pools
         'tolerance': {
-            'EX_glc__D_e': [1.02, 1.0],
-            'EX_lcts_e': [1.02, 1.0]}}
+            'EX_glc__D_e': [1.05, 1.0],
+            'EX_lcts_e': [1.05, 1.0]}}
     config.update(metabolism_config)
     return config
 
@@ -61,24 +61,25 @@ def lacy_expression_config():
 
     # expression
     transcription_rates = {
-        'lacy_RNA': 1e-7}
+        'lacy_RNA': 1e-6}
     translation_rates = {
-        'LacY': 5e-3}
+        'LacY': 1e-4}
     protein_map = {
         'LacY': 'lacy_RNA'}
     degradation_rates = {
-        'lacy_RNA': 3e-3,  # a single RNA lasts about 5 minutes
-        'LacY': 3e-5}
+        'lacy_RNA': 1e-3,  # a single RNA lasts about 5 minutes
+        'LacY': 1e-5}  # proteins degrade ~100x slower
 
     # regulation
     regulators = [
         ('external', 'glc__D_e'),
         ('internal', 'lcts_p')]
-    regulation = {
-        'lacy_RNA': 'if (external, glc__D_e) > 0.01 and (internal, lcts_p) < 0.05'}  # inhibited in this condition
+    regulation_condition = {
+        'lacy_RNA': 'if [(external, glc__D_e) > 0.005 '  # limiting concentration of glc at 0.005 mM (Boulineau 2013)
+                    'or (internal, lcts_p) < 0.005]'}  # internal lcts is hypothesized to disinhibit lacY transcription
     transcription_leak = {
-        'rate': 5e-5,
-        'magnitude': 1e-6}
+        'rate': 5e-4,
+        'magnitude': 1e-7}
 
     # initial state
     initial_state = {
@@ -95,7 +96,7 @@ def lacy_expression_config():
         'degradation_rates': degradation_rates,
         'protein_map': protein_map,
         'regulators': regulators,
-        'regulation': regulation,
+        'regulation': regulation_condition,
         'transcription_leak': transcription_leak,
         'initial_state': initial_state}
 
@@ -113,7 +114,7 @@ def glucose_lactose_transport_config():
                 ('internal', 'g6p_c'): 1.0,
                 ('external', 'glc__D_e'): -1.0,
                 ('internal', 'pep_c'): -1.0,
-                ('internal', 'pyr_c'): 1.0 },
+                ('internal', 'pyr_c'): 1.0},
             'is reversible': False,
             'catalyzed by': [
                 ('internal', 'EIIglc')]},
@@ -128,12 +129,12 @@ def glucose_lactose_transport_config():
     transport_kinetics = {
         'EX_glc__D_e': {
             ('internal', 'EIIglc'): {
-                ('external', 'glc__D_e'): 1e-1,  # k_m for external [glc__D_e]
+                ('external', 'glc__D_e'): 2e-1,  # (mM) k_m for glc
                 ('internal', 'pep_c'): None,  # k_m = None makes a reactant non-limiting
                 'kcat_f': 1e2}},
         'EX_lcts_e': {
             ('internal', 'LacY'): {
-                ('external', 'lcts_e'): 1e-1,
+                ('external', 'lcts_e'): 2e-1,  # (mM) k_m for lcts
                 'kcat_f': 1e2}}}
 
     transport_initial_state = {
@@ -194,7 +195,7 @@ class TransportMetabolismExpression(Generator):
         'transport': glucose_lactose_transport_config(),
         'metabolism': default_metabolism_config(),
         'expression': lacy_expression_config(),
-        'divide': True
+        'divide': True,
     }
 
     def __init__(self, config=None):
