@@ -32,7 +32,7 @@ from cell.processes.ode_expression import ODE_expression, get_flagella_expressio
 from chemotaxis.processes.flagella_motor import FlagellaMotor
 from chemotaxis.composites.flagella_expression import (
     get_flagella_expression_config,
-    get_flagella_initial_state,
+    get_flagella_expression_initial_state,
     plot_gene_expression_output,
 )
 
@@ -385,7 +385,7 @@ def test_expression_chemotaxis(
     compartment = ChemotaxisExpressionFlagella(config)
 
     # run experiment
-    initial_state = get_flagella_initial_state({
+    initial_state = get_flagella_expression_initial_state({
         'molecules': 'internal'})
     timeline = get_brownian_ligand_timeline(total_time=total_time)
     experiment_settings = {

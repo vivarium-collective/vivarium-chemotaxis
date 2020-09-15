@@ -43,7 +43,10 @@ from vivarium.processes.tree_mass import TreeMass
 
 # composites
 from cell.composites.gene_expression import GeneExpression
-from chemotaxis.composites.transport_metabolism import glucose_lactose_transport_config
+from chemotaxis.composites.transport_metabolism import (
+    glucose_lactose_transport_config,
+    default_metabolism_config,
+)
 
 # plots
 from cell.plots.gene_expression import plot_gene_expression_output
@@ -54,16 +57,6 @@ from chemotaxis import COMPOSITE_OUT_DIR, REFERENCE_DATA_DIR
 
 NAME = 'flagella_gene_expression'
 
-
-def default_metabolism_config():
-    metabolism_config = get_iAF1260b_config()
-    metabolism_config.update({
-        'initial_mass': 1339.0,  # fg of metabolite pools
-        'tolerance': {
-            'EX_glc__D_e': [1.05, 1.0],
-            'EX_lcts_e': [1.05, 1.0],
-        }})
-    return metabolism_config
 
 
 flagella_schema_override = {
@@ -129,41 +122,53 @@ def get_flagella_expression_config(config):
     }
 
 
-def get_flagella_initial_state(ports={}):
+# initial state for flagella gene expression compartment
+def get_flagella_expression_initial_state(ports={}):
+    expression_config = get_flagella_metabolism_initial_state(ports)
+
+    # add molecules
+    molecules = {}
+    for nucleotide in nucleotides.values():
+        molecules[nucleotide] = 5e6
+    for amino_acid in amino_acids.values():
+        molecules[amino_acid] = 1e6
+    molecules['ATP'] = 5e7
+
+    expression_config.update({
+        ports.get('molecules', 'molecules'):
+            molecules})
+    return expression_config
+
+
+# initial state for flagella expression with metabolism
+def get_flagella_metabolism_initial_state(ports={}):
     flagella_data = FlagellaChromosome()
     chromosome_config = flagella_data.chromosome_config
 
-    molecules = {}
-    for nucleotide in nucleotides.values():
-        molecules[nucleotide] = 5000000
-    for amino_acid in amino_acids.values():
-        molecules[amino_acid] = 1000000
-
+    # justification for 15 ribosomes: E. coli has ~7000-70000 ribosomes
+    # (http://book.bionumbers.org/how-many-ribosomes-are-in-a-cell/),
+    # and 4 flagella would make up ~0.0002 of total mass. Which indicates
+    # 2-14 ribosomes are required if allocation is proportional to mass.
+    # there are ~2000 RNAPs in E. coli (Bremer, and Dennis 1996)
     return {
-        ports.get(
-            'molecules',
-            'molecules'): molecules,
-        ports.get(
-            'transcripts',
-            'transcripts'): {
-                gene: 0
-                for gene in chromosome_config['genes'].keys()
+        ports.get('transcripts', 'transcripts'): {
+            gene: 0
+            for gene in chromosome_config['genes'].keys()
         },
-        ports.get(
-            'proteins',
-            'proteins'): {
-                'CpxR': 10,
-                'CRP': 10,
-                'Fnr': 10,
-                'endoRNAse': 1,
-                'flagella': 8,
-                UNBOUND_RIBOSOME_KEY: 100,  # e. coli has ~ 20000 ribosomes
-                UNBOUND_RNAP_KEY: 100
-            }
+        ports.get('proteins', 'proteins'): {
+            'CpxR': 10,
+            'CRP': 10,
+            'Fnr': 10,
+            'endoRNAse': 1,
+            'flagella': 4,
+            UNBOUND_RIBOSOME_KEY: 15,
+            UNBOUND_RNAP_KEY: 15,
+        },
     }
 
 
-def get_flagella_expression_compartment(config):
+# flagella expression compartment
+def FlagellaGeneExpression(config):
     """
     Make a gene expression compartment with flagella expression data
     """
@@ -171,48 +176,38 @@ def get_flagella_expression_compartment(config):
     return GeneExpression(flagella_expression_config)
 
 
-
-# flagella expression with metabolism
-def get_flagella_metabolism_initial_state():
-    flagella_data = FlagellaChromosome()
-    chromosome_config = flagella_data.chromosome_config
-    return {
-        'transcripts': {
-            gene: 0
-            for gene in chromosome_config['genes'].keys()
-        },
-        'proteins': {
-            'CpxR': 10,
-            'CRP': 10,
-            'Fnr': 10,
-            'endoRNAse': 1,
-            'flagella': 8,
-            UNBOUND_RIBOSOME_KEY: 100,  # e. coli has ~ 20000 ribosomes
-            UNBOUND_RNAP_KEY: 100
-        },
-    }
-
-
+# flagella expression compartment with transport and metabolism
 class FlagellaExpressionMetabolism(Generator):
     """ Flagella stochastic expression with metabolism """
 
     name = 'flagella_expression_metabolism'
-    defaults = get_flagella_expression_config({})
-    defaults.update({
+    defaults = {
         'boundary_path': ('boundary',),
         'fields_path': ('fields',),
         'dimensions_path': ('dimensions',),
         'agents_path': ('agents',),
         'daughter_path': tuple(),
+        'flagella_chromosome': {},
         'transport': glucose_lactose_transport_config(),
         'metabolism': default_metabolism_config(),
         'initial_mass': 0.0 * units.fg,
         'expression_time_step': 10,
         'divide': True,
-    })
+    }
 
     def __init__(self, config=None):
+        if config is None:
+            config = {}
+        # get flagella expression config and update config
+        chromosome_config = config.get(
+            'flagella_chromosome',
+            self.defaults['flagella_chromosome'])
+        flagella_expression_config = get_flagella_expression_config(
+            chromosome_config)
+        config.update(flagella_expression_config)
+
         super(FlagellaExpressionMetabolism, self).__init__(config)
+
         if 'agent_id' not in self.config:
             self.config['agent_id'] = str(uuid.uuid1())
 
@@ -344,9 +339,10 @@ class FlagellaExpressionMetabolism(Generator):
         return topology
 
 
-# simulation function
+# simulation
 def run_flagella_compartment(
         compartment,
+        total_time=2500,
         initial_state=None,
         out_dir='out'):
 
@@ -355,7 +351,7 @@ def run_flagella_compartment(
 
     # run simulation
     settings = {
-        'total_time': 2500,
+        'total_time': total_time,
         'emit_step': 10,
         'initial_state': initial_state}
     timeseries = simulate_compartment_in_experiment(compartment, settings)
@@ -438,10 +434,10 @@ def test_flagella_metabolism(seed=1):
 
 @pytest.mark.slow
 def test_flagella_expression():
-    flagella_compartment = get_flagella_expression_compartment({})
+    flagella_compartment = FlagellaGeneExpression({})
 
     # initial state for flagella complexation
-    initial_state = get_flagella_initial_state()
+    initial_state = get_flagella_expression_initial_state()
     initial_state['proteins'].update({
         'Ribosome': 100,  # plenty of ribosomes
         'flagella': 0,
@@ -482,16 +478,32 @@ if __name__ == '__main__':
         mtb_out_dir = os.path.join(out_dir, 'metabolism')
         if not os.path.exists(mtb_out_dir):
             os.makedirs(mtb_out_dir)
-        compartment = FlagellaExpressionMetabolism({'divide': False})
+        # get initial state
+        initial_state = get_flagella_metabolism_initial_state()
+
+        # configure the compartment
+        flagella_config = {'divide': False}
+        compartment = FlagellaExpressionMetabolism(flagella_config)
+
+        # run sim
+        total_time = 2500
         run_flagella_compartment(
-            compartment,
-            get_flagella_metabolism_initial_state(),
-            mtb_out_dir
-        )
+            compartment=compartment,
+            total_time=total_time,
+            initial_state=initial_state,
+            out_dir=out_dir)
     else:
-        compartment = get_flagella_expression_compartment({})
+        # get initial state
+        initial_state = get_flagella_expression_initial_state()
+
+        # configure the compartment
+        flagella_chromosome_config = {}
+        compartment = FlagellaGeneExpression(flagella_chromosome_config)
+
+        # run sim
+        total_time = 5000  # 2500
         run_flagella_compartment(
-            compartment,
-            get_flagella_initial_state(),
-            out_dir
-        )
+            compartment=compartment,
+            total_time=total_time,
+            initial_state=initial_state,
+            out_dir=out_dir)

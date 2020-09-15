@@ -424,12 +424,12 @@ def flagella_just_in_time(out_dir='out'):
     settings = {
         # a cell cycle of 2500 sec is expected to express 4 flagella.
         'total_time': total_time,
-        'emit_step': 10.0,
+        'emit_step': 60.0,
         'initial_state': initial_state,
     }
     timeseries = simulate_compartment_in_experiment(compartment, settings)
 
-    # plot output
+    # plot timeseries heatmaps
     flagella_data = FlagellaChromosome()
     plot_config = {
         'name': 'flagella',
@@ -445,7 +445,13 @@ def flagella_just_in_time(out_dir='out'):
         }
     }
     plot_timeseries_heatmaps(timeseries, plot_config, out_dir)
-    plot_simulation_output(timeseries, {}, out_dir)
+
+    # plot sim output
+    sim_plot_config = {
+        'max_rows': 30,
+        'remove_zeros': True,
+        'skip_ports': ['chromosome', 'ribosomes']}
+    plot_simulation_output(timeseries, sim_plot_config, out_dir)
 
 
 # figure 6c
