@@ -491,7 +491,7 @@ if __name__ == '__main__':
             compartment=compartment,
             total_time=total_time,
             initial_state=initial_state,
-            out_dir=out_dir)
+            out_dir=mtb_out_dir)
     else:
         # get initial state
         initial_state = get_flagella_expression_initial_state()
