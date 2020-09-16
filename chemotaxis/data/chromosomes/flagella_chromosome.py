@@ -413,13 +413,13 @@ class FlagellaChromosome(object):
             'flhDC': {
                 'flhD': -4.0,
                 'flhC': -2.0,
-                'flhDC': 1.0
+                'flhDC': 1.0,
             },
             'flagellar motor switch reaction': {
                 'flagellar motor switch': 1.0,
                 'fliG': -26.0,
                 'fliM': -34.0,
-                'fliN': -1.0
+                'fliN': -1.0,
             },
             'flagellar export apparatus reaction 1': {
                 'flagellar export apparatus subunit': 1.0,
@@ -430,12 +430,12 @@ class FlagellaChromosome(object):
                 'fliQ': -1.0,
                 'fliR': -1.0,
                 'fliJ': -1.0,
-                'fliI': -6.0
+                'fliI': -6.0,
             },
             'flagellar export apparatus reaction 2': {
                 'flagellar export apparatus': 1.0,
                 'flagellar export apparatus subunit': -1.0,
-                'fliH': -12.0
+                'fliH': -12.0,
             },
             'flagellar motor reaction': {
                 'flagellar motor': 1.0,
@@ -450,11 +450,11 @@ class FlagellaChromosome(object):
                 'flgG': -1.0,
                 'flgI': -1.0,
                 'fliF': -1.0,
-                'fliE': -1.0
+                'fliE': -1.0,
             },
             'flagellar hook reaction': {
                 'flagellar hook': 1,
-                'flgE': -120.0
+                'flgE': -120.0,
             },
             'flagellum reaction': {
                 'flagella': 1.0,
@@ -464,7 +464,7 @@ class FlagellaChromosome(object):
                 'flgL': -1.0,
                 'flgK': -1.0,
                 'fliD': -5.0,
-                'flagellar hook': -1
+                'flagellar hook': -1,
             }
         }
 
