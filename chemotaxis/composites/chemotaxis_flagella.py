@@ -378,7 +378,6 @@ def test_ode_expression_chemotaxis(
 def test_expression_chemotaxis(
         n_flagella=5,
         total_time=10,
-        out_dir='out'
 ):
     # make the compartment
     config = get_baseline_config(n_flagella)
@@ -473,7 +472,7 @@ if __name__ == '__main__':
             out_dir=expression_out_dir)
         print_growth(timeseries)
         # plot
-        plot_timeseries(timeseries, out_dir)
+        plot_timeseries(timeseries, expression_out_dir)
         plot_config = {
             'ports': {
                 'transcripts': 'transcripts',
@@ -482,4 +481,4 @@ if __name__ == '__main__':
         plot_gene_expression_output(
             timeseries,
             plot_config,
-            out_dir)
+            expression_out_dir)

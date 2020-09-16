@@ -9,6 +9,9 @@ Handles experiment specifications for `paper_experiments.py`
 import os
 import argparse
 
+# vivarium-core imports
+from vivarium.library.units import units
+
 # directories
 from cell.plots.multibody_physics import plot_tags, plot_snapshots
 from vivarium.core.composition import (
@@ -19,6 +22,35 @@ from vivarium.core.composition import (
 from chemotaxis import EXPERIMENT_OUT_DIR
 
 
+
+def single_agent_config(config):
+    width = 1
+    length = 2
+    # volume = volume_from_length(length, width)
+    bounds = config.get('bounds')
+    location = config.get('location')
+    location = [loc * bounds[n] for n, loc in enumerate(location)]
+
+    return {
+        'boundary': {
+            'location': location,
+            # 'angle': np.random.uniform(0, 2 * PI),
+            # 'volume': volume,
+            'length': length,
+            'width': width,
+            'mass': 1339 * units.fg,
+            # 'thrust': 0,
+            # 'torque': 0,
+        }
+    }
+
+def agent_body_config(config):
+    agent_ids = config['agent_ids']
+    agent_config = {
+        agent_id: single_agent_config(config)
+        for agent_id in agent_ids}
+    return {
+        'agents': agent_config}
 
 
 def plot_control(data, config, out_dir='out'):

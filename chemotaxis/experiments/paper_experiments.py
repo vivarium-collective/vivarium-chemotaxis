@@ -13,6 +13,11 @@ Available experiments include: '3b', '5a', '5b', '5c', '5d', 6a', '6b', '6c', '7
 $ python chemotaxis/experiments/paper_experiments.py 7a
 ```
 
+Notes:
+    * some of the larger experiments require a MongoDB connection.
+    These have the experiment setting {'emitter': {'type': 'database'}}.
+    To run them without saving to a database, remove this setting.
+
 """
 
 import numpy as np
@@ -32,6 +37,7 @@ from vivarium.core.emitter import time_indexed_timeseries_from_data
 from chemotaxis.experiments.control import (
     control,
     plot_control,
+    agent_body_config,
 )
 
 # vivarium-cell imports
@@ -101,6 +107,7 @@ def growth_division_experiment(out_dir='out'):
     fields = ['glc__D_e', 'lcts_e']
     emit_fields = ['glc__D_e']
     initial_agent_id = 'growth_division'
+    parallel = False
 
     # configure the agents and environment
     agents_config = {
@@ -119,7 +126,7 @@ def growth_division_experiment(out_dir='out'):
             bounds=[30, 30],
             molecules=fields,
             keep_fields_emit=emit_fields,
-            # parallel=True,
+            parallel=parallel,
         )
     }
 
@@ -139,6 +146,7 @@ def growth_division_experiment(out_dir='out'):
     # run simulation
     experiment.update(total_time)
     data = experiment.emitter.get_data()
+    experiment.end()  # end required for parallel processes
 
     # plots
     plot_config = {
@@ -256,8 +264,10 @@ def transport_metabolism_environment(out_dir='out'):
         'glc__D_e': 0.5,
         'lcts_e': 8.0,
     }
+    parallel = True
 
     # agent configuration
+    process_timestep = 10
     agents_config = [{
         'name': 'transport_metabolism',
         'type': TransportMetabolismExpression,
@@ -267,13 +277,13 @@ def transport_metabolism_environment(out_dir='out'):
             'fields_path': ('..', '..', 'fields'),
             'dimensions_path': ('..', '..', 'dimensions'),
             'metabolism': {
-                'time_step': 60},
+                'time_step': process_timestep},
             'transport': {
-                'time_step': 60},
+                'time_step': process_timestep},
             'expression': {
-                'time_step': 10},  # TODO -- is this causing big spikes?
+                'time_step': process_timestep},  # TODO -- is this causing big spikes?
             'division': {
-                'time_step': 60,
+                'time_step': process_timestep,
             },
         }}]
     make_agent_ids(agents_config)  # add agent_ids
@@ -303,6 +313,7 @@ def transport_metabolism_environment(out_dir='out'):
             diffusion=1e-3,
             concentrations=media,
             keep_fields_emit=emit_fields,
+            parallel=parallel,
         )
     }
 
@@ -327,6 +338,7 @@ def transport_metabolism_environment(out_dir='out'):
     # run simulation
     experiment.update(total_time)
     data = experiment.emitter.get_data()
+    experiment.end()  # end required for parallel processes
 
     # plot output
     plot_config = {
@@ -460,6 +472,7 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
     bounds = [17, 17]
     tagged_molecules = [('proteins', 'flagella')]
     emit_fields = ['glc__D_e']
+    parallel = False
 
     # configure agents and environment
     agents_config = {
@@ -481,7 +494,9 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
             concentrations=media,
             bounds=bounds,
             depth=6000.0,
-            keep_fields_emit=emit_fields)
+            keep_fields_emit=emit_fields,
+            parallel=parallel,
+        )
     }
 
     # get initial agent state
@@ -494,6 +509,7 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
         'description': '..',
         'total_time': total_time,
         'emit_step': emit_step,
+        'emitter': {'type': 'database'},
     }
     experiment = agent_environment_experiment(
         agents_config=agents_config,
@@ -504,6 +520,7 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
     # run the experiment
     experiment.update(total_time)
     data = experiment.emitter.get_data()
+    experiment.end()  # end required for parallel processes
 
     # plot output
     plot_config = {
@@ -630,37 +647,6 @@ def run_chemotaxis_transduction(out_dir='out'):
     plot_signal_transduction(timeseries, plot_config, out_dir)
 
 
-
-# helper functions for chemotaxis
-def single_agent_config(config):
-    width = 1
-    length = 2
-    # volume = volume_from_length(length, width)
-    bounds = config.get('bounds')
-    location = config.get('location')
-    location = [loc * bounds[n] for n, loc in enumerate(location)]
-
-    return {
-        'boundary': {
-            'location': location,
-            # 'angle': np.random.uniform(0, 2 * PI),
-            # 'volume': volume,
-            'length': length,
-            'width': width,
-            'mass': 1339 * units.fg,
-            # 'thrust': 0,
-            # 'torque': 0,
-        }
-    }
-
-def agent_body_config(config):
-    agent_ids = config['agent_ids']
-    agent_config = {
-        agent_id: single_agent_config(config)
-        for agent_id in agent_ids}
-    return {'agents': agent_config}
-
-
 # figure 7d
 def run_chemotaxis_experiment(out_dir='out'):
     total_time = 30
@@ -749,6 +735,7 @@ def run_chemotaxis_experiment(out_dir='out'):
         'description': '..',
         'total_time': total_time,
         'emit_step': emit_step,
+        'emitter': {'type': 'database'},
     }
     experiment = agent_environment_experiment(
         agents_config=agents_config,
