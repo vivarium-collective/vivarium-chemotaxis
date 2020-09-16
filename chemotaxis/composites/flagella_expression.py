@@ -59,6 +59,7 @@ NAME = 'flagella_gene_expression'
 
 
 
+# Proteins that are not being expressed remain constant upon division
 flagella_schema_override = {
     'transcription': {
         'proteins': {
@@ -343,6 +344,7 @@ class FlagellaExpressionMetabolism(Generator):
 def run_flagella_compartment(
         compartment,
         total_time=2500,
+        emit_step=10,
         initial_state=None,
         out_dir='out'):
 
@@ -352,7 +354,7 @@ def run_flagella_compartment(
     # run simulation
     settings = {
         'total_time': total_time,
-        'emit_step': 10,
+        'emit_step': emit_step,
         'initial_state': initial_state}
     timeseries = simulate_compartment_in_experiment(compartment, settings)
 
@@ -387,6 +389,7 @@ def run_flagella_compartment(
     # plot basic sim output
     plot_settings = {
         'max_rows': 30,
+        'remove_first_timestep': True,
         'remove_zeros': True,
         'skip_ports': ['chromosome', 'ribosomes']}
     plot_simulation_output(
@@ -493,6 +496,7 @@ if __name__ == '__main__':
             total_time=total_time,
             initial_state=initial_state,
             out_dir=mtb_out_dir)
+
     elif args.expression:
         exp_out_dir = os.path.join(out_dir, 'expression')
         if not os.path.exists(exp_out_dir):
@@ -505,9 +509,10 @@ if __name__ == '__main__':
         compartment = FlagellaGeneExpression(flagella_chromosome_config)
 
         # run sim
-        total_time = 5000  # 2500
+        total_time = 2000
         run_flagella_compartment(
             compartment=compartment,
             total_time=total_time,
+            emit_step=10,
             initial_state=initial_state,
             out_dir=exp_out_dir)

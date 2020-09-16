@@ -421,6 +421,8 @@ def flagella_just_in_time(out_dir='out'):
     total_time = 2500
 
     # make the compartment
+    # longer time steps for transport/metabolism speed up the simulation,
+    # and still provide the required nutrients
     compartment_config = {
         'transport': {'time_step': 60},
         'metabolism': {'time_step': 60},
@@ -433,7 +435,6 @@ def flagella_just_in_time(out_dir='out'):
     # run simulation with helper function simulate_compartment_in_experiment
     settings = {
         'total_time': total_time,
-        'emit_step': 4000.0,
         'initial_state': initial_state,
     }
     timeseries = simulate_compartment_in_experiment(compartment, settings)
