@@ -471,11 +471,12 @@ if __name__ == '__main__':
         os.makedirs(out_dir)
 
     parser = argparse.ArgumentParser(description='flagella expression')
-    parser.add_argument('--metabolism', '-m', action='store_true', default=False, )
+    parser.add_argument('--metabolism', '-m', action='store_true', default=False,)
+    parser.add_argument('--expression', '-e', action='store_true', default=True, )
     args = parser.parse_args()
 
     if args.metabolism:
-        mtb_out_dir = os.path.join(out_dir, 'metabolism')
+        mtb_out_dir = os.path.join(out_dir, 'expression_metabolism')
         if not os.path.exists(mtb_out_dir):
             os.makedirs(mtb_out_dir)
         # get initial state
@@ -492,7 +493,10 @@ if __name__ == '__main__':
             total_time=total_time,
             initial_state=initial_state,
             out_dir=mtb_out_dir)
-    else:
+    elif args.expression:
+        exp_out_dir = os.path.join(out_dir, 'expression')
+        if not os.path.exists(exp_out_dir):
+            os.makedirs(exp_out_dir)
         # get initial state
         initial_state = get_flagella_expression_initial_state()
 
@@ -506,4 +510,4 @@ if __name__ == '__main__':
             compartment=compartment,
             total_time=total_time,
             initial_state=initial_state,
-            out_dir=out_dir)
+            out_dir=exp_out_dir)

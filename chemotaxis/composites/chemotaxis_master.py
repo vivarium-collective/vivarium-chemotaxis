@@ -5,6 +5,7 @@ Chemotaxis Master Composite
 """
 
 import os
+import argparse
 import uuid
 
 # core imports
@@ -14,26 +15,31 @@ from vivarium.core.composition import (
     plot_simulation_output,
     plot_compartment_topology,
 )
+from vivarium.library.dict_utils import deep_merge
 
 # processes
 from vivarium.processes.meta_division import MetaDivision
-from cell.processes.metabolism import (
-    Metabolism,
-    get_iAF1260b_config
-)
+from vivarium.processes.tree_mass import TreeMass
+from cell.processes.metabolism import Metabolism
 from cell.processes.convenience_kinetics import ConvenienceKinetics
 from cell.processes.transcription import Transcription
 from cell.processes.translation import Translation
 from cell.processes.degradation import RnaDegradation
 from cell.processes.complexation import Complexation
 from cell.processes.division_volume import DivisionVolume
-from chemotaxis.processes.chemoreceptor_cluster import ReceptorCluster
+from chemotaxis.processes.chemoreceptor_cluster import ReceptorCluster, get_brownian_ligand_timeline
 from chemotaxis.processes.flagella_motor import FlagellaMotor
 from chemotaxis.processes.membrane_potential import MembranePotential
 
 # composites
-from chemotaxis.composites.flagella_expression import get_flagella_expression_config
-from chemotaxis.composites.transport_metabolism import glucose_lactose_transport_config
+from chemotaxis.composites.flagella_expression import (
+    get_flagella_expression_config,
+    get_flagella_metabolism_initial_state,
+)
+from chemotaxis.composites.transport_metabolism import (
+    glucose_lactose_transport_config,
+    default_metabolism_config,
+)
 
 # plots
 from cell.plots.gene_expression import plot_gene_expression_output
@@ -45,21 +51,13 @@ from chemotaxis import COMPOSITE_OUT_DIR
 NAME = 'chemotaxis_master'
 
 
-def get_metabolism_config(time_step=1):
-    metabolism_config = get_iAF1260b_config()
-    metabolism_config.update({
-        'time_step': time_step,
-        'moma': False,
-        'tolerance': {
-            'EX_glc__D_e': [1.05, 1.0],
-            'EX_lcts_e': [1.05, 1.0]}
-        })
-    return metabolism_config
-
-
 class ChemotaxisMaster(Generator):
+    """ Chemotaxis Master Composite
 
-    flagella_expression_config = get_flagella_expression_config({})
+     The most complete chemotaxis agent in the vivarium-chemotaxis repository
+     """
+
+    name = NAME
     defaults = {
         'dimensions_path': ('dimensions',),
         'fields_path': ('fields',),
@@ -67,20 +65,25 @@ class ChemotaxisMaster(Generator):
         'agents_path': ('agents',),
         'daughter_path': tuple(),
         'transport': glucose_lactose_transport_config(),
-        'metabolism': get_metabolism_config(10),
-        'transcription': flagella_expression_config['transcription'],
-        'translation': flagella_expression_config['translation'],
-        'degradation': flagella_expression_config['degradation'],
-        'complexation': flagella_expression_config['complexation'],
+        'metabolism': default_metabolism_config(),
         'receptor': {'ligand': 'MeAsp'},
-        'flagella': {'n_flagella': 5},
+        'flagella': {'n_flagella': 4},
         'PMF': {},
+        'mass_deriver': {},
+        'chromosome': {},
         'division': {},
         'divide': True,
     }
 
     def __init__(self, config=None):
+        if config is None:
+            config = {}
+        # make expression process configs with get_flagella_expression_config
+        chromosome_config = config.get('chromosome', self.defaults['chromosome'])
+        expression_config = get_flagella_expression_config(chromosome_config)
+        config = deep_merge(dict(config), expression_config)
         super(ChemotaxisMaster, self).__init__(config)
+
         if 'agent_id' not in self.config:
             self.config['agent_id'] = str(uuid.uuid1())
 
@@ -88,42 +91,26 @@ class ChemotaxisMaster(Generator):
         daughter_path = config['daughter_path']
         agent_id = config['agent_id']
 
-        # Transport
+        # Transport and Metabolism
+        # get target fluxes from transport and add to metabolism
         transport = ConvenienceKinetics(config['transport'])
-
-        # Metabolism
-        # add target fluxes from transport
         target_fluxes = transport.kinetic_rate_laws.reaction_ids
-        config['metabolism']['constrained_reaction_ids'] = target_fluxes
-        metabolism = Metabolism(config['metabolism'])
-
-        # flagella expression
-        transcription = Transcription(config['transcription'])
-        translation = Translation(config['translation'])
-        degradation = RnaDegradation(config['degradation'])
-        complexation = Complexation(config['complexation'])
-
-        # chemotaxis -- flagella activity, receptor activity, and PMF
-        receptor = ReceptorCluster(config['receptor'])
-        flagella = FlagellaMotor(config['flagella'])
-        PMF = MembranePotential(config['PMF'])
-
-        # Division
-        # get initial volume from metabolism
-        config['division']['initial_state'] = metabolism.initial_state
-        division_condition = DivisionVolume(config['division'])
+        metabolism_config = config['metabolism']
+        metabolism_config.update({'constrained_reaction_ids': target_fluxes})
+        metabolism = Metabolism(metabolism_config)
 
         processes = {
-            'metabolism': metabolism,
             'transport': transport,
-            'transcription': transcription,
-            'translation': translation,
-            'degradation': degradation,
-            'complexation': complexation,
-            'receptor': receptor,
-            'flagella': flagella,
-            'PMF': PMF,
-            'division': division_condition,
+            'metabolism': metabolism,
+            'receptor': ReceptorCluster(config['receptor']),
+            'flagella': FlagellaMotor(config['flagella']),
+            'PMF': MembranePotential(config['PMF']),
+            'transcription': Transcription(config['transcription']),
+            'translation': Translation(config['translation']),
+            'degradation': RnaDegradation(config['degradation']),
+            'complexation': Complexation(config['complexation']),
+            'division': DivisionVolume(config['division']),
+            'mass_deriver': TreeMass(config['mass_deriver']),
         }
         # divide process set to true, add meta-division processes
         if config['divide']:
@@ -159,7 +146,7 @@ class ChemotaxisMaster(Generator):
                 'fields': fields_path,
                 'flux_bounds': ('flux_bounds',),
                 'global': boundary_path,
-                'dimensions': dimensions_path
+                'dimensions': dimensions_path,
             },
             'transcription': {
                 'chromosome': ('chromosome',),
@@ -206,7 +193,10 @@ class ChemotaxisMaster(Generator):
             },
             'division': {
                 'global': boundary_path,
-            }
+            },
+            'mass_deriver': {
+                'global': boundary_path,
+            },
         }
         if config['divide']:
             topology.update({
@@ -217,54 +207,41 @@ class ChemotaxisMaster(Generator):
         return topology
 
 
-def run_chemotaxis_master(out_dir):
-    total_time = 10
-
-    # make the compartment
-    compartment = ChemotaxisMaster({'agent_id': '0'})
-
-    # save the topology network
+def save_master_chemotaxis_topology(out_dir):
+    compartment = ChemotaxisMaster({})
     settings = {'show_ports': True}
     plot_compartment_topology(
         compartment,
         settings,
         out_dir)
 
-    # run an experinet
+
+def test_chemotaxis_master(
+    total_time=5,
+    emit_step=1,
+    chemotaxis_timestep=0.01,
+):
+    # get initial state
+    initial_state = get_flagella_metabolism_initial_state()
+
+    # configure the compartment
+    compartment = ChemotaxisMaster({
+        'receptor': {'time_step': chemotaxis_timestep},
+        'flagella': {'time_step': chemotaxis_timestep},
+        'agent_id': '0',
+        'divide': False})
+
+    # simulate
+    timeline = get_brownian_ligand_timeline(
+        total_time=total_time,
+        timestep=chemotaxis_timestep)
     settings = {
-        'timestep': 1,
-        'total_time': total_time}
-    timeseries = simulate_compartment_in_experiment(compartment, settings)
-
-    volume_ts = timeseries['boundary']['volume']
-    print('growth: {}'.format(volume_ts[-1]/volume_ts[0]))
-
-    # plots
-    # simulation output
-    plot_settings = {
-        'max_rows': 40,
-        'remove_zeros': True,
-        'skip_ports': ['reactions', 'prior_state', 'null']}
-    plot_simulation_output(timeseries, plot_settings, out_dir)
-
-    # gene expression plot
-    gene_exp_plot_config = {
-        'name': 'flagella_expression',
-        'ports': {
-            'transcripts': 'transcripts',
-            'proteins': 'proteins',
-            'molecules': 'internal'}}
-    plot_gene_expression_output(
-        timeseries,
-        gene_exp_plot_config,
-        out_dir)
-
-
-def test_chemotaxis_master(total_time=5):
-    compartment = ChemotaxisMaster({})
-    settings = {
-        'timestep': 1,
-        'total_time': total_time}
+        'emit_step': emit_step,
+        'initial_state': initial_state,
+        'timeline': {
+            'timeline': timeline,
+            'ports': {
+                'external': ('boundary', 'external')}}}
     return simulate_compartment_in_experiment(compartment, settings)
 
 
@@ -273,4 +250,37 @@ if __name__ == '__main__':
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
-    run_chemotaxis_master(out_dir)
+    parser = argparse.ArgumentParser(description='flagella expression')
+    parser.add_argument('--topology', '-t', action='store_true', default=False, )
+    args = parser.parse_args()
+
+    if args.topology:
+        save_master_chemotaxis_topology(out_dir)
+    else:
+        total_time = 500
+
+        # run sim
+        timeseries = test_chemotaxis_master(
+            total_time=total_time,
+            chemotaxis_timestep=1,  # 0.01 is the appropriate timescale
+        )
+        volume_ts = timeseries['boundary']['volume']
+        print('growth: {}'.format(volume_ts[-1]/volume_ts[0]))
+
+        # plot output
+        plot_settings = {
+            'max_rows': 40,
+            'remove_zeros': True,
+            'skip_ports': ['reactions', 'prior_state', 'null']}
+        plot_simulation_output(timeseries, plot_settings, out_dir)
+
+        # gene expression plot
+        gene_exp_plot_config = {
+            'ports': {
+                'transcripts': 'transcripts',
+                'proteins': 'proteins',
+                'molecules': 'internal'}}
+        plot_gene_expression_output(
+            timeseries,
+            gene_exp_plot_config,
+            out_dir)
