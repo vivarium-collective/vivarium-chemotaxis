@@ -23,6 +23,7 @@ from vivarium.core.composition import (
 )
 from vivarium.core.emitter import path_timeseries_from_embedded_timeseries
 from vivarium.library.units import units
+from vivarium.library.dict_utils import deep_merge
 
 # data
 from cell.data.nucleotides import nucleotides
@@ -169,11 +170,14 @@ def get_flagella_metabolism_initial_state(ports={}):
 
 
 # flagella expression compartment
-def FlagellaGeneExpression(config):
+def FlagellaGeneExpression(config={}):
     """
     Make a gene expression compartment with flagella expression data
     """
-    flagella_expression_config = get_flagella_expression_config(config)
+    chromosome_config = config.get('chromosome', {})
+    compartment_config = config.get('compartment', {})
+    flagella_expression_config = get_flagella_expression_config(chromosome_config)
+    flagella_expression_config = deep_merge(dict(flagella_expression_config), compartment_config)
     return GeneExpression(flagella_expression_config)
 
 
@@ -374,13 +378,20 @@ def run_flagella_compartment(
         out_dir)
 
     # plot just-in-time figure
+    # transcript_list is ordered in expected just-in-time order
+    transcript_list = list(flagella_data.chromosome_config['genes'].keys())
+    protein_list = flagella_data.complexation_monomer_ids + flagella_data.complexation_complex_ids
+    protein_list.sort()
+    molecule_list = list(nucleotides.values()) + list(amino_acids.values())
+    molecule_list.sort()
     plot_config2 = plot_config.copy()
     plot_config2.update({
         'name': 'flagella',
         'plot_ports': {
-            'transcripts': list(flagella_data.chromosome_config['genes'].keys()),
-            'proteins': flagella_data.complexation_monomer_ids + flagella_data.complexation_complex_ids,
-            'molecules': list(nucleotides.values()) + list(amino_acids.values())}})
+            'transcripts': transcript_list,
+            'proteins': protein_list,
+            'molecules': molecule_list,
+        }})
     plot_timeseries_heatmaps(
         timeseries,
         plot_config2,
@@ -505,14 +516,25 @@ if __name__ == '__main__':
         initial_state = get_flagella_expression_initial_state()
 
         # configure the compartment
-        flagella_chromosome_config = {}
-        compartment = FlagellaGeneExpression(flagella_chromosome_config)
+        expression_timestep = 50
+        parallel = True
+        flagella_config = {
+            'chromosome': {},
+            'compartment': {
+                'time_step': expression_timestep,
+                'transcription': {'_parallel': parallel},
+                'translation': {'_parallel': parallel},
+                'complexation': {'_parallel': parallel},
+                'degradation': {'_parallel': parallel},
+            },
+        }
+        compartment = FlagellaGeneExpression(flagella_config)
 
         # run sim
-        total_time = 2000
+        total_time = 3000
         run_flagella_compartment(
             compartment=compartment,
             total_time=total_time,
-            emit_step=10,
+            emit_step=expression_timestep,
             initial_state=initial_state,
             out_dir=exp_out_dir)
