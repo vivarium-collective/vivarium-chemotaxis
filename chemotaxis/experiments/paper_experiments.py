@@ -480,7 +480,7 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
         'ids': ['flagella_metabolism'],
         'type': FlagellaExpressionMetabolism,
         'config': {
-            'time_step': process_time_step,
+            'expression_time_step': process_time_step,
             'agents_path': ('..', '..', 'agents'),
             'fields_path': ('..', '..', 'fields'),
             'dimensions_path': ('..', '..', 'dimensions'),
