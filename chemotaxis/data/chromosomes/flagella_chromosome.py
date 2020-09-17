@@ -35,12 +35,12 @@ class FlagellaChromosome(object):
             ('fliEp1', 'flhDC'): 9e-06 * units.mM,
             ('fliFp1', 'flhDC'): 1.2e-05 * units.mM,
             ('flgAp', 'flhDC'): 1.4e-05 * units.mM,
-            ('flgBp', 'flhDC'): 1.6e-05 * units.mM,
-            ('flhBp', 'flhDC'): 1.8e-05 * units.mM,
-            ('fliAp1', 'flhDC'): 2.1e-05 * units.mM,  # activating fliA begins hand-off of regulation
-            ('flgEp', 'flhDC'): 2.2e-05 * units.mM,
-            ('fliDp', 'flhDC'): 2.4e-05 * units.mM,
-            ('flgKp', 'flhDC'): 2.6e-05 * units.mM,
+            ('flgBp', 'flhDC'): 1.8e-05 * units.mM,
+            ('flhBp', 'flhDC'): 2.1e-05 * units.mM,
+            ('fliAp1', 'flhDC'): 2.6e-05 * units.mM,  # activating fliA begins hand-off of regulation
+            ('flgEp', 'flhDC'): 2.8e-05 * units.mM,
+            ('fliDp', 'flhDC'): 3.0e-05 * units.mM,
+            ('flgKp', 'flhDC'): 3.2e-05 * units.mM,
 
             # activation by fliA (also flhDC)
             ('fliLp1', 'fliA'): 4e-06 * units.mM,
@@ -49,7 +49,7 @@ class FlagellaChromosome(object):
             ('flgAp', 'fliA'): 7e-06 * units.mM,
             ('flgBp', 'fliA'): 8e-06 * units.mM,
             ('flhBp', 'fliA'): 9e-06 * units.mM,
-            ('fliAp1', 'fliA'): 4e-06 * units.mM,  # fliA self-activation takes over regulation
+            ('fliAp1', 'fliA'): 5e-06 * units.mM,  # fliA self-activation takes over regulation
             ('flgEp', 'fliA'): 1e-05 * units.mM,
             ('fliDp', 'fliA'): 1.5e-05 * units.mM,
             ('flgKp', 'fliA'): 2e-05 * units.mM,
@@ -325,8 +325,6 @@ class FlagellaChromosome(object):
         #     self.promoter_affinities[(promoter, 'flhDC')] = 1.0
         for promoter in self.fliA_activated:
             self.promoter_affinities[(promoter, 'fliA')] = 1.0
-        self.promoter_affinities.update(
-            parameters.get('promoter_affinities', {}))
         promoter_affinity_scaling = parameters.get('promoter_affinity_scaling', 1)
         self.promoter_affinities = {
             promoter: affinity * promoter_affinity_scaling
@@ -350,23 +348,20 @@ class FlagellaChromosome(object):
             for key, sequence in self.protein_sequences.items()}
 
         # transcript affinities are the affinities with which a ribosome binds to a transcript
-        # tr_affinity_scaling scales affinities linearly relative to the requirements of a flagellum.
-        min_tr_affinity = parameters.get('min_tr_affinity', 1e-3)
-        scaling_rate = 0  # parameters.get('tr_affinity_rate', 1e-5)
-        tr_affinity_scaling = {
-            'fliL': 2,
-            'fliM': 34,
-            'fliG': 26,
-            'fliH': 12,
-            'fliI': 6,
-            'fliD': 5,
-            'flgE': 120}
+        # tsc_affinity_scaling scales affinities to meet the requirements of a flagellum.
+        affinity_scaling = parameters.get('tsc_affinity_scaling', 1)
+        min_affinity = 1e-2
+        added_affinity = {
+            'fliG': 3e-2,
+            'flgE': 2e-3,
+            'flhB': 1e-3,
+            'fliI': 2e-3,
+            'fliH': 3e-3,
+        }
         self.transcript_affinities = {}
         for (operon, product) in self.transcripts:
             self.transcript_affinities[(operon, product)] = \
-                min_tr_affinity + scaling_rate * tr_affinity_scaling.get(product, 0)
-        self.transcript_affinities.update(
-            parameters.get('transcript_affinities', {}))
+                affinity_scaling * (min_affinity + added_affinity.get(product, 0))
 
         self.transcription_factors = [
             'flhDC', 'fliA', 'CsgD', 'CRP', 'GadE', 'H-NS', 'CpxR', 'Fnr']

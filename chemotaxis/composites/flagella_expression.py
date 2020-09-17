@@ -531,7 +531,7 @@ if __name__ == '__main__':
         compartment = FlagellaGeneExpression(flagella_config)
 
         # run sim
-        total_time = 3000
+        total_time = 4000
         run_flagella_compartment(
             compartment=compartment,
             total_time=total_time,

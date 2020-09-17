@@ -418,7 +418,7 @@ def flagella_expression_network(out_dir='out'):
 
 # figure 6b
 def flagella_just_in_time(out_dir='out'):
-    total_time = 2500
+    total_time = 3000
 
     # make the compartment
     # longer time steps for transport/metabolism speed up the simulation,
@@ -467,7 +467,7 @@ def flagella_just_in_time(out_dir='out'):
 # figure 6c
 def run_heterogeneous_flagella_experiment(out_dir='out'):
 
-    total_time = 15000
+    total_time = 18000
     emit_step = 120
     process_time_step = 60
     bounds = [17, 17]
@@ -536,7 +536,7 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
 
 
 # figure 7a
-def variable_flagella(out_dir='out'):
+def run_flagella_activity(out_dir='out'):
     total_time = 80
     time_step = 0.01
     initial_flagella = 1
@@ -771,7 +771,7 @@ experiments_library = {
     '6a': flagella_expression_network,
     '6b': flagella_just_in_time,
     '6c': run_heterogeneous_flagella_experiment,
-    '7a': variable_flagella,
+    '7a': run_flagella_activity,
     '7b': run_chemoreceptor_pulse,
     '7c': run_chemotaxis_transduction,
     '7d': run_chemotaxis_experiment,
