@@ -27,61 +27,38 @@ class FlagellaChromosome(object):
             self.ecoli_sequence = read_sequence(ECOLI_GENOME_PATH)
 
         self.factor_thresholds = {
-            # flhD
+            # flhDC activation by CRP
             ('flhDp', 'CRP'): 1e-05 * units.mM,
 
-            # fliL
+            # activation by flhDC
             ('fliLp1', 'flhDC'): 6e-06 * units.mM,
-            ('fliLp1', 'fliA'): 1.3e-05 * units.mM,
-
-            # fliE
             ('fliEp1', 'flhDC'): 9e-06 * units.mM,
-            ('fliEp1', 'fliA'): 1.1e-05 * units.mM,
-
-            # fliF
             ('fliFp1', 'flhDC'): 1.2e-05 * units.mM,
-            ('fliFp1', 'fliA'): 1e-05 * units.mM,
-
-            # flgA
             ('flgAp', 'flhDC'): 1.4e-05 * units.mM,
-            ('flgAp', 'fliA'): 8e-06 * units.mM,
-
-            # flgB
             ('flgBp', 'flhDC'): 1.6e-05 * units.mM,
-            ('flgBp', 'fliA'): 9e-07 * units.mM,
+            ('flhBp', 'flhDC'): 1.8e-05 * units.mM,
+            ('fliAp1', 'flhDC'): 2.1e-05 * units.mM,  # activating fliA begins hand-off of regulation
+            ('flgEp', 'flhDC'): 2.2e-05 * units.mM,
+            ('fliDp', 'flhDC'): 2.4e-05 * units.mM,
+            ('flgKp', 'flhDC'): 2.6e-05 * units.mM,
 
-            # flhB
-            ('flhBp', 'flhDC'): 1.7e-05 * units.mM,
-            ('flhBp', 'fliA'): 1e-06 * units.mM,
+            # activation by fliA (also flhDC)
+            ('fliLp1', 'fliA'): 4e-06 * units.mM,
+            ('fliEp1', 'fliA'): 5e-06 * units.mM,
+            ('fliFp1', 'fliA'): 6e-06 * units.mM,
+            ('flgAp', 'fliA'): 7e-06 * units.mM,
+            ('flgBp', 'fliA'): 8e-06 * units.mM,
+            ('flhBp', 'fliA'): 9e-06 * units.mM,
+            ('fliAp1', 'fliA'): 4e-06 * units.mM,  # fliA self-activation takes over regulation
+            ('flgEp', 'fliA'): 1e-05 * units.mM,
+            ('fliDp', 'fliA'): 1.5e-05 * units.mM,
+            ('flgKp', 'fliA'): 2e-05 * units.mM,
 
-            # fliA
-            # self-activation determines hand-off of regulation from flhDC
-            ('fliAp1', 'flhDC'): 1.9e-05 * units.mM,
-            ('fliAp1', 'fliA'): 4e-06 * units.mM,
-
-            # flgE
-            ('flgEp', 'flhDC'): 2.1e-05 * units.mM,
-            ('flgEp', 'fliA'): 3e-06 * units.mM,
-
-            # fliD
-            ('fliDp', 'flhDC'): 2.3e-05 * units.mM,
-            ('fliDp', 'fliA'): 4e-06 * units.mM,
-
-            # flgK
-            ('flgKp', 'flhDC'): 2.5e-05 * units.mM,
-            ('flgKp', 'fliA'): 5e-06 * units.mM,
-
-            # fliC
-            ('fliCp', 'fliA'): 7e-06 * units.mM,
-
-            # tarp
-            ('tarp', 'fliA'): 9e-06 * units.mM,
-
-            # motA
-            ('motAp', 'fliA'): 1.1e-05 * units.mM,
-
-            # flgM
-            ('flgMp', 'fliA'): 1.3e-05 * units.mM,
+            # activation by fliA alone
+            ('fliCp', 'fliA'): 2.5e-05 * units.mM,
+            ('tarp', 'fliA'): 3e-05 * units.mM,
+            ('motAp', 'fliA'): 4e-05 * units.mM,
+            ('flgMp', 'fliA'): 4.5e-05 * units.mM,
         }
 
         self.factor_thresholds.update(parameters.get('thresholds', {}))
@@ -373,7 +350,7 @@ class FlagellaChromosome(object):
             for key, sequence in self.protein_sequences.items()}
 
         # transcript affinities are the affinities with which a ribosome binds to a transcript
-        # tr_affinity_scaling scales affinities relative to the requirements for a single flagellum.
+        # tr_affinity_scaling scales affinities linearly relative to the requirements of a flagellum.
         min_tr_affinity = parameters.get('min_tr_affinity', 1e-3)
         scaling_rate = 0  # parameters.get('tr_affinity_rate', 1e-5)
         tr_affinity_scaling = {
