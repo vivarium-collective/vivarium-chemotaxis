@@ -418,14 +418,17 @@ def flagella_expression_network(out_dir='out'):
 
 # figure 6b
 def flagella_just_in_time(out_dir='out'):
-    total_time = 3000
+    total_time = 4000
 
     # make the compartment
-    # longer time steps for transport/metabolism speed up the simulation,
-    # and still provide the required nutrients
+    # longer time steps speed up the simulation,
+    # and are sufficient to provide the required nutrients
     compartment_config = {
+        'expression_time_step': 60,
         'transport': {'time_step': 60},
         'metabolism': {'time_step': 60},
+        'chromosome': {'tsc_affinity_scaling': 1e-1},
+        'divide': False,
     }
     compartment = FlagellaExpressionMetabolism(compartment_config)
 
@@ -439,8 +442,15 @@ def flagella_just_in_time(out_dir='out'):
     }
     timeseries = simulate_compartment_in_experiment(compartment, settings)
 
-    # plot output as heat maps
+    # plot "just-in-time" output as a heat maps
+    # transcript_list is made in expected just-in-time order
+    # order proteins and small molecules alphabetically
     flagella_data = FlagellaChromosome()
+    transcript_list = list(flagella_data.chromosome_config['genes'].keys())
+    protein_list = flagella_data.complexation_monomer_ids + flagella_data.complexation_complex_ids
+    protein_list.sort()
+    molecule_list = list(nucleotides.values()) + list(amino_acids.values())
+    molecule_list.sort()
     plot_config = {
         'name': 'flagella',
         'ports': {
@@ -449,9 +459,9 @@ def flagella_just_in_time(out_dir='out'):
             'molecules': 'molecules',
         },
         'plot_ports': {
-            'transcripts': list(flagella_data.chromosome_config['genes'].keys()),
-            'proteins': flagella_data.complexation_monomer_ids + flagella_data.complexation_complex_ids,
-            'molecules': list(nucleotides.values()) + list(amino_acids.values()),
+            'transcripts': transcript_list,
+            'proteins': protein_list,
+            'molecules': molecule_list,
         }
     }
     plot_timeseries_heatmaps(timeseries, plot_config, out_dir)

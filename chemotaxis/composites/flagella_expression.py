@@ -172,7 +172,7 @@ def get_flagella_metabolism_initial_state(ports={}):
 # flagella expression compartment
 def FlagellaGeneExpression(config={}):
     """
-    Make a gene expression compartment with flagella expression data
+    return a GeneExpression compartment configured with flagella expression data
     """
     chromosome_config = config.get('chromosome', {})
     compartment_config = config.get('compartment', {})
@@ -192,7 +192,7 @@ class FlagellaExpressionMetabolism(Generator):
         'dimensions_path': ('dimensions',),
         'agents_path': ('agents',),
         'daughter_path': tuple(),
-        'flagella_chromosome': {},
+        'chromosome': {},
         'transport': glucose_lactose_transport_config(),
         'metabolism': default_metabolism_config(),
         'initial_mass': 0.0 * units.fg,
@@ -205,8 +205,7 @@ class FlagellaExpressionMetabolism(Generator):
             config = {}
         # get flagella expression config and update config
         chromosome_config = config.get(
-            'flagella_chromosome',
-            self.defaults['flagella_chromosome'])
+            'chromosome', self.defaults['chromosome'])
         flagella_expression_config = get_flagella_expression_config(
             chromosome_config)
         config.update(flagella_expression_config)
@@ -493,6 +492,9 @@ if __name__ == '__main__':
         mtb_out_dir = os.path.join(out_dir, 'expression_metabolism')
         if not os.path.exists(mtb_out_dir):
             os.makedirs(mtb_out_dir)
+
+        total_time = 2500
+
         # get initial state
         initial_state = get_flagella_metabolism_initial_state()
 
@@ -500,8 +502,7 @@ if __name__ == '__main__':
         flagella_config = {'divide': False}
         compartment = FlagellaExpressionMetabolism(flagella_config)
 
-        # run sim
-        total_time = 2500
+        # run sim and plot
         run_flagella_compartment(
             compartment=compartment,
             total_time=total_time,
@@ -512,6 +513,9 @@ if __name__ == '__main__':
         exp_out_dir = os.path.join(out_dir, 'expression')
         if not os.path.exists(exp_out_dir):
             os.makedirs(exp_out_dir)
+
+        total_time = 4000
+
         # get initial state
         initial_state = get_flagella_expression_initial_state()
 
@@ -519,7 +523,9 @@ if __name__ == '__main__':
         expression_timestep = 50
         parallel = True
         flagella_config = {
-            'chromosome': {},
+            'chromosome': {
+                'tsc_affinity_scaling': 1e-2,
+            },
             'compartment': {
                 'time_step': expression_timestep,
                 'transcription': {'_parallel': parallel},
@@ -530,8 +536,7 @@ if __name__ == '__main__':
         }
         compartment = FlagellaGeneExpression(flagella_config)
 
-        # run sim
-        total_time = 4000
+        # run sim and plot
         run_flagella_compartment(
             compartment=compartment,
             total_time=total_time,

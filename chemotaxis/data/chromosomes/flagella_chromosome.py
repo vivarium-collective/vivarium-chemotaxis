@@ -50,15 +50,15 @@ class FlagellaChromosome(object):
             ('flgBp', 'fliA'): 8e-06 * units.mM,
             ('flhBp', 'fliA'): 9e-06 * units.mM,
             ('fliAp1', 'fliA'): 5e-06 * units.mM,  # fliA self-activation takes over regulation
-            ('flgEp', 'fliA'): 1e-05 * units.mM,
+            ('flgEp', 'fliA'): 7e-06 * units.mM,
             ('fliDp', 'fliA'): 1.5e-05 * units.mM,
             ('flgKp', 'fliA'): 2e-05 * units.mM,
 
             # activation by fliA alone
-            ('fliCp', 'fliA'): 2.5e-05 * units.mM,
-            ('tarp', 'fliA'): 3e-05 * units.mM,
-            ('motAp', 'fliA'): 4e-05 * units.mM,
-            ('flgMp', 'fliA'): 4.5e-05 * units.mM,
+            ('fliCp', 'fliA'): 2.4e-05 * units.mM,
+            ('tarp', 'fliA'): 2.8e-05 * units.mM,
+            ('motAp', 'fliA'): 3.6e-05 * units.mM,
+            ('flgMp', 'fliA'): 4.1e-05 * units.mM,
         }
 
         self.factor_thresholds.update(parameters.get('thresholds', {}))
