@@ -267,7 +267,9 @@ def transport_metabolism_environment(out_dir='out'):
     parallel = True
 
     # agent configuration
-    process_timestep = 10
+    # due to the depleted environmental conditions,
+    # large transport/metabolism timesteps can require more uptake than is available
+    process_timestep = 5
     agents_config = [{
         'name': 'transport_metabolism',
         'type': TransportMetabolismExpression,
@@ -307,7 +309,7 @@ def transport_metabolism_environment(out_dir='out'):
         'config': make_lattice_config(
             time_step=60,
             bounds=bounds,
-            n_bins=[bound*2 for bound in bounds],
+            n_bins=bounds,
             jitter_force=1e-2,
             depth=50.0,
             diffusion=1e-3,
@@ -477,31 +479,38 @@ def flagella_just_in_time(out_dir='out'):
 # figure 6c
 def run_heterogeneous_flagella_experiment(out_dir='out'):
 
-    total_time = 18000
+    total_time = 15000  # 15000
     emit_step = 120
     process_time_step = 60
-    bounds = [17, 17]
-    tagged_molecules = [('proteins', 'flagella')]
+    environment_time_step = 120
+    bounds = [18, 18]
+    tagged_molecules = [
+        ('proteins', 'flagella'),
+        ('proteins', 'fliA'),
+        ('proteins', 'flhDC'),
+    ]
     emit_fields = ['glc__D_e']
-    parallel = False
+    parallel = True
 
     # configure agents and environment
     agents_config = {
         'ids': ['flagella_metabolism'],
         'type': FlagellaExpressionMetabolism,
         'config': {
+            # 'chromosome': {'tsc_affinity_scaling': 1.2},
             'expression_time_step': process_time_step,
+            'transport': {'time_step': process_time_step},
+            'metabolism': {'time_step': process_time_step},
             'agents_path': ('..', '..', 'agents'),
             'fields_path': ('..', '..', 'fields'),
             'dimensions_path': ('..', '..', 'dimensions'),
-            'transport': {},
         }
     }
     media = get_minimal_media_iAF1260b()
     environment_config = {
         'type': Lattice,
         'config': make_lattice_config(
-            time_step=process_time_step,
+            time_step=environment_time_step,
             concentrations=media,
             bounds=bounds,
             depth=6000.0,
@@ -512,7 +521,7 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
 
     # get initial agent state
     initial_agent_state = get_flagella_metabolism_initial_state()
-    initial_agent_state.update({'boundary': {'location': [8, 8]}})
+    initial_agent_state.update({'boundary': {'location': [bound/2 for bound in bounds]}})
 
     # use agent_environment_experiment to make the experiment
     experiment_settings = {
