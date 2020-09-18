@@ -23,6 +23,7 @@ from vivarium.core.composition import (
 )
 from vivarium.core.emitter import path_timeseries_from_embedded_timeseries
 from vivarium.library.units import units
+from vivarium.library.dict_utils import deep_merge
 
 # data
 from cell.data.nucleotides import nucleotides
@@ -43,7 +44,10 @@ from vivarium.processes.tree_mass import TreeMass
 
 # composites
 from cell.composites.gene_expression import GeneExpression
-from chemotaxis.composites.transport_metabolism import glucose_lactose_transport_config
+from chemotaxis.composites.transport_metabolism import (
+    glucose_lactose_transport_config,
+    default_metabolism_config,
+)
 
 # plots
 from cell.plots.gene_expression import plot_gene_expression_output
@@ -55,17 +59,8 @@ from chemotaxis import COMPOSITE_OUT_DIR, REFERENCE_DATA_DIR
 NAME = 'flagella_gene_expression'
 
 
-def default_metabolism_config():
-    metabolism_config = get_iAF1260b_config()
-    metabolism_config.update({
-        'initial_mass': 1339.0,  # fg of metabolite pools
-        'tolerance': {
-            'EX_glc__D_e': [1.05, 1.0],
-            'EX_lcts_e': [1.05, 1.0],
-        }})
-    return metabolism_config
 
-
+# Proteins that are not being expressed remain constant upon division
 flagella_schema_override = {
     'transcription': {
         'proteins': {
@@ -129,90 +124,95 @@ def get_flagella_expression_config(config):
     }
 
 
-def get_flagella_initial_state(ports={}):
-    flagella_data = FlagellaChromosome()
-    chromosome_config = flagella_data.chromosome_config
+# initial state for flagella gene expression compartment
+def get_flagella_expression_initial_state(ports={}):
+    expression_config = get_flagella_metabolism_initial_state(ports)
 
+    # add molecules
     molecules = {}
     for nucleotide in nucleotides.values():
-        molecules[nucleotide] = 5000000
+        molecules[nucleotide] = 5e6
     for amino_acid in amino_acids.values():
-        molecules[amino_acid] = 1000000
+        molecules[amino_acid] = 1e6
+    molecules['ATP'] = 5e7
 
-    return {
-        ports.get(
-            'molecules',
-            'molecules'): molecules,
-        ports.get(
-            'transcripts',
-            'transcripts'): {
-                gene: 0
-                for gene in chromosome_config['genes'].keys()
-        },
-        ports.get(
-            'proteins',
-            'proteins'): {
-                'CpxR': 10,
-                'CRP': 10,
-                'Fnr': 10,
-                'endoRNAse': 1,
-                'flagella': 8,
-                UNBOUND_RIBOSOME_KEY: 100,  # e. coli has ~ 20000 ribosomes
-                UNBOUND_RNAP_KEY: 100
-            }
-    }
+    expression_config.update({
+        ports.get('molecules', 'molecules'):
+            molecules})
+    return expression_config
 
 
-def get_flagella_expression_compartment(config):
-    """
-    Make a gene expression compartment with flagella expression data
-    """
-    flagella_expression_config = get_flagella_expression_config(config)
-    return GeneExpression(flagella_expression_config)
-
-
-
-# flagella expression with metabolism
-def get_flagella_metabolism_initial_state():
+# initial state for flagella expression with metabolism
+def get_flagella_metabolism_initial_state(ports={}):
     flagella_data = FlagellaChromosome()
     chromosome_config = flagella_data.chromosome_config
+
+    # justification for number of ribosomes: E. coli has ~7000-70000 ribosomes
+    # (http://book.bionumbers.org/how-many-ribosomes-are-in-a-cell/),
+    # and 4 flagella would make up ~0.0002 of total mass. Which indicates
+    # ~2-14 ribosomes are required to maintain 4 flagella if allocation
+    # is proportional to mass. ~2-21 ribosomes to maintain 6 flagella,
+    # There are ~2000 RNAPs in E. coli (Bremer, and Dennis 1996)
     return {
-        'transcripts': {
+        ports.get('transcripts', 'transcripts'): {
             gene: 0
             for gene in chromosome_config['genes'].keys()
         },
-        'proteins': {
+        ports.get('proteins', 'proteins'): {
             'CpxR': 10,
             'CRP': 10,
             'Fnr': 10,
             'endoRNAse': 1,
-            'flagella': 8,
-            UNBOUND_RIBOSOME_KEY: 100,  # e. coli has ~ 20000 ribosomes
-            UNBOUND_RNAP_KEY: 100
+            'flagella': 4,
+            UNBOUND_RIBOSOME_KEY: 20,
+            UNBOUND_RNAP_KEY: 10,
         },
     }
 
 
+# flagella expression compartment
+def FlagellaGeneExpression(config={}):
+    """
+    return a GeneExpression compartment configured with flagella expression data
+    """
+    chromosome_config = config.get('chromosome', {})
+    compartment_config = config.get('compartment', {})
+    flagella_expression_config = get_flagella_expression_config(chromosome_config)
+    flagella_expression_config = deep_merge(dict(flagella_expression_config), compartment_config)
+    return GeneExpression(flagella_expression_config)
+
+
+# flagella expression compartment with transport and metabolism
 class FlagellaExpressionMetabolism(Generator):
     """ Flagella stochastic expression with metabolism """
 
     name = 'flagella_expression_metabolism'
-    defaults = get_flagella_expression_config({})
-    defaults.update({
+    defaults = {
         'boundary_path': ('boundary',),
         'fields_path': ('fields',),
         'dimensions_path': ('dimensions',),
         'agents_path': ('agents',),
         'daughter_path': tuple(),
+        'chromosome': {},
         'transport': glucose_lactose_transport_config(),
         'metabolism': default_metabolism_config(),
         'initial_mass': 0.0 * units.fg,
-        'time_step': 10,
+        'expression_time_step': 10,
         'divide': True,
-    })
+    }
 
     def __init__(self, config=None):
+        if config is None:
+            config = {}
+        # get flagella expression config and update config
+        chromosome_config = config.get(
+            'chromosome', self.defaults['chromosome'])
+        flagella_expression_config = get_flagella_expression_config(
+            chromosome_config)
+        config.update(flagella_expression_config)
+
         super(FlagellaExpressionMetabolism, self).__init__(config)
+
         if 'agent_id' not in self.config:
             self.config['agent_id'] = str(uuid.uuid1())
 
@@ -227,10 +227,10 @@ class FlagellaExpressionMetabolism(Generator):
         complexation_config = config['complexation']
 
         # update expression timestep
-        transcription_config.update({'time_step': config['time_step']})
-        translation_config.update({'time_step': config['time_step']})
-        degradation_config.update({'time_step': config['time_step']})
-        complexation_config.update({'time_step': config['time_step']})
+        transcription_config.update({'time_step': config['expression_time_step']})
+        translation_config.update({'time_step': config['expression_time_step']})
+        degradation_config.update({'time_step': config['expression_time_step']})
+        complexation_config.update({'time_step': config['expression_time_step']})
 
         # make the expression processes
         transcription = Transcription(transcription_config)
@@ -242,14 +242,12 @@ class FlagellaExpressionMetabolism(Generator):
 
         # Transport
         transport_config = config['transport']
-        transport_config.update({'time_step': config['time_step']})
         transport = ConvenienceKinetics(transport_config)
         target_fluxes = transport.kinetic_rate_laws.reaction_ids
 
         # Metabolism
         # add target fluxes from transport
         metabolism_config = config.get('metabolism')
-        metabolism_config.update({'time_step': config['time_step']})
         metabolism_config.update({'constrained_reaction_ids': target_fluxes})
         metabolism = Metabolism(metabolism_config)
 
@@ -346,9 +344,11 @@ class FlagellaExpressionMetabolism(Generator):
         return topology
 
 
-# simulation function
+# simulation
 def run_flagella_compartment(
         compartment,
+        total_time=2500,
+        emit_step=10,
         initial_state=None,
         out_dir='out'):
 
@@ -357,11 +357,8 @@ def run_flagella_compartment(
 
     # run simulation
     settings = {
-        # a cell cycle of 2520 sec is expected to express 8 flagella.
-        # 2 flagella expected in approximately 630 seconds.
-        'total_time': 2520,
-        'emit_step': 10,
-        'verbose': True,
+        'total_time': total_time,
+        'emit_step': emit_step,
         'initial_state': initial_state}
     timeseries = simulate_compartment_in_experiment(compartment, settings)
 
@@ -381,13 +378,20 @@ def run_flagella_compartment(
         out_dir)
 
     # plot just-in-time figure
+    # transcript_list is ordered in expected just-in-time order
+    transcript_list = list(flagella_data.chromosome_config['genes'].keys())
+    protein_list = flagella_data.complexation_monomer_ids + flagella_data.complexation_complex_ids
+    protein_list.sort()
+    molecule_list = list(nucleotides.values()) + list(amino_acids.values())
+    molecule_list.sort()
     plot_config2 = plot_config.copy()
     plot_config2.update({
         'name': 'flagella',
         'plot_ports': {
-            'transcripts': list(flagella_data.chromosome_config['genes'].keys()),
-            'proteins': flagella_data.complexation_monomer_ids + flagella_data.complexation_complex_ids,
-            'molecules': list(nucleotides.values()) + list(amino_acids.values())}})
+            'transcripts': transcript_list,
+            'proteins': protein_list,
+            'molecules': molecule_list,
+        }})
     plot_timeseries_heatmaps(
         timeseries,
         plot_config2,
@@ -396,6 +400,7 @@ def run_flagella_compartment(
     # plot basic sim output
     plot_settings = {
         'max_rows': 30,
+        'remove_first_timestep': True,
         'remove_zeros': True,
         'skip_ports': ['chromosome', 'ribosomes']}
     plot_simulation_output(
@@ -443,10 +448,10 @@ def test_flagella_metabolism(seed=1):
 
 @pytest.mark.slow
 def test_flagella_expression():
-    flagella_compartment = get_flagella_expression_compartment({})
+    flagella_compartment = FlagellaGeneExpression({})
 
     # initial state for flagella complexation
-    initial_state = get_flagella_initial_state()
+    initial_state = get_flagella_expression_initial_state()
     initial_state['proteins'].update({
         'Ribosome': 100,  # plenty of ribosomes
         'flagella': 0,
@@ -480,23 +485,62 @@ if __name__ == '__main__':
         os.makedirs(out_dir)
 
     parser = argparse.ArgumentParser(description='flagella expression')
-    parser.add_argument('--metabolism', '-m', action='store_true', default=False, )
+    parser.add_argument('--metabolism', '-m', action='store_true', default=False,)
+    parser.add_argument('--expression', '-e', action='store_true', default=True, )
     args = parser.parse_args()
 
     if args.metabolism:
-        mtb_out_dir = os.path.join(out_dir, 'metabolism')
+        mtb_out_dir = os.path.join(out_dir, 'expression_metabolism')
         if not os.path.exists(mtb_out_dir):
             os.makedirs(mtb_out_dir)
-        compartment = FlagellaExpressionMetabolism({'divide': False})
+
+        total_time = 2500
+
+        # get initial state
+        initial_state = get_flagella_metabolism_initial_state()
+
+        # configure the compartment
+        flagella_config = {'divide': False}
+        compartment = FlagellaExpressionMetabolism(flagella_config)
+
+        # run sim and plot
         run_flagella_compartment(
-            compartment,
-            get_flagella_metabolism_initial_state(),
-            mtb_out_dir
-        )
-    else:
-        compartment = get_flagella_expression_compartment({})
+            compartment=compartment,
+            total_time=total_time,
+            initial_state=initial_state,
+            out_dir=mtb_out_dir)
+
+    elif args.expression:
+        exp_out_dir = os.path.join(out_dir, 'expression')
+        if not os.path.exists(exp_out_dir):
+            os.makedirs(exp_out_dir)
+
+        total_time = 4000
+
+        # get initial state
+        initial_state = get_flagella_expression_initial_state()
+
+        # configure the compartment
+        expression_timestep = 50
+        parallel = True
+        flagella_config = {
+            'chromosome': {
+                'tsc_affinity_scaling': 1e-2,
+            },
+            'compartment': {
+                'time_step': expression_timestep,
+                'transcription': {'_parallel': parallel},
+                'translation': {'_parallel': parallel},
+                'complexation': {'_parallel': parallel},
+                'degradation': {'_parallel': parallel},
+            },
+        }
+        compartment = FlagellaGeneExpression(flagella_config)
+
+        # run sim and plot
         run_flagella_compartment(
-            compartment,
-            get_flagella_initial_state(),
-            out_dir
-        )
+            compartment=compartment,
+            total_time=total_time,
+            emit_step=expression_timestep,
+            initial_state=initial_state,
+            out_dir=exp_out_dir)

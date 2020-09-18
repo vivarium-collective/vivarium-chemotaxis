@@ -11,7 +11,6 @@ import argparse
 from vivarium.library.units import units
 from vivarium.core.process import Generator
 from vivarium.core.composition import (
-    plot_compartment_topology,
     simulate_compartment_in_experiment,
     plot_simulation_output,
 )
@@ -33,7 +32,7 @@ from cell.processes.ode_expression import ODE_expression, get_flagella_expressio
 from chemotaxis.processes.flagella_motor import FlagellaMotor
 from chemotaxis.composites.flagella_expression import (
     get_flagella_expression_config,
-    get_flagella_initial_state,
+    get_flagella_expression_initial_state,
     plot_gene_expression_output,
 )
 
@@ -205,11 +204,12 @@ class ChemotaxisExpressionFlagella(Generator):
     n_flagella = 5
     initial_mass = 1339.0 * units.fg
     growth_rate = 0.000275
+    flagella_expression_config = get_flagella_expression_config({})
     defaults = {
-        'transcription': get_flagella_expression_config({})['transcription'],
-        'translation': get_flagella_expression_config({})['translation'],
-        'degradation': get_flagella_expression_config({})['degradation'],
-        'complexation': get_flagella_expression_config({})['complexation'],
+        'transcription': flagella_expression_config['transcription'],
+        'translation': flagella_expression_config['translation'],
+        'degradation': flagella_expression_config['degradation'],
+        'complexation': flagella_expression_config['complexation'],
         'receptor': {
             'ligand_id': ligand_id,
             'initial_ligand': initial_ligand
@@ -356,9 +356,6 @@ def test_ode_expression_chemotaxis(
     config = get_baseline_config(n_flagella)
     compartment = ChemotaxisODEExpressionFlagella(config)
 
-    # save the topology network
-    plot_compartment_topology(compartment, {}, out_dir)
-
     # run experiment
     initial_state = {}
     timeline = get_brownian_ligand_timeline(total_time=total_time)
@@ -381,17 +378,13 @@ def test_ode_expression_chemotaxis(
 def test_expression_chemotaxis(
         n_flagella=5,
         total_time=10,
-        out_dir='out'
 ):
     # make the compartment
     config = get_baseline_config(n_flagella)
     compartment = ChemotaxisExpressionFlagella(config)
 
-    # save the topology network
-    plot_compartment_topology(compartment, {}, out_dir)
-
     # run experiment
-    initial_state = get_flagella_initial_state({
+    initial_state = get_flagella_expression_initial_state({
         'molecules': 'internal'})
     timeline = get_brownian_ligand_timeline(total_time=total_time)
     experiment_settings = {
@@ -414,9 +407,6 @@ def test_variable_chemotaxis(
     # make the compartment
     config = get_baseline_config(n_flagella)
     compartment = ChemotaxisVariableFlagella(config)
-
-    # save the topology network
-    plot_compartment_topology(compartment, {}, out_dir)
 
     # run experiment
     initial_state = {}
@@ -482,7 +472,7 @@ if __name__ == '__main__':
             out_dir=expression_out_dir)
         print_growth(timeseries)
         # plot
-        plot_timeseries(timeseries, out_dir)
+        plot_timeseries(timeseries, expression_out_dir)
         plot_config = {
             'ports': {
                 'transcripts': 'transcripts',
@@ -491,4 +481,4 @@ if __name__ == '__main__':
         plot_gene_expression_output(
             timeseries,
             plot_config,
-            out_dir)
+            expression_out_dir)

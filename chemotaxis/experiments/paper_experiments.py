@@ -7,11 +7,16 @@ Includes functions for configuring, running, and plotting all experiments report
     Agmon, E. and Spangler, R.K., "A Multi-Scale Approach to Modeling E. coli Chemotaxis"
 
 These experiments can be triggered from the command line by entering the figure number.
-Available experiments include: '3b', '5a', '5b', '5c', '6a', '6b', '6c', '7a', '7b', '7c', '7d'.
+Available experiments include: '3b', '5a', '5b', '5c', '5d', 6a', '6b', '6c', '7a', '7b', '7c', '7d'.
 
 ```
 $ python chemotaxis/experiments/paper_experiments.py 7a
 ```
+
+Notes:
+    * some of the larger experiments require a MongoDB connection.
+    These have the experiment setting {'emitter': {'type': 'database'}}.
+    To run them without saving to a database, remove this setting.
 
 """
 
@@ -23,6 +28,7 @@ from vivarium.core.composition import (
     simulate_process_in_experiment,
     simulate_compartment_in_experiment,
     agent_environment_experiment,
+    plot_simulation_output,
     make_agent_ids,
 )
 from vivarium.core.emitter import time_indexed_timeseries_from_data
@@ -31,6 +37,7 @@ from vivarium.core.emitter import time_indexed_timeseries_from_data
 from chemotaxis.experiments.control import (
     control,
     plot_control,
+    agent_body_config,
 )
 
 # vivarium-cell imports
@@ -39,18 +46,18 @@ from cell.processes.metabolism import (
     get_minimal_media_iAF1260b,
     get_iAF1260b_config,
 )
+from cell.composites.growth_division import GrowthDivision
 from cell.processes.static_field import make_field
 from cell.composites.lattice import (
     Lattice,
     make_lattice_config,
 )
 from cell.composites.static_lattice import StaticLattice
-from cell.composites.growth_division import GrowthDivision
 
 # chemotaxis processes
 from chemotaxis.processes.flagella_motor import (
     FlagellaMotor,
-    get_chemoreceptor_activity_timeline
+    get_chemoreceptor_activity_timeline,
 )
 from chemotaxis.processes.chemoreceptor_cluster import (
     ReceptorCluster,
@@ -59,6 +66,7 @@ from chemotaxis.processes.chemoreceptor_cluster import (
 )
 
 # chemotaxis composites
+from chemotaxis.composites.chemotaxis_master import ChemotaxisMaster
 from chemotaxis.composites.chemotaxis_minimal import ChemotaxisMinimal
 from chemotaxis.composites.flagella_expression import (
     FlagellaExpressionMetabolism,
@@ -66,9 +74,10 @@ from chemotaxis.composites.flagella_expression import (
 )
 from chemotaxis.composites.transport_metabolism import (
     TransportMetabolismExpression,
+    ODE_expression,
     get_metabolism_initial_external_state,
+    lacy_expression_config,
 )
-from chemotaxis.composites.chemotaxis_master import ChemotaxisMaster
 
 # data
 from chemotaxis.data.chromosomes.flagella_chromosome import FlagellaChromosome
@@ -98,7 +107,9 @@ def growth_division_experiment(out_dir='out'):
     fields = ['glc__D_e', 'lcts_e']
     emit_fields = ['glc__D_e']
     initial_agent_id = 'growth_division'
+    parallel = True
 
+    # configure the agents and environment
     agents_config = {
         'ids': [initial_agent_id],
         'type': GrowthDivision,
@@ -115,7 +126,7 @@ def growth_division_experiment(out_dir='out'):
             bounds=[30, 30],
             molecules=fields,
             keep_fields_emit=emit_fields,
-            # parallel=True,
+            parallel=parallel,
         )
     }
 
@@ -135,6 +146,7 @@ def growth_division_experiment(out_dir='out'):
     # run simulation
     experiment.update(total_time)
     data = experiment.emitter.get_data()
+    experiment.end()  # end required for parallel processes
 
     # plots
     plot_config = {
@@ -153,14 +165,13 @@ def BiGG_metabolism(out_dir='out'):
     total_time = 2500
     env_volume = 1e-13 * units.L
 
-    # configure metabolism process iAF1260b BiGG model
+    # configure metabolism process with iAF1260b BiGG model
     process_config = get_iAF1260b_config()
     metabolism = Metabolism(process_config)
 
-    # get default minimal external concentrations
-    external_concentrations = metabolism.initial_state['external']
-
     # run simulation with the helper function simulate_process_in_experiment
+    # use default minimal external concentrations from metabolism processes
+    external_concentrations = metabolism.initial_state['external']
     sim_settings = {
         'environment': {
             'volume': env_volume,
@@ -170,7 +181,7 @@ def BiGG_metabolism(out_dir='out'):
     }
     timeseries = simulate_process_in_experiment(metabolism, sim_settings)
 
-    # plot
+    # plot output
     plot_config = {
         'environment': {
             'volume': env_volume
@@ -183,7 +194,7 @@ def BiGG_metabolism(out_dir='out'):
 
 # figure 5b
 def transport_metabolism(out_dir='out'):
-    total_time = 3000
+    total_time = 6000
     environment_volume = 1e-13 * units.L
     initial_concentrations = {
         'glc__D_e': 1.0,
@@ -195,7 +206,11 @@ def transport_metabolism(out_dir='out'):
         'agent_id': '0',
         'metabolism': {'time_step': 10},
         'transport': {'time_step': 10},
-        'expression': {'time_step': 1},
+        'expression': {
+            'time_step': 1,
+            # increased leak rate makes more frequent bursts for improved visualization
+            'transcription_leak': {'rate': 5e-3},
+        },
         'divide': False,
     }
     compartment = TransportMetabolismExpression(compartment_config)
@@ -205,14 +220,15 @@ def transport_metabolism(out_dir='out'):
         scale_concentration=100,
         override=initial_concentrations)
 
-    # configure non-spatial environment
-    # TransportMetabolismExpression redirects external through boundary port
+    # run simulation with helper function simulate_compartment_in_experiment
+    # configure non-spatial environment process with environment_volume
     sim_settings = {
         'environment': {
             'volume': environment_volume,
             'concentrations': external_state,
             'ports': {
                 'fields': ('fields',),
+                # redirect external through boundary port
                 'external': ('boundary', 'external'),
                 'dimensions': ('dimensions',),
                 'global': ('boundary',),
@@ -220,11 +236,9 @@ def transport_metabolism(out_dir='out'):
         },
         'total_time': total_time,
     }
-
-    # run simulation
     timeseries = simulate_compartment_in_experiment(compartment, sim_settings)
 
-    # plot
+    # plot output
     plot_settings = {
         'internal_path': ('cytoplasm',),
         'external_path': ('boundary', 'external'),
@@ -233,22 +247,27 @@ def transport_metabolism(out_dir='out'):
         'aspect_ratio': 0.7,
     }
     plot_glc_lcts_environment(timeseries, plot_settings, out_dir)
+    plot_simulation_output(timeseries, {}, out_dir)
 
 
 # figure 5c
 def transport_metabolism_environment(out_dir='out'):
     n_agents = 2
-    total_time = 10000
+    total_time = 15000
     emit_step = 100
     bounds = [30, 30]
     emit_fields = ['glc__D_e', 'lcts_e']
     tagged_molecules = [('cytoplasm', 'LacY')]
     initial_external = {
-        'glc__D_e': 0.2,
+        'glc__D_e': 0.5,
         'lcts_e': 8.0,
     }
+    parallel = True
 
     # agent configuration
+    # due to the depleted environmental conditions,
+    # large transport/metabolism timesteps can require more uptake than is available
+    process_timestep = 5
     agents_config = [{
         'name': 'transport_metabolism',
         'type': TransportMetabolismExpression,
@@ -258,45 +277,46 @@ def transport_metabolism_environment(out_dir='out'):
             'fields_path': ('..', '..', 'fields'),
             'dimensions_path': ('..', '..', 'dimensions'),
             'metabolism': {
-                'time_step': 10},
+                'time_step': process_timestep},
             'transport': {
-                'time_step': 10},
+                'time_step': process_timestep},
             'expression': {
-                'time_step': 1},
+                'time_step': process_timestep},  # TODO -- is this causing big spikes?
             'division': {
-                'time_step': 10,
-                # 'division_volume': 1.3 * units.fL,
+                'time_step': process_timestep,
             },
-        }
-    }]
-    # add agent_ids
-    make_agent_ids(agents_config)
+        }}]
+    make_agent_ids(agents_config)  # add agent_ids
 
-    # TODO -- get initial agent_state from transport
+    # initial agent state
     initial_agent_state = {
         'boundary': {
-            'location': [8, 8],
+            'location': [bound/2 for bound in bounds],
             'external': initial_external
         }
     }
 
     # environment configuration
     media = get_minimal_media_iAF1260b(
-        scale_concentration=100,
+        # scale concentration to ensure other nutrients remain in full supply
+        scale_concentration=1000,
         override_initial=initial_external,
     )
     environment_config = {
         'type': Lattice,
         'config': make_lattice_config(
-            time_step=10,
+            time_step=60,
             bounds=bounds,
-            n_bins=[40, 40],
+            n_bins=bounds,
+            jitter_force=1e-2,
             depth=50.0,
-            diffusion=1e-4,
+            diffusion=1e-3,
             concentrations=media,
             keep_fields_emit=emit_fields,
+            parallel=parallel,
         )
     }
+
     # make the experiment
     experiment_settings = {
         'experiment_name': 'transport_metabolism_environment',
@@ -307,6 +327,7 @@ def transport_metabolism_environment(out_dir='out'):
                        'of LacY',
         'total_time': total_time,
         'emit_step': emit_step,
+        'emitter': {'type': 'database'},
     }
     experiment = agent_environment_experiment(
         agents_config=agents_config,
@@ -317,6 +338,7 @@ def transport_metabolism_environment(out_dir='out'):
     # run simulation
     experiment.update(total_time)
     data = experiment.emitter.get_data()
+    experiment.end()  # end required for parallel processes
 
     # plot output
     plot_config = {
@@ -325,6 +347,50 @@ def transport_metabolism_environment(out_dir='out'):
         'tagged_molecules': tagged_molecules,
     }
     plot_control(data, plot_config, out_dir)
+
+
+# figure 5d
+def lacy_expression(out_dir='out'):
+    """ two experiments for ODE-based LacY expression
+
+    These experiments use only the ode_expression process,
+    and no transport from the resulting proteins
+        * experiment 1: external glucose starts high and drops to 0.0
+        * experiment 2: external glucose starts high and drops to 0.0 along with an increase in internal lactose.
+    """
+
+    total_time = 8000
+    shift_time1 = int(total_time / 5)
+    shift_time2 = int(4 * total_time / 5)
+
+    # make the ode expression process
+    lacy_expression = lacy_expression_config()
+    process = ODE_expression(lacy_expression)
+
+    # make timelines for two experiments
+    timeline1 = [
+        (0, {('external', 'glc__D_e'): 10}),
+        (shift_time1, {('external', 'glc__D_e'): 0.0}),
+        (shift_time2, {('external', 'glc__D_e'): 10.}),
+        (total_time, {})]
+    timeline2 = [
+        (0, {('external', 'glc__D_e'): 10}),
+        (shift_time1, {
+            ('external', 'glc__D_e'): 0,
+            ('internal', 'lcts_p'): 0.1
+        }),
+        (shift_time2, {('external', 'glc__D_e'): 0.1}),
+        (total_time, {})]
+
+    # experiment 1 -- simulate and plot output
+    settings1 = {'timeline': {'timeline': timeline1}}
+    timeseries1 = simulate_process_in_experiment(process, settings1)
+    plot_simulation_output(timeseries1, {}, out_dir, 'experiment_1')
+
+    # experiment 2 -- simulate and plot output
+    settings2 = {'timeline': {'timeline': timeline2}}
+    timeseries2 = simulate_process_in_experiment(process, settings2)
+    plot_simulation_output(timeseries2, {}, out_dir, 'experiment_2')
 
 
 # figure 6a
@@ -352,27 +418,39 @@ def flagella_expression_network(out_dir='out'):
 
 # figure 6b
 def flagella_just_in_time(out_dir='out'):
+    total_time = 4000
 
     # make the compartment
-    compartment_config = {}
+    # longer time steps speed up the simulation,
+    # and are sufficient to provide the required nutrients
+    compartment_config = {
+        'expression_time_step': 60,
+        'transport': {'time_step': 60},
+        'metabolism': {'time_step': 60},
+        'chromosome': {'tsc_affinity_scaling': 1e-1},
+        'divide': False,
+    }
     compartment = FlagellaExpressionMetabolism(compartment_config)
 
-    # get the initial state
+    # get initial state
     initial_state = get_flagella_metabolism_initial_state()
 
-    # run simulation
+    # run simulation with helper function simulate_compartment_in_experiment
     settings = {
-        # a cell cycle of 2520 sec is expected to express 8 flagella.
-        # 2 flagella expected in approximately 630 seconds.
-        'total_time': 500,
-        'emit_step': 10.0,
-        'verbose': True,
+        'total_time': total_time,
         'initial_state': initial_state,
     }
     timeseries = simulate_compartment_in_experiment(compartment, settings)
 
-    # plot output
+    # plot "just-in-time" output as a heat maps
+    # transcript_list is made in expected just-in-time order
+    # order proteins and small molecules alphabetically
     flagella_data = FlagellaChromosome()
+    transcript_list = list(flagella_data.chromosome_config['genes'].keys())
+    protein_list = flagella_data.complexation_monomer_ids + flagella_data.complexation_complex_ids
+    protein_list.sort()
+    molecule_list = list(nucleotides.values()) + list(amino_acids.values())
+    molecule_list.sort()
     plot_config = {
         'name': 'flagella',
         'ports': {
@@ -381,50 +459,67 @@ def flagella_just_in_time(out_dir='out'):
             'molecules': 'molecules',
         },
         'plot_ports': {
-            'transcripts': list(flagella_data.chromosome_config['genes'].keys()),
-            'proteins': flagella_data.complexation_monomer_ids + flagella_data.complexation_complex_ids,
-            'molecules': list(nucleotides.values()) + list(amino_acids.values()),
+            'transcripts': transcript_list,
+            'proteins': protein_list,
+            'molecules': molecule_list,
         }
     }
     plot_timeseries_heatmaps(timeseries, plot_config, out_dir)
+
+    # plot output
+    sim_plot_config = {
+        'max_rows': 30,
+        'remove_zeros': True,
+        'skip_ports': ['chromosome', 'ribosomes']}
+    plot_simulation_output(timeseries, sim_plot_config, out_dir)
 
 
 # figure 6c
 def run_heterogeneous_flagella_experiment(out_dir='out'):
 
-    total_time = 15000
+    total_time = 16000
     emit_step = 120
     process_time_step = 60
-    bounds = [17, 17]
-    tagged_molecules = [('proteins', 'flagella')]
+    environment_time_step = 120
+    bounds = [18, 18]
+    tagged_molecules = [
+        ('proteins', 'flagella'),
+        ('proteins', 'fliA'),
+        ('proteins', 'flhDC'),
+    ]
     emit_fields = ['glc__D_e']
+    parallel = True
 
-    # configurations
+    # configure agents and environment
     agents_config = {
         'ids': ['flagella_metabolism'],
         'type': FlagellaExpressionMetabolism,
         'config': {
-            'time_step': process_time_step,
+            # 'chromosome': {'tsc_affinity_scaling': 1.2},
+            'expression_time_step': process_time_step,
+            'transport': {'time_step': process_time_step},
+            'metabolism': {'time_step': process_time_step},
             'agents_path': ('..', '..', 'agents'),
             'fields_path': ('..', '..', 'fields'),
             'dimensions_path': ('..', '..', 'dimensions'),
-            'transport': {},
         }
     }
     media = get_minimal_media_iAF1260b()
     environment_config = {
         'type': Lattice,
         'config': make_lattice_config(
-            time_step=process_time_step,
+            time_step=environment_time_step,
             concentrations=media,
             bounds=bounds,
             depth=6000.0,
-            keep_fields_emit=emit_fields)
+            keep_fields_emit=emit_fields,
+            parallel=parallel,
+        )
     }
 
-    # initial state
+    # get initial agent state
     initial_agent_state = get_flagella_metabolism_initial_state()
-    initial_agent_state.update({'boundary': {'location': [8, 8]}})
+    initial_agent_state.update({'boundary': {'location': [bound/2 for bound in bounds]}})
 
     # use agent_environment_experiment to make the experiment
     experiment_settings = {
@@ -432,6 +527,7 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
         'description': '..',
         'total_time': total_time,
         'emit_step': emit_step,
+        'emitter': {'type': 'database'},
     }
     experiment = agent_environment_experiment(
         agents_config=agents_config,
@@ -442,8 +538,15 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
     # run the experiment
     experiment.update(total_time)
     data = experiment.emitter.get_data()
+    experiment.end()  # end required for parallel processes
 
-    # plots
+    # remove the first timestep so that it is not always the brightest
+    # all subsequent snapshots are of larger cells, and so their concentration
+    # of flagella looks like less
+    if 0.0 in data:
+        del data[0.0]
+
+    # plot output
     plot_config = {
         'environment_config': environment_config,
         'tagged_molecules': tagged_molecules,
@@ -456,12 +559,16 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
 
 
 # figure 7a
-def variable_flagella(out_dir='out'):
+def run_flagella_activity(out_dir='out'):
     total_time = 80
     time_step = 0.01
     initial_flagella = 1
 
-    # make timeline with varying chemoreceptor activity and flagella counts
+    # make the process
+    process_config = {'n_flagella': initial_flagella}
+    process = FlagellaMotor(process_config)
+
+    # make a timeline with varying chemoreceptor activity and flagella counts
     timeline = get_chemoreceptor_activity_timeline(
         total_time=total_time,
         time_step=time_step,
@@ -472,9 +579,7 @@ def variable_flagella(out_dir='out'):
         (60, {('internal_counts', 'flagella'): initial_flagella + 3})]
     timeline.extend(timeline_flagella)
 
-    # run simulation
-    process_config = {'n_flagella': initial_flagella}
-    process = FlagellaMotor(process_config)
+    # run simulation with helper function simulate_process_in_experiment
     settings = {
         'return_raw_data': True,
         'timeline': {
@@ -484,7 +589,7 @@ def variable_flagella(out_dir='out'):
     }
     data = simulate_process_in_experiment(process, settings)
 
-    # plot
+    # plot output
     plot_settings = {'aspect_ratio': 0.4}
     plot_activity(data, plot_settings, out_dir)
 
@@ -494,14 +599,14 @@ def run_chemoreceptor_pulse(out_dir='out'):
     ligand = 'MeAsp'
     timeline = get_pulse_timeline(ligand=ligand)
 
-    # initialize process
+    # initialize the process
     initial_ligand = timeline[0][1][('external', ligand)]
     process_config = {
         'initial_ligand': initial_ligand,
     }
     receptor = ReceptorCluster(process_config)
 
-    # run experiment
+    # run experiment with helper function simulate_process_in_experiment
     experiment_settings = {
         'timeline': {
             'timeline': timeline,
@@ -509,7 +614,7 @@ def run_chemoreceptor_pulse(out_dir='out'):
     }
     timeseries = simulate_process_in_experiment(receptor, experiment_settings)
 
-    # plot
+    # plot output
     plot_settings = {'aspect_ratio': 0.4}
     plot_receptor_output(timeseries, plot_settings, out_dir, 'pulse')
 
@@ -544,7 +649,7 @@ def run_chemotaxis_transduction(out_dir='out'):
         total_time=total_time,
         speed=8)
 
-    # run experiment
+    # run experiment with helper function simulate_compartment_in_experiment
     experiment_settings = {
         'emit_step': time_step,
         'timeline': {
@@ -559,42 +664,11 @@ def run_chemotaxis_transduction(out_dir='out'):
         compartment,
         experiment_settings)
 
-    # plot
+    # plot output
     plot_config = {
         'ligand_id': ligand_id,
         'aspect_ratio': 0.4}
     plot_signal_transduction(timeseries, plot_config, out_dir)
-
-
-
-# helper functions for chemotaxis
-def single_agent_config(config):
-    width = 1
-    length = 2
-    # volume = volume_from_length(length, width)
-    bounds = config.get('bounds')
-    location = config.get('location')
-    location = [loc * bounds[n] for n, loc in enumerate(location)]
-
-    return {
-        'boundary': {
-            'location': location,
-            # 'angle': np.random.uniform(0, 2 * PI),
-            # 'volume': volume,
-            'length': length,
-            'width': width,
-            'mass': 1339 * units.fg,
-            # 'thrust': 0,
-            # 'torque': 0,
-        }
-    }
-
-def agent_body_config(config):
-    agent_ids = config['agent_ids']
-    agent_config = {
-        agent_id: single_agent_config(config)
-        for agent_id in agent_ids}
-    return {'agents': agent_config}
 
 
 # figure 7d
@@ -602,9 +676,9 @@ def run_chemotaxis_experiment(out_dir='out'):
     total_time = 30
     emit_step = 5
     time_step = 0.001
-    tumble_jitter = 4000  # why tumble jitter?
+    tumble_jitter = 4000  # TODO -- why tumble jitter?
 
-    ligand_id = 'glc__D_e'  # BiGG id for external glucose
+    ligand_id = 'glc__D_e'
     bounds = [1000, 3000]
     initial_agent_location = [0.5, 0.1]
 
@@ -685,6 +759,7 @@ def run_chemotaxis_experiment(out_dir='out'):
         'description': '..',
         'total_time': total_time,
         'emit_step': emit_step,
+        'emitter': {'type': 'database'},
     }
     experiment = agent_environment_experiment(
         agents_config=agents_config,
@@ -715,19 +790,20 @@ experiments_library = {
     '5a': BiGG_metabolism,
     '5b': transport_metabolism,
     '5c': transport_metabolism_environment,
+    '5d': lacy_expression,
     '6a': flagella_expression_network,
     '6b': flagella_just_in_time,
     '6c': run_heterogeneous_flagella_experiment,
-    '7a': variable_flagella,
+    '7a': run_flagella_activity,
     '7b': run_chemoreceptor_pulse,
     '7c': run_chemotaxis_transduction,
     '7d': run_chemotaxis_experiment,
-    '5': ['5a', '5b', '5c'],
+    '5': ['5a', '5b', '5c', '5d'],
     '6': ['6a', '6b', '6c'],
     '7': ['7a', '7b', '7c', '7d'],
     'all': [
         '3b',
-        '5a', '5b', '5c',
+        '5a', '5b', '5c', '5d',
         '6a', '6b', '6c',
         '7a', '7b', '7c', '7d'],
 }

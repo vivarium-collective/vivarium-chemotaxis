@@ -4,7 +4,7 @@
 vivarium processes.
 
 ## setup
-Make a python environment and install dependencies. 
+Make a python environment with Python 3 (pyenv is recommended) and install dependencies. 
 
 First install numpy:
 ```

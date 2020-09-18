@@ -27,31 +27,39 @@ class FlagellaChromosome(object):
             self.ecoli_sequence = read_sequence(ECOLI_GENOME_PATH)
 
         self.factor_thresholds = {
+            # flhDC activation by CRP
             ('flhDp', 'CRP'): 1e-05 * units.mM,
-            ('fliLp1', 'flhDC'): 1e-06 * units.mM,
-            ('fliLp1', 'fliA'): 1.3e-05 * units.mM,
-            ('fliEp1', 'flhDC'): 4e-06 * units.mM,
-            ('fliEp1', 'fliA'): 1.1e-05 * units.mM,
-            ('fliFp1', 'flhDC'): 7e-06 * units.mM,
-            ('fliFp1', 'fliA'): 1e-05 * units.mM,
-            ('flgBp', 'flhDC'): 1e-05 * units.mM,
-            ('flgBp', 'fliA'): 8e-06 * units.mM,
-            ('flgAp', 'flhDC'): 1.3e-05 * units.mM,
-            ('flgAp', 'fliA'): 6e-06 * units.mM,
-            ('flhBp', 'flhDC'): 1.5e-05 * units.mM,
-            ('flhBp', 'fliA'): 5e-06 * units.mM,
-            ('fliAp1', 'flhDC'): 1.7e-05 * units.mM,
-            ('fliAp1', 'fliA'): 4e-06 * units.mM,
-            ('flgEp', 'flhDC'): 1.9e-05 * units.mM,
-            ('flgEp', 'fliA'): 3e-06 * units.mM,
-            ('fliDp', 'flhDC'): 1.9e-05 * units.mM,
-            ('fliDp', 'fliA'): 3e-06 * units.mM,
-            ('flgKp', 'flhDC'): 2.1e-05 * units.mM,
-            ('flgKp', 'fliA'): 1e-06 * units.mM,
-            ('fliCp', 'fliA'): 5e-06 * units.mM,
-            ('tarp', 'fliA'): 7e-06 * units.mM,
-            ('motAp', 'fliA'): 9e-06 * units.mM,
-            ('flgMp', 'fliA'): 1.1e-06 * units.mM}
+
+            # activation by flhDC (increasing threshold)
+            ('fliLp1', 'flhDC'): 4e-05 * units.mM,
+            ('fliEp1', 'flhDC'): 5e-05 * units.mM,
+            ('fliFp1', 'flhDC'): 6e-05 * units.mM,
+            ('flgAp', 'flhDC'): 7e-05 * units.mM,
+            ('flgBp', 'flhDC'): 8e-05 * units.mM,
+            ('flhBp', 'flhDC'): 9e-05 * units.mM,
+            ('fliAp1', 'flhDC'): 1e-04 * units.mM,  # activating fliA begins hand-off of regulation
+            ('flgEp', 'flhDC'): 1.1e-04 * units.mM,
+            ('fliDp', 'flhDC'): 1.2e-04 * units.mM,
+            ('flgKp', 'flhDC'): 1.3e-04 * units.mM,
+
+            # activation by fliA (decreasing threshold)
+            ('fliLp1', 'fliA'): 4.2e-05 * units.mM,
+            ('fliEp1', 'fliA'): 4.1e-05 * units.mM,
+            ('fliFp1', 'fliA'): 4.0e-05 * units.mM,
+            ('flgAp', 'fliA'): 3.9e-05 * units.mM,
+            ('flgBp', 'fliA'): 3.8e-05 * units.mM,
+            ('flhBp', 'fliA'): 3.7e-05 * units.mM,
+            ('fliAp1', 'fliA'): 3.5e-05 * units.mM,  # fliA self-activation takes over regulation
+            ('flgEp', 'fliA'): 3.4e-05 * units.mM,
+            ('fliDp', 'fliA'): 3.3e-05 * units.mM,
+            ('flgKp', 'fliA'): 3.2e-05 * units.mM,
+
+            # activation by fliA alone (increasing threshold)
+            ('fliCp', 'fliA'): 4.3e-05 * units.mM,
+            ('tarp', 'fliA'): 4.4e-05 * units.mM,
+            ('motAp', 'fliA'): 4.5e-05 * units.mM,
+            ('flgMp', 'fliA'): 4.6e-05 * units.mM,
+        }
 
         self.factor_thresholds.update(parameters.get('thresholds', {}))
 
@@ -63,16 +71,17 @@ class FlagellaChromosome(object):
                 'fliE': ['fliE'],
                 'fliF': ['fliF', 'fliG', 'fliH', 'fliI', 'fliJ', 'fliK'],
                 'flgA': ['flgA', 'flgM', 'flgN'],
-                'flgM': ['flgM', 'flgN'],
-                'flgE': ['flgE'],
                 'flgB': ['flgB', 'flgC', 'flgD', 'flgE', 'flgF', 'flgG', 'flgH', 'flgI', 'flgJ'],
                 'flhB': ['flhB', 'flhA', 'flhE'],
                 'fliA': ['fliA', 'fliZ'], # ignore 'tcyJ' for now
+                'flgE': ['flgE'],
                 'fliD': ['fliD', 'fliS', 'fliT'],
                 'flgK': ['flgK', 'flgL'],
                 'fliC': ['fliC'],
                 'tar': ['tar', 'tap', 'cheR', 'cheB', 'cheY', 'cheZ'],
-                'motA': ['motA', 'motB', 'cheA', 'cheW']},
+                'motA': ['motA', 'motB', 'cheA', 'cheW'],
+                'flgM': ['flgM', 'flgN'],
+            },
             'promoters': {
                 'flhDp': {
                     'id': 'flhDp',
@@ -275,29 +284,22 @@ class FlagellaChromosome(object):
         self.fliA_activated = [
             'fliCp', 'tarp', 'motAp', 'flgMp']
 
-        flhDC_factors = {
-            'fliLp1': {
-                'flhDC': 1.2, 'fliA': 0.25},
-            'fliEp1': {
-                'flhDC': 0.45, 'fliA': 0.35},
-            'fliFp1': {
-                'flhDC': 0.35, 'fliA': 0.30},
-            'flgBp': {
-                'flhDC': 0.35, 'fliA': 0.45},
-            'flgAp': {
-                'flhDC': 0.15, 'fliA': 0.3},
-            'flgEp': {
-                'flhDC': 1.0, 'fliA': 4.0},
-            'flhBp': {
-                'flhDC': 0.1, 'fliA': 0.35},
-            'fliAp1': {
-                'flhDC': 1.0, 'fliA': 0.3},
-            'fliDp': {
-                'flhDC': 1.2, 'fliA': 0.25},
-            'flgKp': {
-                'flhDC': 1.2, 'fliA': 0.25}
-        }
+        # activation coefficients from:
+        # Kalir, S., & Alon, U. (2004). "Using a quantitative blueprint to reprogram
+        # the dynamics of the flagella gene network." Cell.
+        activation_coefficients = {
+            'fliLp1': {'flhDC': 1.2,  'fliA': 0.25},
+            'fliEp1': {'flhDC': 0.45, 'fliA': 0.35},
+            'fliFp1': {'flhDC': 0.35, 'fliA': 0.30},
+            'flgAp':  {'flhDC': 0.15, 'fliA': 0.3},
+            'flgEp':  {'flhDC': 1.0,  'fliA': 4.0},
+            'flgBp':  {'flhDC': 0.35, 'fliA': 0.45},
+            'flhBp':  {'flhDC': 0.1,  'fliA': 0.35},
+            'fliAp1': {'flhDC': 1.0,  'fliA': 0.3},
+            'fliDp':  {'flhDC': 1.2,  'fliA': 0.25},
+            'flgKp':  {'flhDC': 1.2,  'fliA': 0.25}}
 
+        # binary sums for activation_coefficients based on TF concentrations
         def binary_sum_gates(promoter_factors):
             affinities = {}
             first, second = list(promoter_factors[
@@ -315,16 +317,14 @@ class FlagellaChromosome(object):
 
         # promoter affinities are binding affinity of RNAP onto promoter
         self.promoter_affinities = {
-            ('flhDp', 'CRP'): 0.01}
+            ('flhDp', 'CRP'): 0.15}
         # self.promoter_affinities[('motAp', 'CpxR')] = 1.0
-        flhDC_affinities = binary_sum_gates(flhDC_factors)
+        flhDC_affinities = binary_sum_gates(activation_coefficients)
         self.promoter_affinities.update(flhDC_affinities)
         # for promoter in self.flhDC_activated:
         #     self.promoter_affinities[(promoter, 'flhDC')] = 1.0
         for promoter in self.fliA_activated:
             self.promoter_affinities[(promoter, 'fliA')] = 1.0
-        self.promoter_affinities.update(
-            parameters.get('promoter_affinities', {}))
         promoter_affinity_scaling = parameters.get('promoter_affinity_scaling', 1)
         self.promoter_affinities = {
             promoter: affinity * promoter_affinity_scaling
@@ -347,23 +347,33 @@ class FlagellaChromosome(object):
                 [key[1]])
             for key, sequence in self.protein_sequences.items()}
 
-        # transcript affinities are the affinities transcripts to bind a ribosome and translate to protein
-        # transcript affinities are scaled relative to the requirements to build a single full flagellum.
-        self.min_tr_affinity = parameters.get('min_tr_affinity', 1e-1)
-        tr_affinity_scaling = {
-            'fliL': 2,
-            'fliM': 34,
-            'fliG': 26,
-            'fliH': 12,
-            'fliI': 6,
-            'fliD': 5,
-            'flgE': 120}
+        # transcript affinities are the affinities with which a ribosome binds to a transcript
+        # tsc_affinity_scaling scales affinities to meet the requirements of a flagellum.
+        affinity_scaling = parameters.get('tsc_affinity_scaling', 1)
+        min_affinity = 1e-2
+        added_affinity = {
+            'fliG': 3e0 * min_affinity,
+            'flgE': 2e-1 * min_affinity,
+            'flhB': 1e-1 * min_affinity,
+            'fliI': 3e-1 * min_affinity,
+            'fliH': 3e-1 * min_affinity,
+            'fliA': 4e-1 * min_affinity,
+            # reduce affinity
+            'tar': -5e-1 * min_affinity,
+            'tap': -5e-1 * min_affinity,
+            'motA': -5e-1 * min_affinity,
+            'motB': -5e-1 * min_affinity,
+            'cheZ': -5e-1 * min_affinity,
+            'cheY': -5e-1 * min_affinity,
+            'cheW': -5e-1 * min_affinity,
+            'cheR': -5e-1 * min_affinity,
+            'cheB': -5e-1 * min_affinity,
+            'cheA': -5e-1 * min_affinity,
+        }
         self.transcript_affinities = {}
         for (operon, product) in self.transcripts:
-            self.transcript_affinities[(operon, product)] = self.min_tr_affinity * tr_affinity_scaling.get(product,1)
-        self.transcript_affinities.update(
-            parameters.get('transcript_affinities', {}))
-
+            self.transcript_affinities[(operon, product)] = \
+                affinity_scaling * (min_affinity + added_affinity.get(product, 0))
 
         self.transcription_factors = [
             'flhDC', 'fliA', 'CsgD', 'CRP', 'GadE', 'H-NS', 'CpxR', 'Fnr']
@@ -377,23 +387,23 @@ class FlagellaChromosome(object):
         self.complexation_complex_ids = [
             'flhDC',
             'flagellar motor switch',
-            'flagella',
+            'flagellar hook',
             'flagellar export apparatus subunit',
             'flagellar export apparatus',
-            'flagellar hook',
-            'flagellar motor']
+            'flagellar motor',
+            'flagella']
 
         self.complexation_stoichiometry = {
             'flhDC': {
                 'flhD': -4.0,
                 'flhC': -2.0,
-                'flhDC': 1.0
+                'flhDC': 1.0,
             },
             'flagellar motor switch reaction': {
                 'flagellar motor switch': 1.0,
                 'fliG': -26.0,
                 'fliM': -34.0,
-                'fliN': -1.0
+                'fliN': -1.0,
             },
             'flagellar export apparatus reaction 1': {
                 'flagellar export apparatus subunit': 1.0,
@@ -404,7 +414,7 @@ class FlagellaChromosome(object):
                 'fliQ': -1.0,
                 'fliR': -1.0,
                 'fliJ': -1.0,
-                'fliI': -6.0
+                'fliI': -6.0,
             },
             'flagellar export apparatus reaction 2': {
                 'flagellar export apparatus': 1.0,
