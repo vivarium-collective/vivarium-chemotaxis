@@ -147,11 +147,12 @@ def get_flagella_metabolism_initial_state(ports={}):
     flagella_data = FlagellaChromosome()
     chromosome_config = flagella_data.chromosome_config
 
-    # justification for 15 ribosomes: E. coli has ~7000-70000 ribosomes
+    # justification for number of ribosomes: E. coli has ~7000-70000 ribosomes
     # (http://book.bionumbers.org/how-many-ribosomes-are-in-a-cell/),
     # and 4 flagella would make up ~0.0002 of total mass. Which indicates
-    # 2-14 ribosomes are required if allocation is proportional to mass.
-    # there are ~2000 RNAPs in E. coli (Bremer, and Dennis 1996)
+    # ~2-14 ribosomes are required to maintain 4 flagella if allocation
+    # is proportional to mass. ~2-21 ribosomes to maintain 6 flagella,
+    # There are ~2000 RNAPs in E. coli (Bremer, and Dennis 1996)
     return {
         ports.get('transcripts', 'transcripts'): {
             gene: 0
@@ -163,8 +164,8 @@ def get_flagella_metabolism_initial_state(ports={}):
             'Fnr': 10,
             'endoRNAse': 1,
             'flagella': 4,
-            UNBOUND_RIBOSOME_KEY: 15,
-            UNBOUND_RNAP_KEY: 15,
+            UNBOUND_RIBOSOME_KEY: 20,
+            UNBOUND_RNAP_KEY: 10,
         },
     }
 

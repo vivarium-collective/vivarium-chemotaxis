@@ -107,7 +107,7 @@ def growth_division_experiment(out_dir='out'):
     fields = ['glc__D_e', 'lcts_e']
     emit_fields = ['glc__D_e']
     initial_agent_id = 'growth_division'
-    parallel = False
+    parallel = True
 
     # configure the agents and environment
     agents_config = {
@@ -208,10 +208,8 @@ def transport_metabolism(out_dir='out'):
         'transport': {'time_step': 10},
         'expression': {
             'time_step': 1,
-            # increased leak rate makes more frequent bursts
-            'transcription_leak': {
-                'rate': 5e-3,
-            },
+            # increased leak rate makes more frequent bursts for improved visualization
+            'transcription_leak': {'rate': 5e-3},
         },
         'divide': False,
     }
@@ -223,8 +221,8 @@ def transport_metabolism(out_dir='out'):
         override=initial_concentrations)
 
     # run simulation with helper function simulate_compartment_in_experiment
+    # configure non-spatial environment process with environment_volume
     sim_settings = {
-        # configure non-spatial environment
         'environment': {
             'volume': environment_volume,
             'concentrations': external_state,
@@ -479,7 +477,7 @@ def flagella_just_in_time(out_dir='out'):
 # figure 6c
 def run_heterogeneous_flagella_experiment(out_dir='out'):
 
-    total_time = 15000  # 15000
+    total_time = 16000
     emit_step = 120
     process_time_step = 60
     environment_time_step = 120
@@ -541,6 +539,12 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
     experiment.update(total_time)
     data = experiment.emitter.get_data()
     experiment.end()  # end required for parallel processes
+
+    # remove the first timestep so that it is not always the brightest
+    # all subsequent snapshots are of larger cells, and so their concentration
+    # of flagella looks like less
+    if 0.0 in data:
+        del data[0.0]
 
     # plot output
     plot_config = {

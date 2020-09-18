@@ -30,7 +30,7 @@ class FlagellaChromosome(object):
             # flhDC activation by CRP
             ('flhDp', 'CRP'): 1e-05 * units.mM,
 
-            # activation by flhDC
+            # activation by flhDC (increasing threshold)
             ('fliLp1', 'flhDC'): 4e-05 * units.mM,
             ('fliEp1', 'flhDC'): 5e-05 * units.mM,
             ('fliFp1', 'flhDC'): 6e-05 * units.mM,
@@ -38,27 +38,27 @@ class FlagellaChromosome(object):
             ('flgBp', 'flhDC'): 8e-05 * units.mM,
             ('flhBp', 'flhDC'): 9e-05 * units.mM,
             ('fliAp1', 'flhDC'): 1e-04 * units.mM,  # activating fliA begins hand-off of regulation
-            ('flgEp', 'flhDC'): 1.2e-04 * units.mM,
-            ('fliDp', 'flhDC'): 1.3e-04 * units.mM,
-            ('flgKp', 'flhDC'): 1.4e-04 * units.mM,
+            ('flgEp', 'flhDC'): 1.1e-04 * units.mM,
+            ('fliDp', 'flhDC'): 1.2e-04 * units.mM,
+            ('flgKp', 'flhDC'): 1.3e-04 * units.mM,
 
-            # activation by fliA
-            ('fliLp1', 'fliA'): 1.0e-05 * units.mM,
-            ('fliEp1', 'fliA'): 1.4e-05 * units.mM,
-            ('fliFp1', 'fliA'): 1.8e-05 * units.mM,
-            ('flgAp', 'fliA'): 2.2e-05 * units.mM,
-            ('flgBp', 'fliA'): 2.6e-05 * units.mM,
-            ('flhBp', 'fliA'): 3.0e-05 * units.mM,
-            ('fliAp1', 'fliA'): 3.6e-05 * units.mM,  # fliA self-activation takes over regulation
-            ('flgEp', 'fliA'): 3.8e-05 * units.mM,
-            ('fliDp', 'fliA'): 4.2e-05 * units.mM,
-            ('flgKp', 'fliA'): 4.3e-05 * units.mM,
+            # activation by fliA (decreasing threshold)
+            ('fliLp1', 'fliA'): 4.2e-05 * units.mM,
+            ('fliEp1', 'fliA'): 4.1e-05 * units.mM,
+            ('fliFp1', 'fliA'): 4.0e-05 * units.mM,
+            ('flgAp', 'fliA'): 3.9e-05 * units.mM,
+            ('flgBp', 'fliA'): 3.8e-05 * units.mM,
+            ('flhBp', 'fliA'): 3.7e-05 * units.mM,
+            ('fliAp1', 'fliA'): 3.5e-05 * units.mM,  # fliA self-activation takes over regulation
+            ('flgEp', 'fliA'): 3.4e-05 * units.mM,
+            ('fliDp', 'fliA'): 3.3e-05 * units.mM,
+            ('flgKp', 'fliA'): 3.2e-05 * units.mM,
 
-            # activation by fliA alone
-            ('fliCp', 'fliA'): 4.2e-05 * units.mM,
+            # activation by fliA alone (increasing threshold)
+            ('fliCp', 'fliA'): 4.3e-05 * units.mM,
             ('tarp', 'fliA'): 4.4e-05 * units.mM,
-            ('motAp', 'fliA'): 4.6e-05 * units.mM,
-            ('flgMp', 'fliA'): 4.8e-05 * units.mM,
+            ('motAp', 'fliA'): 4.5e-05 * units.mM,
+            ('flgMp', 'fliA'): 4.6e-05 * units.mM,
         }
 
         self.factor_thresholds.update(parameters.get('thresholds', {}))
@@ -317,7 +317,7 @@ class FlagellaChromosome(object):
 
         # promoter affinities are binding affinity of RNAP onto promoter
         self.promoter_affinities = {
-            ('flhDp', 'CRP'): 0.1}
+            ('flhDp', 'CRP'): 0.15}
         # self.promoter_affinities[('motAp', 'CpxR')] = 1.0
         flhDC_affinities = binary_sum_gates(activation_coefficients)
         self.promoter_affinities.update(flhDC_affinities)
@@ -352,12 +352,23 @@ class FlagellaChromosome(object):
         affinity_scaling = parameters.get('tsc_affinity_scaling', 1)
         min_affinity = 1e-2
         added_affinity = {
-            'fliG': 3e-2,
-            'flgE': 2e-3,
-            'flhB': 1e-3,
-            'fliI': 2e-3,
-            'fliH': 3e-3,
-            'fliA': 1e-3,
+            'fliG': 3e0 * min_affinity,
+            'flgE': 2e-1 * min_affinity,
+            'flhB': 1e-1 * min_affinity,
+            'fliI': 3e-1 * min_affinity,
+            'fliH': 3e-1 * min_affinity,
+            'fliA': 4e-1 * min_affinity,
+            # reduce affinity
+            'tar': -5e-1 * min_affinity,
+            'tap': -5e-1 * min_affinity,
+            'motA': -5e-1 * min_affinity,
+            'motB': -5e-1 * min_affinity,
+            'cheZ': -5e-1 * min_affinity,
+            'cheY': -5e-1 * min_affinity,
+            'cheW': -5e-1 * min_affinity,
+            'cheR': -5e-1 * min_affinity,
+            'cheB': -5e-1 * min_affinity,
+            'cheA': -5e-1 * min_affinity,
         }
         self.transcript_affinities = {}
         for (operon, product) in self.transcripts:
