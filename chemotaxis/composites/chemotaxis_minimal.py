@@ -15,7 +15,7 @@ from vivarium.core.composition import (
 # processes
 from chemotaxis.processes.chemoreceptor_cluster import (
     ReceptorCluster,
-    get_exponential_random_timeline
+    get_exponential_random_timeline,
 )
 from chemotaxis.processes.coarse_motor import MotorActivity
 
@@ -27,7 +27,12 @@ NAME = 'chemotaxis_minimal'
 
 
 class ChemotaxisMinimal(Generator):
+    """ Chemotaxis Minimal Composite
 
+     A chemotactic cell with only receptor and motor processes.
+     """
+
+    name = NAME
     defaults = {
         'ligand_id': 'MeAsp',
         'initial_ligand': 0.1,

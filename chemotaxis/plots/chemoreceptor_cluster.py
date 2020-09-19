@@ -14,7 +14,7 @@ def plot_receptor_output(output, settings, out_dir='out', filename='response'):
     # plot results
     cols = 1
     rows = 3
-    width = 6
+    width = 3
     height = width / aspect_ratio
     plt.figure(figsize=(width, height))
     plt.rc('font', size=fontsize)
