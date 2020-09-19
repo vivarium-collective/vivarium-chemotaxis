@@ -70,7 +70,9 @@ def plot_control(data, config, out_dir='out'):
     }
 
     # multigen plot
-    plot_settings = {}
+    plot_settings = {
+        'remove_zeros': True
+    }
     plot_agents_multigen(data, plot_settings, out_dir)
 
     # tag plot

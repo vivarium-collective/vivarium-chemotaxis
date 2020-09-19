@@ -61,9 +61,9 @@ def get_lacY_expression_config():
 
     # expression
     transcription_rates = {
-        'lacy_RNA': 1e-4}
+        'lacy_RNA': 5e-6}
     translation_rates = {
-        'LacY': 1e-5}
+        'LacY': 2e-4}
     protein_map = {
         'LacY': 'lacy_RNA'}
     degradation_rates = {
@@ -78,8 +78,9 @@ def get_lacY_expression_config():
         'lacy_RNA': 'if [(external, glc__D_e) > 0.005 '  # limiting concentration of glc at 0.005 mM (Boulineau 2013)
                     'or (internal, lcts_p) < 0.005]'}  # internal lcts is hypothesized to disinhibit lacY transcription
     transcription_leak = {
-        'rate': 5e-4,
-        'magnitude': 1e-7}
+        'rate': 1e-3,
+        'magnitude': 2e-7,
+    }
 
     # initial state
     initial_state = {
@@ -129,12 +130,12 @@ def get_glucose_lactose_transport_config():
     transport_kinetics = {
         'EX_glc__D_e': {
             ('internal', 'EIIglc'): {
-                ('external', 'glc__D_e'): 2e-1,  # (mM) k_m for glc
+                ('external', 'glc__D_e'): 1e-1,  # (mM) k_m for glc
                 ('internal', 'pep_c'): None,  # k_m = None makes a reactant non-limiting
                 'kcat_f': 1e2}},
         'EX_lcts_e': {
             ('internal', 'LacY'): {
-                ('external', 'lcts_e'): 2e-1,  # (mM) k_m for lcts
+                ('external', 'lcts_e'): 1e-1,  # (mM) k_m for lcts
                 'kcat_f': 1e2}}}
 
     transport_initial_state = {
