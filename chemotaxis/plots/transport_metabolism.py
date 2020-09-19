@@ -45,7 +45,7 @@ def plot_glc_lcts_environment(timeseries, settings={}, out_dir='out'):
     n_rows = 3
 
     # make figure and plot
-    width = 6
+    width = 5
     height = width / aspect_ratio
     fig = plt.figure(figsize=(width, height))
     grid = plt.GridSpec(n_rows, n_cols)
@@ -54,15 +54,15 @@ def plot_glc_lcts_environment(timeseries, settings={}, out_dir='out'):
     ax1.plot(time, glucose, label='glucose')
     ax1.plot(time, lactose, label='lactose')
     set_axes(ax1)
-    ax1.title.set_text('environment volume = {} L'.format(environment_volume))
-    ax1.set_ylabel('external \n concentration (mM)')
+    ax1.title.set_text('environment: {}'.format(environment_volume))
+    ax1.set_ylabel('external \n (mM)')
     ax1.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
 
     ax2 = fig.add_subplot(grid[1, 0])  # grid is (row, column)
-    ax2.plot(time, lacy_RNA, label='lacy_RNA')
-    ax2.plot(time, LacY, label='LacY')
+    ax2.plot(time, lacy_RNA, label='lacY RNA')
+    ax2.plot(time, LacY, label='LacY protein')
     set_axes(ax2)
-    ax2.set_ylabel('internal \n concentration (mM)')
+    ax2.set_ylabel('internal \n (mM)')
     ax2.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
 
     ax3 = fig.add_subplot(grid[2, 0])  # grid is (row, column)
@@ -82,5 +82,5 @@ def plot_glc_lcts_environment(timeseries, settings={}, out_dir='out'):
     # save figure
     fig_path = os.path.join(out_dir, 'glc_lcts_environment')
     plt.subplots_adjust(wspace=0.3, hspace=0.3)
-    plt.savefig(fig_path, bbox_inches='tight')
+    plt.savefig(fig_path+'.pdf', bbox_inches='tight')
     plt.close()

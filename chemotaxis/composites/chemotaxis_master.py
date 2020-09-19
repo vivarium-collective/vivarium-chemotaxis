@@ -37,8 +37,8 @@ from chemotaxis.composites.flagella_expression import (
     get_flagella_metabolism_initial_state,
 )
 from chemotaxis.composites.transport_metabolism import (
-    glucose_lactose_transport_config,
-    default_metabolism_config,
+    get_glucose_lactose_transport_config,
+    get_iAF1260b_config,
 )
 
 # plots
@@ -64,8 +64,8 @@ class ChemotaxisMaster(Generator):
         'boundary_path': ('boundary',),
         'agents_path': ('agents',),
         'daughter_path': tuple(),
-        'transport': glucose_lactose_transport_config(),
-        'metabolism': default_metabolism_config(),
+        'transport': get_glucose_lactose_transport_config(),
+        'metabolism': get_iAF1260b_config(),
         'receptor': {'ligand': 'MeAsp'},
         'flagella': {'n_flagella': 4},
         'PMF': {},

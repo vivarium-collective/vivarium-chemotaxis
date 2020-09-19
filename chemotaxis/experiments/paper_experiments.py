@@ -76,7 +76,7 @@ from chemotaxis.composites.transport_metabolism import (
     TransportMetabolismExpression,
     ODE_expression,
     get_metabolism_initial_external_state,
-    lacy_expression_config,
+    get_lacY_expression_config,
 )
 
 # data
@@ -132,7 +132,7 @@ def growth_division_experiment(out_dir='out'):
 
     # make the experiment
     experiment_settings = {
-        'experiment_name': 'growth_division_experiment',
+        'experiment_name': '3b',
         'description': 'simple growth_division agents are placed in a lattice'
                        ' environment and grown.',
         'total_time': total_time,
@@ -207,9 +207,11 @@ def transport_metabolism(out_dir='out'):
         'metabolism': {'time_step': 10},
         'transport': {'time_step': 10},
         'expression': {
-            'time_step': 1,
             # increased leak rate makes more frequent bursts for improved visualization
-            'transcription_leak': {'rate': 5e-3},
+            'transcription_leak': {
+                'rate': 5e-3,
+                'magnitude': 1e-5,
+            },
         },
         'divide': False,
     }
@@ -217,7 +219,7 @@ def transport_metabolism(out_dir='out'):
 
     # get external state with adjusted minimal concentrations
     external_state = get_metabolism_initial_external_state(
-        scale_concentration=100,
+        scale_concentration=1000,
         override=initial_concentrations)
 
     # run simulation with helper function simulate_compartment_in_experiment
@@ -319,7 +321,7 @@ def transport_metabolism_environment(out_dir='out'):
 
     # make the experiment
     experiment_settings = {
-        'experiment_name': 'transport_metabolism_environment',
+        'experiment_name': '5c',
         'description': 'glucose-lactose diauxic shifters are placed in a shallow environment with glucose and '
                        'lactose. They start off with no internal LacY and uptake only glucose, but LacY is '
                        'expressed upon depletion of glucose they begin to uptake lactose. Cells have an iAF1260b '
@@ -364,7 +366,7 @@ def lacy_expression(out_dir='out'):
     shift_time2 = int(4 * total_time / 5)
 
     # make the ode expression process
-    lacy_expression = lacy_expression_config()
+    lacy_expression = get_lacY_expression_config()
     process = ODE_expression(lacy_expression)
 
     # make timelines for two experiments
@@ -477,7 +479,7 @@ def flagella_just_in_time(out_dir='out'):
 # figure 6c
 def run_heterogeneous_flagella_experiment(out_dir='out'):
 
-    total_time = 16000
+    total_time = 15000
     emit_step = 120
     process_time_step = 60
     environment_time_step = 120
@@ -523,7 +525,7 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
 
     # use agent_environment_experiment to make the experiment
     experiment_settings = {
-        'experiment_name': 'heterogeneous_flagella_experiment',
+        'experiment_name': '6c',
         'description': '..',
         'total_time': total_time,
         'emit_step': emit_step,
@@ -623,9 +625,9 @@ def run_chemoreceptor_pulse(out_dir='out'):
 def run_chemotaxis_transduction(out_dir='out'):
     total_time = 60
     time_step = 0.1
-    n_flagella = 4
+    n_flagella = 5
     ligand_id = 'MeAsp'
-    initial_ligand = 1e-2
+    initial_ligand = 1e-1
 
     # configure the compartment
     compartment_config = {
@@ -673,8 +675,8 @@ def run_chemotaxis_transduction(out_dir='out'):
 
 # figure 7d
 def run_chemotaxis_experiment(out_dir='out'):
-    total_time = 30
-    emit_step = 5
+    total_time = 10
+    emit_step = 100
     time_step = 0.001
     tumble_jitter = 4000  # TODO -- why tumble jitter?
 
@@ -682,44 +684,61 @@ def run_chemotaxis_experiment(out_dir='out'):
     bounds = [1000, 3000]
     initial_agent_location = [0.5, 0.1]
 
-    # exponential field parameters
-    # TODO -- not uppercase!
-    FIELD_SCALE = 4.0
-    EXPONENTIAL_BASE = 1.3e2
-    FIELD_CENTER = [0.5, 0.0]
-    LOC_DX = (initial_agent_location[0] - FIELD_CENTER[0]) * bounds[0]
-    LOC_DY = (initial_agent_location[1] - FIELD_CENTER[1]) * bounds[1]
-    DIST = np.sqrt(LOC_DX ** 2 + LOC_DY ** 2)
-    INITIAL_LIGAND = FIELD_SCALE * EXPONENTIAL_BASE ** (DIST / 1000)
+    # field parameters
+    field_scale = 4.0
+    exponential_base = 1.3e2
+    field_center = [0.5, 0.0]
+    loc_dx = (initial_agent_location[0] - field_center[0]) * bounds[0]
+    loc_dy = (initial_agent_location[1] - field_center[1]) * bounds[1]
+    dist = np.sqrt(loc_dx ** 2 + loc_dy ** 2)
+    initial_ligand = field_scale * exponential_base ** (dist / 1000)
 
     # configure agents
-    agents_config = [{
-        'number': 2,
-        'name': 'receptor + motor',
-        'type': ChemotaxisMinimal,
-        'config': {
-            'ligand_id': ligand_id,
-            'initial_ligand': INITIAL_LIGAND,
-            'external_path': ('global',),
-            'agents_path': ('..', '..', 'agents'),
-            'daughter_path': tuple(),
-            'receptor': {
-                'time_step': time_step,
-            },
-            'motor': {
-                'tumble_jitter': tumble_jitter,
-                'time_step': time_step,
+    agents_config = [
+        {
+            'number': 5,
+            'name': 'receptor + motor',
+            'type': ChemotaxisMaster,
+            'config': {
+                'ligand_id': ligand_id,
+                'initial_ligand': initial_ligand,
+                'external_path': ('global',),
+                'agents_path': ('..', '..', 'agents'),
+                'fields_path': ('..', '..', 'fields'),
+                'dimensions_path': ('..', '..', 'dimensions'),
+                'daughter_path': tuple(),
+                'receptor': {
+                    'time_step': time_step,
+                },
+                'motor': {
+                    'tumble_jitter': tumble_jitter,
+                    'time_step': time_step,
+                },
             },
         },
-    }]
+        {
+            'number': 5,
+            'name': 'motor',
+            'type': ChemotaxisMaster,
+            'config': {
+                'ligand_id': 'None',
+                # 'initial_ligand': 1.0,
+                'external_path': ('global',),
+                'agents_path': ('..', '..', 'agents'),
+                'fields_path': ('..', '..', 'fields'),
+                'dimensions_path': ('..', '..', 'dimensions'),
+                'daughter_path': tuple(),
+                'receptor': {
+                    'time_step': time_step,
+                },
+                'motor': {
+                    'tumble_jitter': tumble_jitter,
+                    'time_step': time_step,
+                },
+            },
+        },
+    ]
     agent_ids = make_agent_ids(agents_config)
-    # agents_config = {
-    #     'ids': ['chemotaxis_master'],
-    #     'type': ChemotaxisMaster,
-    #     'config': {
-    #         'agents_path': ('..', '..', 'agents'),
-    #         'fields_path': ('..', '..', 'fields'),
-    #         'dimensions_path': ('..', '..', 'dimensions')}}
 
     # configure environment
     environment_config = {
@@ -734,9 +753,9 @@ def run_chemotaxis_experiment(out_dir='out'):
                     'type': 'exponential',
                     'molecules': {
                         ligand_id: {
-                            'center': FIELD_CENTER,
-                            'scale': FIELD_SCALE,
-                            'base': EXPONENTIAL_BASE,
+                            'center': field_center,
+                            'scale': field_scale,
+                            'base': exponential_base,
                         },
                     },
                 },
@@ -755,11 +774,11 @@ def run_chemotaxis_experiment(out_dir='out'):
 
     # use agent_environment_experiment to make the experiment
     experiment_settings = {
-        'experiment_name': 'chemotaxis_experiment',
+        'experiment_name': '7d',
         'description': '..',
         'total_time': total_time,
         'emit_step': emit_step,
-        'emitter': {'type': 'database'},
+        # 'emitter': {'type': 'database'},
     }
     experiment = agent_environment_experiment(
         agents_config=agents_config,

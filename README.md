@@ -3,7 +3,13 @@
 [vivarium-chemotaxis](https://github.com/vivarium-collective/vivarium-chemotaxis) is a library for chemotaxis-specific
 vivarium processes.
 
+Visit [the Vivarium Core
+documentation](https://vivarium-core.readthedocs.io/) to learn how to
+use the core Vivarium engine to create computational biology models.
+
 ## setup
+Please refer to the Vivarium Core documentation for more complete instructions.
+
 Make a python environment with Python 3 (pyenv is recommended) and install dependencies. 
 
 First install numpy:

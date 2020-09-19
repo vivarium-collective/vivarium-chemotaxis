@@ -24,9 +24,9 @@ from vivarium.processes.tree_mass import TreeMass
 from cell.processes.division_volume import DivisionVolume
 from cell.processes.metabolism import (
     Metabolism,
-    get_iAF1260b_config,
     get_minimal_media_iAF1260b,
 )
+from cell.processes.metabolism import get_iAF1260b_config as get_iAF1260b_path_config
 from cell.processes.convenience_kinetics import ConvenienceKinetics
 from cell.processes.ode_expression import ODE_expression
 
@@ -40,8 +40,8 @@ from chemotaxis import COMPOSITE_OUT_DIR, REFERENCE_DATA_DIR
 NAME = 'transport_metabolism'
 
 
-def default_metabolism_config():
-    config = get_iAF1260b_config()
+def get_iAF1260b_config():
+    config = get_iAF1260b_path_config()
 
     # flux bound tolerance for reactions in glucose_lactose_transport_config
     metabolism_config = {
@@ -53,7 +53,7 @@ def default_metabolism_config():
     return config
 
 
-def lacy_expression_config():
+def get_lacY_expression_config():
     """
     :py:class:`ODE_expression` configuration for expression of glucose
     and lactose transporters
@@ -61,14 +61,14 @@ def lacy_expression_config():
 
     # expression
     transcription_rates = {
-        'lacy_RNA': 1e-6}
+        'lacy_RNA': 1e-4}
     translation_rates = {
-        'LacY': 1e-4}
+        'LacY': 1e-5}
     protein_map = {
         'LacY': 'lacy_RNA'}
     degradation_rates = {
-        'lacy_RNA': 1e-3,  # a single RNA lasts about 5 minutes
-        'LacY': 1e-5}  # proteins degrade ~100x slower
+        'lacy_RNA': 3e-3,  # a single RNA lasts about 5 minutes
+        'LacY': 3e-5}  # proteins degrade ~100x slower
 
     # regulation
     regulators = [
@@ -101,7 +101,7 @@ def lacy_expression_config():
         'initial_state': initial_state}
 
 
-def glucose_lactose_transport_config():
+def get_glucose_lactose_transport_config():
     """
     :py:class:`ConvenienceKinetics` configuration for simplified glucose
     and lactose transport.Glucose uptake simplifies the PTS/GalP system
@@ -192,9 +192,9 @@ class TransportMetabolismExpression(Generator):
         'fields_path': ('fields',),
         'dimensions_path': ('dimensions',),
         'division': {},
-        'transport': glucose_lactose_transport_config(),
-        'metabolism': default_metabolism_config(),
-        'expression': lacy_expression_config(),
+        'transport': get_glucose_lactose_transport_config(),
+        'metabolism': get_iAF1260b_config(),
+        'expression': get_lacY_expression_config(),
         'divide': True,
     }
 

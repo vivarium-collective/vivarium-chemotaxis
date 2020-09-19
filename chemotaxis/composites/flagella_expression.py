@@ -45,8 +45,8 @@ from vivarium.processes.tree_mass import TreeMass
 # composites
 from cell.composites.gene_expression import GeneExpression
 from chemotaxis.composites.transport_metabolism import (
-    glucose_lactose_transport_config,
-    default_metabolism_config,
+    get_glucose_lactose_transport_config,
+    get_iAF1260b_config,
 )
 
 # plots
@@ -194,8 +194,8 @@ class FlagellaExpressionMetabolism(Generator):
         'agents_path': ('agents',),
         'daughter_path': tuple(),
         'chromosome': {},
-        'transport': glucose_lactose_transport_config(),
-        'metabolism': default_metabolism_config(),
+        'transport': get_glucose_lactose_transport_config(),
+        'metabolism': get_iAF1260b_config(),
         'initial_mass': 0.0 * units.fg,
         'expression_time_step': 10,
         'divide': True,
