@@ -598,9 +598,7 @@ def run_flagella_activity(out_dir='out'):
         'return_raw_data': True,
         'timeline': {
             'timeline': timeline,
-            'time_step': time_step
-        },
-    }
+            'time_step': time_step}}
     data = simulate_process_in_experiment(process, settings)
 
     # plot output
@@ -615,17 +613,13 @@ def run_chemoreceptor_pulse(out_dir='out'):
 
     # initialize the process
     initial_ligand = timeline[0][1][('external', ligand)]
-    process_config = {
-        'initial_ligand': initial_ligand,
-    }
+    process_config = {'initial_ligand': initial_ligand}
     receptor = ReceptorCluster(process_config)
 
     # run experiment with helper function simulate_process_in_experiment
     experiment_settings = {
         'timeline': {
-            'timeline': timeline,
-        },
-    }
+            'timeline': timeline}}
     timeseries = simulate_process_in_experiment(receptor, experiment_settings)
 
     # plot output
@@ -646,13 +640,10 @@ def run_chemotaxis_transduction(out_dir='out'):
         'receptor': {
             'ligand_id': ligand_id,
             'initial_ligand': initial_ligand,
-            'time_step': time_step,
-        },
+            'time_step': time_step},
         'flagella': {
             'n_flagella': n_flagella,
-            'time_step': time_step,
-        },
-    }
+            'time_step': time_step}}
     compartment = ChemotaxisMaster(compartment_config)
 
     # make a timeline of external ligand concentrations
@@ -670,10 +661,8 @@ def run_chemotaxis_transduction(out_dir='out'):
             'timeline': timeline,
             'time_step': time_step,
             'ports': {
-                'external': ('boundary', 'external')
-            },
-        },
-    }
+                'external': ('boundary', 'external')},
+        }}
     timeseries = simulate_compartment_in_experiment(
         compartment,
         experiment_settings)
@@ -687,19 +676,23 @@ def run_chemotaxis_transduction(out_dir='out'):
 
 # figure 7d
 def run_chemotaxis_experiment(out_dir='out'):
+
+    # simulation parameters
     total_time = 10
     emit_step = 100
     time_step = 0.001
-    tumble_jitter = 4000  # TODO -- why tumble jitter?
 
-    ligand_id = 'glc__D_e'
+    # environment parameters
+    ligand_id = 'MeAsp'
     bounds = [1000, 3000]
-    initial_agent_location = [0.5, 0.1]
 
     # field parameters
     field_scale = 4.0
     exponential_base = 1.3e2
     field_center = [0.5, 0.0]
+
+    # agent state
+    initial_agent_location = [0.5, 0.1]
     loc_dx = (initial_agent_location[0] - field_center[0]) * bounds[0]
     loc_dy = (initial_agent_location[1] - field_center[1]) * bounds[1]
     dist = np.sqrt(loc_dx ** 2 + loc_dy ** 2)
@@ -719,13 +712,11 @@ def run_chemotaxis_experiment(out_dir='out'):
                 'fields_path': ('..', '..', 'fields'),
                 'dimensions_path': ('..', '..', 'dimensions'),
                 'daughter_path': tuple(),
-                'receptor': {
-                    'time_step': time_step,
-                },
-                'motor': {
-                    'tumble_jitter': tumble_jitter,
-                    'time_step': time_step,
-                },
+                'receptor': {'time_step': time_step},
+                # 'motor': {
+                #     'tumble_jitter': 4000,  # TODO -- why tumble jitter?
+                #     'time_step': time_step,
+                # },
             },
         },
         {
@@ -740,13 +731,11 @@ def run_chemotaxis_experiment(out_dir='out'):
                 'fields_path': ('..', '..', 'fields'),
                 'dimensions_path': ('..', '..', 'dimensions'),
                 'daughter_path': tuple(),
-                'receptor': {
-                    'time_step': time_step,
-                },
-                'motor': {
-                    'tumble_jitter': tumble_jitter,
-                    'time_step': time_step,
-                },
+                'receptor': {'time_step': time_step},
+                # 'motor': {
+                #     'tumble_jitter': tumble_jitter,
+                #     'time_step': time_step,
+                # },
             },
         },
     ]
@@ -792,7 +781,7 @@ def run_chemotaxis_experiment(out_dir='out'):
                        'exponential gradient to demonstrate their chemotaxis.',
         'total_time': total_time,
         'emit_step': emit_step,
-        # 'emitter': {'type': 'database'},
+        'emitter': {'type': 'database'},
     }
 
     # use helper function agent_environment_experiment to make the experiment

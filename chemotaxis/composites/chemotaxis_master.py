@@ -21,6 +21,7 @@ from vivarium.library.dict_utils import deep_merge
 from vivarium.processes.meta_division import MetaDivision
 from vivarium.processes.tree_mass import TreeMass
 from cell.processes.metabolism import Metabolism
+from cell.processes.metabolism import get_iAF1260b_config as get_iAF1260b_path_config
 from cell.processes.convenience_kinetics import ConvenienceKinetics
 from cell.processes.transcription import Transcription
 from cell.processes.translation import Translation
@@ -51,6 +52,26 @@ from chemotaxis import COMPOSITE_OUT_DIR
 NAME = 'chemotaxis_master'
 
 
+def get_chemotaxis_master_schema_override():
+    """ schema_override method to selectively turn off metabolic state emits """
+    config = get_iAF1260b_path_config()
+    metabolism = Metabolism(config)
+    return {
+        'metabolism': {
+            'internal': {
+                mol_id: {
+                    '_emit': False,
+                } for mol_id in metabolism.initial_state['internal'].keys()
+            },
+            'external': {
+                mol_id: {
+                    '_emit': False,
+                } for mol_id in metabolism.initial_state['external'].keys()
+            },
+        }
+    }
+
+
 class ChemotaxisMaster(Generator):
     """ Chemotaxis Master Composite
 
@@ -73,6 +94,7 @@ class ChemotaxisMaster(Generator):
         'chromosome': {},
         'division': {},
         'divide': True,
+        '_schema': get_chemotaxis_master_schema_override()
     }
 
     def __init__(self, config=None):
