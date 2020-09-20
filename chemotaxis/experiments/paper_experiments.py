@@ -250,7 +250,7 @@ def transport_metabolism(out_dir='out'):
 def transport_metabolism_environment(out_dir='out'):
 
     # simulation parameters
-    total_time = 50000
+    total_time = 30000
     emit_step = 100
     parallel = True  # TODO -- make this an option you can pass in
 
@@ -277,7 +277,10 @@ def transport_metabolism_environment(out_dir='out'):
         'glc__D_e',
         'lcts_e']
     tagged_molecules = [
-        ('cytoplasm', 'LacY')]
+        ('cytoplasm', 'LacY'),
+        ('cytoplasm', 'lacy_RNA'),
+        ('cytoplasm', 'lcts_p'),
+        ('flux_bounds', 'EX_glc__D_e')]
 
     # agent configuration
     # parameters passed to each process override compartment default
