@@ -7,7 +7,7 @@ Includes functions for configuring, running, and plotting all experiments report
     Agmon, E. and Spangler, R.K., "A Multi-Scale Approach to Modeling E. coli Chemotaxis"
 
 These experiments can be triggered from the command line by entering the figure number.
-Available experiments include: '3b', '5a', '5b', '5c', '5d', 6a', '6b', '6c', '7a', '7b', '7c', '7d'.
+Available experiments include: '3b', '5a', '5b', '5c', '5d', '6a', '6b', '6c', '7a', '7b', '7c', '7d'.
 
 ```
 $ python chemotaxis/experiments/paper_experiments.py 7a
@@ -131,8 +131,7 @@ def growth_division_experiment(out_dir='out'):
     # make the experiment using helper function agent_environment_experiment
     experiment_settings = {
         'experiment_name': '3b',
-        'description': 'simple growth_division agents are placed in a lattice'
-                       ' environment and grown.',
+        'description': 'a simple GrowthDivision agent is placed in a Lattice environment and grown.',
         'total_time': total_time,
         'emit_step': emit_step}
     experiment = agent_environment_experiment(
@@ -251,34 +250,39 @@ def transport_metabolism(out_dir='out'):
 def transport_metabolism_environment(out_dir='out'):
 
     # simulation parameters
-    total_time = 25000
+    total_time = 50000
     emit_step = 100
-    parallel = True
-
-    # cell parameters
-    n_agents = 2
-    process_timestep = 5  # short timesteps required in depleted environment
+    parallel = True  # TODO -- make this an option you can pass in
 
     # environment parameters
-    bounds = [30, 30]
+    # put cells in a very shallow environment, with low concentrations of glucose.
+    # this makes it possible to observe the glucose-lactose shift in individual cells.
+    bounds = [35, 35]
     n_bins = [30, 30]
     depth = 50.0
-    diffusion = 2e-3
-    env_timestep = 60  # TODO -- gives diffusion enough time to fill up??
+    diffusion = 5e-3
+    jitter_force = 1e-2
+    env_timestep = 10
     initial_external = {
         'glc__D_e': 1.0,
         'lcts_e': 8.0}
+
+    # cell parameters
+    # small time steps required in depleted environment
+    n_agents = 3
+    process_timestep = 10
 
     # plotting parameters
     emit_fields = [
         'glc__D_e',
         'lcts_e']
     tagged_molecules = [
-        ('cytoplasm', 'lacy_RNA'),
         ('cytoplasm', 'LacY')]
 
     # agent configuration
     # parameters passed to each process override compartment default
+    # paths to ports are assigned to go up two levels in the hierarchy
+    # So they can plug into the Lattice environment.
     agents_config = [{
         'name': 'transport_metabolism',
         'type': TransportMetabolismExpression,
@@ -288,14 +292,16 @@ def transport_metabolism_environment(out_dir='out'):
             'fields_path': ('..', '..', 'fields'),
             'dimensions_path': ('..', '..', 'dimensions'),
             'division': {'time_step': process_timestep},
-            'metabolism': {'time_step': process_timestep},
+            'metabolism': {
+                'time_step': process_timestep,
+                '_parallel': parallel},
             'transport': {'time_step': process_timestep},
             'expression': {
                 'transcription_leak': {
-                    'rate': 1e-3,
-                    'magnitude': 2e-7}}
+                    'rate': 5e-5,
+                    'magnitude': 5e-7}}
         }}]
-    make_agent_ids(agents_config)  # add agent_ids
+    make_agent_ids(agents_config)  # add agent_ids based on n_agents
 
     # initial agent state
     initial_agent_state = {
@@ -304,12 +310,14 @@ def transport_metabolism_environment(out_dir='out'):
             'external': initial_external}}
 
     # get minimal media for iAF1260b
-    # scale concentration to ensure other nutrients remain in full supply
+    # scale concentrations of nutrients other than initial_external
+    # to ensure they remain in full supply in the shallow environment
     media = get_minimal_media_iAF1260b(
-        scale_concentration=1000,
+        scale_concentration=1e6,
         override_initial=initial_external)
 
     # environment configuration
+    # use make_lattice_config to override defaults
     environment_config = {
         'type': Lattice,
         'config': make_lattice_config(
@@ -319,6 +327,7 @@ def transport_metabolism_environment(out_dir='out'):
             depth=depth,
             diffusion=diffusion,
             concentrations=media,
+            jitter_force=jitter_force,
             keep_fields_emit=emit_fields,
             parallel=parallel)}
 
@@ -326,11 +335,9 @@ def transport_metabolism_environment(out_dir='out'):
     # database emitter saves to mongoDB
     experiment_settings = {
         'experiment_name': '5c',
-        'description': 'glucose-lactose diauxic shifters are placed in a shallow environment with glucose and '
-                       'lactose. They start off with no internal LacY and uptake only glucose, but LacY is '
-                       'expressed upon depletion of glucose and they begin to uptake lactose. Cells have an '
-                       'iAF1260b BiGG metabolism, kinetic transport of glucose and lactose, and ode-based gene '
-                       'expression of LacY',
+        'description': 'TransportMetabolismExpression cells are placed in a shallow environment with glucose and '
+                       'lactose. They start with no internal LacY and uptake only glucose, but upon depletion of '
+                       'glucose some cells begin to express LacY uptake lactose.',
         'total_time': total_time,
         'emit_step': emit_step,
         'emitter': {'type': 'database'}}
@@ -531,7 +538,8 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
     # database emitter saves to mongoDB
     experiment_settings = {
         'experiment_name': '6c',
-        'description': '..',
+        'description': 'A single FlagellaExpressionMetabolism compartment is placed in a Lattice environment and'
+                       'grown into a small colony to demonstrate heterogeneous expression of flagellar genes.',
         'total_time': total_time,
         'emit_step': emit_step,
         'emitter': {'type': 'database'},
@@ -777,7 +785,8 @@ def run_chemotaxis_experiment(out_dir='out'):
     # database emitter saves to mongoDB
     experiment_settings = {
         'experiment_name': '7d',
-        'description': '..',
+        'description': 'ChemotaxisMaster agents are placed in a large StaticLattice environment with an'
+                       'exponential gradient to demonstrate their chemotaxis.',
         'total_time': total_time,
         'emit_step': emit_step,
         # 'emitter': {'type': 'database'},

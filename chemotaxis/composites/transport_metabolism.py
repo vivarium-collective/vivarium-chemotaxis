@@ -41,6 +41,12 @@ NAME = 'transport_metabolism'
 
 
 def get_iAF1260b_config():
+    """
+    :py:class:`Metabolism` configuration for with iAF1260b BiGG model,
+    initial_mass, and tolerances set on the glucose/lactose exchange
+    reactions.
+    """
+
     config = get_iAF1260b_path_config()
 
     # flux bound tolerance for reactions in glucose_lactose_transport_config
@@ -75,12 +81,11 @@ def get_lacY_expression_config():
         ('external', 'glc__D_e'),
         ('internal', 'lcts_p')]
     regulation_condition = {
-        'lacy_RNA': 'if [(external, glc__D_e) > 0.005 '  # limiting concentration of glc at 0.005 mM (Boulineau 2013)
-                    'or (internal, lcts_p) < 0.005]'}  # internal lcts is hypothesized to disinhibit lacY transcription
+        'lacy_RNA': 'if [(external, glc__D_e) > 0.05 '  # limiting concentration of glc
+                    'or (internal, lcts_p) < 0.05]'}  # internal lcts is hypothesized to disinhibit lacY transcription
     transcription_leak = {
-        'rate': 1e-3,
-        'magnitude': 2e-7,
-    }
+        'rate': 1e-4,
+        'magnitude': 1e-7}
 
     # initial state
     initial_state = {
