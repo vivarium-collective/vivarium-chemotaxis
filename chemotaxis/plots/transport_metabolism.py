@@ -82,5 +82,5 @@ def plot_glc_lcts_environment(timeseries, settings={}, out_dir='out'):
     # save figure
     fig_path = os.path.join(out_dir, 'glc_lcts_environment')
     plt.subplots_adjust(wspace=0.3, hspace=0.3)
-    plt.savefig(fig_path+'.pdf', bbox_inches='tight')
+    plt.savefig(fig_path, bbox_inches='tight')
     plt.close()
