@@ -32,6 +32,7 @@ from vivarium.core.composition import (
     make_agent_ids,
 )
 from vivarium.core.emitter import time_indexed_timeseries_from_data
+from vivarium.library.dict_utils import deep_merge
 
 # experiment workflow
 from chemotaxis.experiments.control import (
@@ -678,76 +679,74 @@ def run_chemotaxis_transduction(out_dir='out'):
 def run_chemotaxis_experiment(out_dir='out'):
 
     # simulation parameters
-    total_time = 10
-    emit_step = 100
-    time_step = 0.001
+    total_time = 120
+
+    # agent parameters
+    fast_process_timestep = 0.01
+    slow_process_timestep = 10
 
     # environment parameters
     ligand_id = 'MeAsp'
     bounds = [1000, 3000]
 
-    # field parameters
+    # exponential field parameters
+    initial_agent_location = [0.5, 0.1]
+    field_center = [0.5, 0.0]
     field_scale = 4.0
     exponential_base = 1.3e2
-    field_center = [0.5, 0.0]
 
-    # agent state
-    initial_agent_location = [0.5, 0.1]
+    # initialize ligand concentration based on position in exponential field
+    # this allows the receptor process to initialize at a steady states
+    # TODO -- this can be calculated by static_field.get_concentration(
     loc_dx = (initial_agent_location[0] - field_center[0]) * bounds[0]
     loc_dy = (initial_agent_location[1] - field_center[1]) * bounds[1]
     dist = np.sqrt(loc_dx ** 2 + loc_dy ** 2)
     initial_ligand = field_scale * exponential_base ** (dist / 1000)
 
     # configure agents
+    baseline_master_chemotaxis_config = {
+        'ligand_id': ligand_id,
+        'initial_ligand': initial_ligand,
+        'external_path': ('global',),
+        'agents_path': ('..', '..', 'agents'),
+        'fields_path': ('..', '..', 'fields'),
+        'dimensions_path': ('..', '..', 'dimensions'),
+        'daughter_path': tuple(),
+        'receptor': {'time_step': fast_process_timestep},
+        'flagella': {'time_step': fast_process_timestep},
+        'transport': {'time_step': slow_process_timestep},
+        'metabolism': {'time_step': slow_process_timestep},
+        'transcription': {'time_step': slow_process_timestep},
+        'translation': {'time_step': slow_process_timestep},
+        'degradation': {'time_step': slow_process_timestep},
+        'complexation': {'time_step': slow_process_timestep},
+        'division': {'time_step': slow_process_timestep}}
+
+    # list of agent configurations
     agents_config = [
         {
-            'number': 5,
+            'number': 2,
             'name': 'receptor + motor',
             'type': ChemotaxisMaster,
-            'config': {
-                'ligand_id': ligand_id,
-                'initial_ligand': initial_ligand,
-                'external_path': ('global',),
-                'agents_path': ('..', '..', 'agents'),
-                'fields_path': ('..', '..', 'fields'),
-                'dimensions_path': ('..', '..', 'dimensions'),
-                'daughter_path': tuple(),
-                'receptor': {'time_step': time_step},
-                # 'motor': {
-                #     'tumble_jitter': 4000,  # TODO -- why tumble jitter?
-                #     'time_step': time_step,
-                # },
-            },
+            'config': baseline_master_chemotaxis_config,
         },
         {
-            'number': 5,
+            'number': 2,
             'name': 'motor',
             'type': ChemotaxisMaster,
-            'config': {
-                'ligand_id': 'None',
-                # 'initial_ligand': 1.0,
-                'external_path': ('global',),
-                'agents_path': ('..', '..', 'agents'),
-                'fields_path': ('..', '..', 'fields'),
-                'dimensions_path': ('..', '..', 'dimensions'),
-                'daughter_path': tuple(),
-                'receptor': {'time_step': time_step},
-                # 'motor': {
-                #     'tumble_jitter': tumble_jitter,
-                #     'time_step': time_step,
-                # },
-            },
+            'config': deep_merge(
+                dict(baseline_master_chemotaxis_config),
+                {'ligand_id': 'None',})
         },
     ]
     agent_ids = make_agent_ids(agents_config)
 
-    # configure environment
+    # configure the environment
     environment_config = {
         'type': StaticLattice,
         'config': {
             'multibody': {
-                'bounds': bounds
-            },
+                'bounds': bounds},
             'field': {
                 'molecules': [ligand_id],
                 'gradient': {
@@ -756,16 +755,11 @@ def run_chemotaxis_experiment(out_dir='out'):
                         ligand_id: {
                             'center': field_center,
                             'scale': field_scale,
-                            'base': exponential_base,
-                        },
-                    },
-                },
+                            'base': exponential_base}}},
                 'bounds': bounds,
-            },
-        },
-    }
+            }}}
 
-    # initialize state
+    # initialize experiment state
     initial_state = {}
     initial_agent_body = agent_body_config({
         'bounds': bounds,
@@ -777,10 +771,10 @@ def run_chemotaxis_experiment(out_dir='out'):
     # database emitter saves to mongoDB
     experiment_settings = {
         'experiment_name': '7d',
-        'description': 'ChemotaxisMaster agents are placed in a large StaticLattice environment with an'
+        'description': 'Two configurations of ChemotaxisMaster -- one with receptors for MeAsp another without'
+                       'useful chemoreceptors -- are placed in a large StaticLattice environment with an '
                        'exponential gradient to demonstrate their chemotaxis.',
         'total_time': total_time,
-        'emit_step': emit_step,
         'emitter': {'type': 'database'},
     }
 
@@ -794,6 +788,7 @@ def run_chemotaxis_experiment(out_dir='out'):
     # run the experiment
     experiment.update(total_time)
     data = experiment.emitter.get_data()
+    experiment.end()
 
     # plot trajectory
     field_config = environment_config['config']['field']
