@@ -24,9 +24,9 @@ from vivarium.processes.tree_mass import TreeMass
 from cell.processes.division_volume import DivisionVolume
 from cell.processes.metabolism import (
     Metabolism,
-    get_iAF1260b_config,
     get_minimal_media_iAF1260b,
 )
+from cell.processes.metabolism import get_iAF1260b_config as get_iAF1260b_path_config
 from cell.processes.convenience_kinetics import ConvenienceKinetics
 from cell.processes.ode_expression import ODE_expression
 
@@ -40,8 +40,14 @@ from chemotaxis import COMPOSITE_OUT_DIR, REFERENCE_DATA_DIR
 NAME = 'transport_metabolism'
 
 
-def default_metabolism_config():
-    config = get_iAF1260b_config()
+def get_iAF1260b_config():
+    """
+    :py:class:`Metabolism` configuration for with iAF1260b BiGG model,
+    initial_mass, and tolerances set on the glucose/lactose exchange
+    reactions.
+    """
+
+    config = get_iAF1260b_path_config()
 
     # flux bound tolerance for reactions in glucose_lactose_transport_config
     metabolism_config = {
@@ -53,7 +59,7 @@ def default_metabolism_config():
     return config
 
 
-def lacy_expression_config():
+def get_lacY_expression_config():
     """
     :py:class:`ODE_expression` configuration for expression of glucose
     and lactose transporters
@@ -61,24 +67,24 @@ def lacy_expression_config():
 
     # expression
     transcription_rates = {
-        'lacy_RNA': 1e-6}
+        'lacy_RNA': 5e-6}
     translation_rates = {
-        'LacY': 1e-4}
+        'LacY': 2e-4}
     protein_map = {
         'LacY': 'lacy_RNA'}
     degradation_rates = {
-        'lacy_RNA': 1e-3,  # a single RNA lasts about 5 minutes
-        'LacY': 1e-5}  # proteins degrade ~100x slower
+        'lacy_RNA': 3e-3,  # a single RNA lasts about 5 minutes
+        'LacY': 3e-5}  # proteins degrade ~100x slower
 
     # regulation
     regulators = [
         ('external', 'glc__D_e'),
         ('internal', 'lcts_p')]
     regulation_condition = {
-        'lacy_RNA': 'if [(external, glc__D_e) > 0.005 '  # limiting concentration of glc at 0.005 mM (Boulineau 2013)
-                    'or (internal, lcts_p) < 0.005]'}  # internal lcts is hypothesized to disinhibit lacY transcription
+        'lacy_RNA': 'if [(external, glc__D_e) > 0.05 '  # limiting concentration of glc
+                    'or (internal, lcts_p) < 0.05]'}  # internal lcts is hypothesized to disinhibit lacY transcription
     transcription_leak = {
-        'rate': 5e-4,
+        'rate': 1e-4,
         'magnitude': 1e-7}
 
     # initial state
@@ -101,7 +107,7 @@ def lacy_expression_config():
         'initial_state': initial_state}
 
 
-def glucose_lactose_transport_config():
+def get_glucose_lactose_transport_config():
     """
     :py:class:`ConvenienceKinetics` configuration for simplified glucose
     and lactose transport.Glucose uptake simplifies the PTS/GalP system
@@ -129,12 +135,12 @@ def glucose_lactose_transport_config():
     transport_kinetics = {
         'EX_glc__D_e': {
             ('internal', 'EIIglc'): {
-                ('external', 'glc__D_e'): 2e-1,  # (mM) k_m for glc
+                ('external', 'glc__D_e'): 1e-1,  # (mM) k_m for glc
                 ('internal', 'pep_c'): None,  # k_m = None makes a reactant non-limiting
                 'kcat_f': 1e2}},
         'EX_lcts_e': {
             ('internal', 'LacY'): {
-                ('external', 'lcts_e'): 2e-1,  # (mM) k_m for lcts
+                ('external', 'lcts_e'): 1e-1,  # (mM) k_m for lcts
                 'kcat_f': 1e2}}}
 
     transport_initial_state = {
@@ -192,9 +198,9 @@ class TransportMetabolismExpression(Generator):
         'fields_path': ('fields',),
         'dimensions_path': ('dimensions',),
         'division': {},
-        'transport': glucose_lactose_transport_config(),
-        'metabolism': default_metabolism_config(),
-        'expression': lacy_expression_config(),
+        'transport': get_glucose_lactose_transport_config(),
+        'metabolism': get_iAF1260b_config(),
+        'expression': get_lacY_expression_config(),
         'divide': True,
     }
 

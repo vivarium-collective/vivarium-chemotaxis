@@ -58,6 +58,7 @@ def plot_control(data, config, out_dir='out'):
     emit_fields = config.get('emit_fields')
     tagged_molecules = config.get('tagged_molecules')
     topology_network = config.get('topology_network')
+    n_snapshots = config.get('n_snapshots', 5)
 
     # extract data
     multibody_config = environment_config['config']['multibody']
@@ -70,14 +71,17 @@ def plot_control(data, config, out_dir='out'):
     }
 
     # multigen plot
-    plot_settings = {}
+    plot_settings = {
+        # 'remove_zeros': True
+    }
     plot_agents_multigen(data, plot_settings, out_dir)
 
     # tag plot
     if tagged_molecules:
         plot_config = {
             'tagged_molecules': tagged_molecules,
-            'n_snapshots': 5,
+            'n_snapshots': n_snapshots,
+            'convert_to_concs': False,
             'out_dir': out_dir}
         plot_tags(plot_data, plot_config)
 
@@ -85,7 +89,7 @@ def plot_control(data, config, out_dir='out'):
     if emit_fields:
         plot_config = {
             'fields': emit_fields,
-            'n_snapshots': 5,
+            'n_snapshots': n_snapshots,
             'out_dir': out_dir}
         plot_snapshots(plot_data, plot_config)
 
