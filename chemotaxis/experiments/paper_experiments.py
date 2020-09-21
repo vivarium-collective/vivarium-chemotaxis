@@ -730,13 +730,13 @@ def run_chemotaxis_experiment(out_dir='out'):
         'complexation': {'time_step': slow_process_timestep},
         'division': {'time_step': slow_process_timestep}}
 
+    # chemoreceptor configuration with 'None' ligand_id,
+    # which will leave it in a steady state.
     no_receptor_config = deep_merge(
         copy.deepcopy(master_chemotaxis_config),
         {'receptor': {'ligand_id': 'None', 'initial_ligand': 1}})
 
     # list of agent configurations
-    # 'motor' gets a chemoreceptor configuration with 'None' ligand_id,
-    # which will leave it in a steady state.
     agents_config = [
         {
             'number': n_receptor_motor,

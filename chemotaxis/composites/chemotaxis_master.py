@@ -87,7 +87,7 @@ class ChemotaxisMaster(Generator):
         'daughter_path': tuple(),
         'transport': get_glucose_lactose_transport_config(),
         'metabolism': get_iAF1260b_config(),
-        'receptor': {'ligand': 'MeAsp'},
+        'receptor': {'ligand_id': 'MeAsp'},
         'flagella': {'n_flagella': 4},
         'PMF': {},
         'mass_deriver': {},
