@@ -33,7 +33,9 @@ from vivarium.core.composition import (
     plot_agents_multigen,
     make_agent_ids,
 )
-from vivarium.core.emitter import time_indexed_timeseries_from_data
+from vivarium.core.emitter import (
+    time_indexed_timeseries_from_data,
+    timeseries_from_data)
 from vivarium.library.dict_utils import deep_merge
 
 # experiment workflow
@@ -91,6 +93,7 @@ from cell.plots.gene_expression import (
     plot_timeseries_heatmaps,
     gene_network_plot)
 from cell.plots.multibody_physics import plot_agent_trajectory
+from chemotaxis.plots.chemotaxis_experiments import plot_motility
 from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
 from chemotaxis.plots.transport_metabolism import plot_glc_lcts_environment
 from chemotaxis.plots.flagella_activity import (
@@ -819,6 +822,10 @@ def run_chemotaxis_experiment(out_dir='out'):
         'agents_key': 'agents',
         'max_rows': 30}
     plot_agents_multigen(data, plot_settings, out_dir)
+
+    # motility
+    embdedded_timeseries = timeseries_from_data(data)
+    plot_motility(embdedded_timeseries, out_dir)
 
 
 # put all the experiments for the paper in a dictionary
