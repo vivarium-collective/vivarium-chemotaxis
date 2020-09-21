@@ -29,6 +29,7 @@ from vivarium.core.composition import (
     simulate_compartment_in_experiment,
     agent_environment_experiment,
     plot_simulation_output,
+    plot_agents_multigen,
     make_agent_ids,
 )
 from vivarium.core.emitter import time_indexed_timeseries_from_data
@@ -679,7 +680,9 @@ def run_chemotaxis_transduction(out_dir='out'):
 def run_chemotaxis_experiment(out_dir='out'):
 
     # simulation parameters
-    total_time = 60
+    total_time = 60 * 2
+    n_receptor_motor = 3
+    n_motor = 3
 
     # agent parameters
     fast_process_timestep = 0.01
@@ -697,7 +700,7 @@ def run_chemotaxis_experiment(out_dir='out'):
 
     # initialize ligand concentration based on position in exponential field
     # this allows the receptor process to initialize at a steady states
-    # TODO -- this can be calculated by static_field.get_concentration(
+    # TODO -- this can be calculated by static_field.get_concentration
     loc_dx = (initial_agent_location[0] - field_center[0]) * bounds[0]
     loc_dy = (initial_agent_location[1] - field_center[1]) * bounds[1]
     dist = np.sqrt(loc_dx ** 2 + loc_dy ** 2)
@@ -707,14 +710,15 @@ def run_chemotaxis_experiment(out_dir='out'):
     baseline_master_chemotaxis_config = {
         'ligand_id': ligand_id,
         'initial_ligand': initial_ligand,
-        'external_path': ('global',),
         'agents_path': ('..', '..', 'agents'),
         'fields_path': ('..', '..', 'fields'),
         'dimensions_path': ('..', '..', 'dimensions'),
         'daughter_path': tuple(),
-        'receptor': {'time_step': fast_process_timestep},
+        'receptor': {
+            'time_step': fast_process_timestep,
+            'initial_ligand': initial_ligand},
         'flagella': {'time_step': fast_process_timestep},
-        # 'PMF': {'time_step': fast_process_timestep},
+        'PMF': {'time_step': fast_process_timestep},
         'transport': {'time_step': slow_process_timestep},
         'metabolism': {'time_step': slow_process_timestep},
         'transcription': {'time_step': slow_process_timestep},
@@ -724,21 +728,25 @@ def run_chemotaxis_experiment(out_dir='out'):
         'division': {'time_step': slow_process_timestep}}
 
     # list of agent configurations
+    # 'motor' gets a chemoreceptor configuration with 'None' ligand_id,
+    # which will leave it in a steady state.
     agents_config = [
         {
-            'number': 1,
+            'number': n_receptor_motor,
             'name': 'receptor + motor',
             'type': ChemotaxisMaster,
             'config': baseline_master_chemotaxis_config,
         },
-        # {
-        #     'number': 2,
-        #     'name': 'motor',
-        #     'type': ChemotaxisMaster,
-        #     'config': deep_merge(
-        #         dict(baseline_master_chemotaxis_config),
-        #         {'ligand_id': 'None',})
-        # },
+        {
+            'number': n_motor,
+            'name': 'motor',
+            'type': ChemotaxisMaster,
+            'config': deep_merge(
+                dict(baseline_master_chemotaxis_config),
+                {'receptor': {
+                    'ligand_id': 'None',
+                    'initial_ligand': 1}})
+        },
     ]
     agent_ids = make_agent_ids(agents_config)
 
@@ -805,6 +813,12 @@ def run_chemotaxis_experiment(out_dir='out'):
         'rotate_90': True,
     }
     plot_agent_trajectory(indexed_timeseries, plot_config, out_dir, 'trajectory')
+
+    # multigen agents plot
+    plot_settings = {
+        'agents_key': 'agents',
+        'max_rows': 30}
+    plot_agents_multigen(data, plot_settings, out_dir)
 
 
 # put all the experiments for the paper in a dictionary
