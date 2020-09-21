@@ -21,6 +21,7 @@ Notes:
 """
 
 import numpy as np
+import copy
 
 # vivarium-core imports
 from vivarium.library.units import units
@@ -707,15 +708,14 @@ def run_chemotaxis_experiment(out_dir='out'):
     initial_ligand = field_scale * exponential_base ** (dist / 1000)
 
     # configure agents
-    baseline_master_chemotaxis_config = {
-        'ligand_id': ligand_id,
-        'initial_ligand': initial_ligand,
+    master_chemotaxis_config = {
         'agents_path': ('..', '..', 'agents'),
         'fields_path': ('..', '..', 'fields'),
         'dimensions_path': ('..', '..', 'dimensions'),
         'daughter_path': tuple(),
         'receptor': {
             'time_step': fast_process_timestep,
+            'ligand_id': ligand_id,
             'initial_ligand': initial_ligand},
         'flagella': {'time_step': fast_process_timestep},
         'PMF': {'time_step': fast_process_timestep},
@@ -727,6 +727,10 @@ def run_chemotaxis_experiment(out_dir='out'):
         'complexation': {'time_step': slow_process_timestep},
         'division': {'time_step': slow_process_timestep}}
 
+    no_receptor_config = deep_merge(
+        copy.deepcopy(master_chemotaxis_config),
+        {'receptor': {'ligand_id': 'None', 'initial_ligand': 1}})
+
     # list of agent configurations
     # 'motor' gets a chemoreceptor configuration with 'None' ligand_id,
     # which will leave it in a steady state.
@@ -735,17 +739,13 @@ def run_chemotaxis_experiment(out_dir='out'):
             'number': n_receptor_motor,
             'name': 'receptor + motor',
             'type': ChemotaxisMaster,
-            'config': baseline_master_chemotaxis_config,
+            'config': master_chemotaxis_config,
         },
         {
             'number': n_motor,
             'name': 'motor',
             'type': ChemotaxisMaster,
-            'config': deep_merge(
-                dict(baseline_master_chemotaxis_config),
-                {'receptor': {
-                    'ligand_id': 'None',
-                    'initial_ligand': 1}})
+            'config': no_receptor_config,
         },
     ]
     agent_ids = make_agent_ids(agents_config)
