@@ -60,12 +60,6 @@ class FlagellaMotor(Process):
         'k_s': 0.45,  # scaling coefficient
         'adapt_precision': 8,  # scales CheY_P to cluster activity
 
-        # motor
-        'mb_0': 0.65,  # steady state motor bias (Cluzel et al 2000)
-        'n_motors': 5,
-        'cw_to_ccw': 0.83,  # 1/s (Block1983) motor bias, assumed to be constant
-        'cw_to_ccw_leak': 0.25,  # rate of spontaneous transition to tumble
-
         # rotational state of individual flagella
         # parameters from Sneddon, Pontius, and Emonet (2012)
         'omega': 1.3,  # (1/s) characteristic motor switch time
@@ -73,10 +67,13 @@ class FlagellaMotor(Process):
         'g_1': 40,  # (k_B/T) free energy barrier for CW-->CCW
         'K_D': 3.06,  # binding constant of Chey-P to base of the motor
 
+        # added parameters
+        'ccw_to_cw_leak': 0.2,  # 1/s rate of spontaneous switch to cw
+
         # motile force parameters
         'flagellum_thrust': expected_thrust / math.log(expected_flagella + 1),
-        'tumble_jitter': 120.0,
-        'tumble_scaling': 0.4 / expected_pmf,  # scale to expected PMF
+        'tumble_jitter': 60.0,
+        'tumble_scaling': 0.5 / expected_pmf,  # scale to expected PMF
         'run_scaling': 1.0 / expected_pmf,  # scale to expected PMF
 
         # initial state
@@ -89,9 +86,7 @@ class FlagellaMotor(Process):
                 'CheA': 1.0,  # (uM) #100 uM = 0.1 mM
                 # sensor activity
                 'chemoreceptor_activity': 1/3,
-                # motor activity
-                'ccw_motor_bias': 0.5,
-                'cw_bias': 0.5,
+                # cell motile state
                 'motile_state': 1,  # 1 for tumble, 0 for run
             },
             'membrane': {
@@ -133,16 +128,12 @@ class FlagellaMotor(Process):
         # internal
         state_emit = [
             'chemoreceptor_activity',
-            'ccw_motor_bias',
-            'cw_bias',
             'motile_state',
             'CheA',
             'CheY_P',
             'CheY',
         ]
         state_set_updater = [
-                'ccw_motor_bias',
-                'cw_bias',
                 'motile_state',
                 'CheA',
                 'CheY_P',
@@ -192,8 +183,6 @@ class FlagellaMotor(Process):
         k_s = self.parameters['k_s']
         k_z = self.parameters['k_z']
         gamma_y = self.parameters['gamma_y']
-        mb_0 = self.parameters['mb_0']
-        cw_to_ccw = self.parameters['cw_to_ccw']
 
         ## Kinase activity
         # relative steady-state concentration of phosphorylated CheY.
@@ -201,14 +190,6 @@ class FlagellaMotor(Process):
         dCheY_P = new_CheY_P - CheY_P_0
         CheY_P = max(new_CheY_P, 0.0)  # keep value positive
         CheY = max(CheY_0 - dCheY_P, 0.0)  # keep value positive
-
-        ## Motor switching
-        # CCW corresponds to run. CW corresponds to tumble
-        ccw_motor_bias = mb_0 / (CheY_P * (1 - mb_0) + mb_0)  # (1/s)
-        cw_bias = cw_to_ccw * (1 / ccw_motor_bias - 1)  # (1/s)
-        # don't let cw_bias get under leak value
-        if cw_bias < self.parameters['cw_to_ccw_leak']:
-            cw_bias = self.parameters['cw_to_ccw_leak']
 
         ## update flagella
         # update number of flagella
@@ -232,7 +213,7 @@ class FlagellaMotor(Process):
 
         # update flagella states
         for flagella_id, motor_state in flagella.items():
-            new_motor_state = self.update_flagellum(motor_state, cw_bias, CheY_P, timestep)
+            new_motor_state = self.update_flagellum(motor_state, CheY_P, timestep)
             flagella_update.update({flagella_id: new_motor_state})
 
         ## get cell motile state.
@@ -253,8 +234,6 @@ class FlagellaMotor(Process):
         return {
             'flagella': flagella_update,
             'internal': {
-                'ccw_motor_bias': ccw_motor_bias,
-                'cw_bias': cw_bias,
                 'motile_state': motile_state,
                 'CheY_P': CheY_P,
                 'CheY': CheY
@@ -265,9 +244,9 @@ class FlagellaMotor(Process):
             }}
 
 
-    def update_flagellum(self, motor_state, cw_bias, CheY_P, timestep):
+    def update_flagellum(self, motor_state, CheY_P, timestep):
         """
-        Rotational state of an individual flagellum from:
+        Rotational state of an individual flagellum based on:
             Sneddon, M. W., Pontius, W., & Emonet, T. (2012).
             Stochastic coordination of multiple actuators reduces
             latency and improves chemotactic response in bacteria.
@@ -285,18 +264,28 @@ class FlagellaMotor(Process):
         # switching frequency
         CW_to_CCW = omega * math.exp(delta_g)
         CCW_to_CW = omega * math.exp(-delta_g)
-        # switch_freq = CCW_to_CW * (1 - cw_bias) + CW_to_CCW * cw_bias
+        CW_bias = CCW_to_CW / (CCW_to_CW + CW_to_CCW)
+        CCW_bias = CW_to_CCW / (CW_to_CCW + CCW_to_CW)
+        # switch_freq = CCW_to_CW * (1 - CW_bias) + CW_to_CCW * CW_bias
+
+        # don't let ccw_to_cw get under leak value
+        if CW_bias < self.parameters['ccw_to_cw_leak']:
+            CW_bias = self.parameters['ccw_to_cw_leak']
 
         # flagella motor state: -1 for CCW, 1 for CW
         if motor_state == -1:
-            prob_switch = CCW_to_CW * timestep
+            # switch probability as function of the time step
+            switch_rate = -math.log(1 - CW_bias)
+            prob_switch = 1 - math.exp(-switch_rate * timestep)
             if np.random.random(1)[0] <= prob_switch:
                 new_motor_state = 1
             else:
                 new_motor_state = -1
 
         elif motor_state == 1:
-            prob_switch = CW_to_CCW * timestep
+            # switch probability as function of the time step
+            switch_rate = -math.log(1 - CCW_bias)
+            prob_switch = 1 - math.exp(-switch_rate * timestep)
             if np.random.random(1)[0] <= prob_switch:
                 new_motor_state = -1
             else:

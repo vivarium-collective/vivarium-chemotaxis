@@ -60,7 +60,7 @@ class MotorActivity(Process):
         'mb_0': 0.65,  # steady state motor bias (Cluzel et al 2000)
         'n_motors': 5,
         'cw_to_ccw': 0.83,  # 1/s (Block1983) motor bias, assumed to be constant
-        'cw_to_ccw_leak': 0.25,  # rate of spontaneous transition to tumble
+        'ccw_to_cw_leak': 0.25,  # rate of spontaneous transition to tumble
 
         # parameters for multibody physics
         'tumble_jitter': 120.0,
@@ -139,8 +139,8 @@ class MotorActivity(Process):
         ccw_motor_bias = mb_0 / (CheY_P * (1 - mb_0) + mb_0)  # (1/s)
         ccw_to_cw = cw_to_ccw * (1 / ccw_motor_bias - 1)  # (1/s)
         # don't let ccw_to_cw get under leak value
-        if ccw_to_cw < self.parameters['cw_to_ccw_leak']:
-            ccw_to_cw = self.parameters['cw_to_ccw_leak']
+        if ccw_to_cw < self.parameters['ccw_to_cw_leak']:
+            ccw_to_cw = self.parameters['ccw_to_cw_leak']
 
         if motile_state_current == -1:  # -1 for run
             # switch to tumble (cw)?

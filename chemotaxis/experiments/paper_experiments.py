@@ -684,9 +684,9 @@ def run_chemotaxis_transduction(out_dir='out'):
 def run_chemotaxis_experiment(out_dir='out'):
 
     # simulation parameters
-    total_time = 60 * 2
-    n_receptor_motor = 3
-    n_motor = 3
+    total_time = 60 * 8
+    n_receptor_motor = 6
+    n_motor = 6
 
     # agent parameters
     fast_process_timestep = 0.01
