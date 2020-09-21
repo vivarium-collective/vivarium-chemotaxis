@@ -45,9 +45,12 @@ class FlagellaMotor(Process):
     """ 
 
     name = NAME
-    initial_pmf = 170  # PMF ~170mV at pH 7, ~140mV at pH 7.7 (Berg H, E. coli in motion, 2004, pg 113)
+    expected_pmf = -140  # PMF ~170mV at pH 7, ~140mV at pH 7.7 (Berg H, E. coli in motion, 2004, pg 113)
+    expected_flagella = 4
+    expected_thrust = 0.5  # (pN) Hughes MP & Morgan H. (1999) Measurement of bacterial flagellar thrust by negative dielectrophoresis.
     defaults = {
         'time_step': 0.01,
+        'n_flagella': expected_flagella,
 
         #  CheY phosphorylation parameters
         # 'k_A': 5.0,  #
@@ -71,10 +74,10 @@ class FlagellaMotor(Process):
         'K_D': 3.06,  # binding constant of Chey-P to base of the motor
 
         # motile force parameters
-        'flagellum_thrust': 25,  # (pN) (Berg H, E. coli in motion, 2004, pg 113)
+        'flagellum_thrust': expected_thrust / math.log(expected_flagella + 1),
         'tumble_jitter': 120.0,
-        'tumble_scaling': 1.4 / initial_pmf,
-        'run_scaling': 1.4 / initial_pmf,
+        'tumble_scaling': 1 / expected_pmf,  # scale to expected PMF
+        'run_scaling': 1 / expected_pmf,  # scale to expected PMF
 
         # initial state
         'initial_state': {
@@ -92,7 +95,7 @@ class FlagellaMotor(Process):
                 'motile_state': 1,  # 1 for tumble, 0 for run
             },
             'membrane': {
-                'PMF': initial_pmf,
+                'PMF': expected_pmf,
             },
             'boundary': {
                 'thrust': 0,
@@ -116,7 +119,6 @@ class FlagellaMotor(Process):
 
         # internal_counts of flagella (n_flagella)
         schema['internal_counts']['flagella'] = {
-            '_value': self.parameters['n_flagella'],
             '_default': self.parameters['n_flagella'],
             '_emit': True}
 
