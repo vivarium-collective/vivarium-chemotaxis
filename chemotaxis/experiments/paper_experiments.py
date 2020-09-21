@@ -747,8 +747,10 @@ def run_chemotaxis_experiment(out_dir='out'):
         'type': StaticLattice,
         'config': {
             'multibody': {
+                'time_step': fast_process_timestep,
                 'bounds': bounds},
             'field': {
+                'time_step': fast_process_timestep,
                 'molecules': [ligand_id],
                 'gradient': {
                     'type': 'exponential',
@@ -773,7 +775,7 @@ def run_chemotaxis_experiment(out_dir='out'):
     # database emitter saves to mongoDB
     experiment_settings = {
         'experiment_name': '7d',
-        'description': 'Two configurations of ChemotaxisMaster -- one with receptors for MeAsp another without'
+        'description': 'Two configurations of ChemotaxisMaster -- one with receptors for MeAsp another without '
                        'useful chemoreceptors -- are placed in a large StaticLattice environment with an '
                        'exponential gradient to demonstrate their chemotaxis.',
         'total_time': total_time,

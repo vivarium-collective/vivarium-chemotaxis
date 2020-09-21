@@ -76,8 +76,8 @@ class FlagellaMotor(Process):
         # motile force parameters
         'flagellum_thrust': expected_thrust / math.log(expected_flagella + 1),
         'tumble_jitter': 120.0,
-        'tumble_scaling': 1 / expected_pmf,  # scale to expected PMF
-        'run_scaling': 1 / expected_pmf,  # scale to expected PMF
+        'tumble_scaling': 0.4 / expected_pmf,  # scale to expected PMF
+        'run_scaling': 1.0 / expected_pmf,  # scale to expected PMF
 
         # initial state
         'initial_state': {
