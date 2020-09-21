@@ -177,14 +177,14 @@ class MotorActivity(Process):
         }
 
 def tumble(tumble_jitter=120.0):
-    thrust = 100  # (pN)
+    thrust = 0.2  # (pN)
     torque = random.normalvariate(0, tumble_jitter)
     return [thrust, torque]
 
 def run():
-    # average thrust = 200 pN according to:
-    # Berg, Howard C. E. coli in Motion. Under "Torque-Speed Dependence"
-    thrust = 250  # (pN)
+    # average thrust = 0.5 pN according to:
+    # Hughes MP & Morgan H. (1999) Measurement of bacterial flagellar thrust by negative dielectrophoresis.
+    thrust = 0.5  # (pN)
     torque = 0.0
     return [thrust, torque]
 

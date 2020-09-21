@@ -41,6 +41,9 @@ def single_agent_config(config):
             'mass': 1339 * units.fg,
             # 'thrust': 0,
             # 'torque': 0,
+        },
+        'membrane': {
+            'PMF': -140.0
         }
     }
 

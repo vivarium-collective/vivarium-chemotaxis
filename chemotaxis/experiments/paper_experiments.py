@@ -679,7 +679,7 @@ def run_chemotaxis_transduction(out_dir='out'):
 def run_chemotaxis_experiment(out_dir='out'):
 
     # simulation parameters
-    total_time = 120
+    total_time = 60
 
     # agent parameters
     fast_process_timestep = 0.01
@@ -714,6 +714,7 @@ def run_chemotaxis_experiment(out_dir='out'):
         'daughter_path': tuple(),
         'receptor': {'time_step': fast_process_timestep},
         'flagella': {'time_step': fast_process_timestep},
+        # 'PMF': {'time_step': fast_process_timestep},
         'transport': {'time_step': slow_process_timestep},
         'metabolism': {'time_step': slow_process_timestep},
         'transcription': {'time_step': slow_process_timestep},
@@ -725,19 +726,19 @@ def run_chemotaxis_experiment(out_dir='out'):
     # list of agent configurations
     agents_config = [
         {
-            'number': 2,
+            'number': 1,
             'name': 'receptor + motor',
             'type': ChemotaxisMaster,
             'config': baseline_master_chemotaxis_config,
         },
-        {
-            'number': 2,
-            'name': 'motor',
-            'type': ChemotaxisMaster,
-            'config': deep_merge(
-                dict(baseline_master_chemotaxis_config),
-                {'ligand_id': 'None',})
-        },
+        # {
+        #     'number': 2,
+        #     'name': 'motor',
+        #     'type': ChemotaxisMaster,
+        #     'config': deep_merge(
+        #         dict(baseline_master_chemotaxis_config),
+        #         {'ligand_id': 'None',})
+        # },
     ]
     agent_ids = make_agent_ids(agents_config)
 
@@ -757,7 +758,8 @@ def run_chemotaxis_experiment(out_dir='out'):
                             'scale': field_scale,
                             'base': exponential_base}}},
                 'bounds': bounds,
-            }}}
+            }
+        }}
 
     # initialize experiment state
     initial_state = {}
@@ -775,6 +777,7 @@ def run_chemotaxis_experiment(out_dir='out'):
                        'useful chemoreceptors -- are placed in a large StaticLattice environment with an '
                        'exponential gradient to demonstrate their chemotaxis.',
         'total_time': total_time,
+        'emit_step': fast_process_timestep * 10,
         'emitter': {'type': 'database'},
     }
 
