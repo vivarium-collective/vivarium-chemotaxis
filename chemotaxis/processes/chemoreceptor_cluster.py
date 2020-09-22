@@ -111,8 +111,6 @@ class ReceptorCluster(Process):
         'K_Tar_on': 0.5,
         'K_Tsr_off': 100.0,
         'K_Tsr_on': 10e6,
-        # k_CheR = 0.0182  # effective catalytic rate of CheR
-        # k_CheB = 0.0364  # effective catalytic rate of CheB
         'k_meth': 0.0625,
         'k_demeth': 0.0714,
         'adapt_rate': 1.2,
@@ -172,7 +170,7 @@ class ReceptorCluster(Process):
         P_on = states['internal']['chemoreceptor_activity']
         CheR = states['internal']['CheR'] * (units.mmol / units.L)
         CheB = states['internal']['CheB'] * (units.mmol / units.L)
-        ligand_conc = states['external'][self.parameters['ligand_id']]   # mmol/L
+        ligand_conc = states['external'][self.parameters['ligand_id']]
 
         # convert to umol / L
         CheR = CheR.to('umol/L').magnitude

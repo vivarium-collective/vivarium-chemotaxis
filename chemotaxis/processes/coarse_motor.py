@@ -60,7 +60,7 @@ class MotorActivity(Process):
         'mb_0': 0.65,  # steady state motor bias (Cluzel et al 2000)
         'n_motors': 5,
         'cw_to_ccw': 0.83,  # 1/s (Block1983) motor bias, assumed to be constant
-        'cw_to_ccw_leak': 0.25,  # rate of spontaneous transition to tumble
+        'ccw_to_cw_leak': 0.25,  # rate of spontaneous transition to tumble
 
         # parameters for multibody physics
         'tumble_jitter': 120.0,
@@ -78,7 +78,7 @@ class MotorActivity(Process):
                 # motor activity
                 'ccw_motor_bias': 0.5,
                 'ccw_to_cw': 0.5,
-                'motor_state': 1,  # motor_state 1 for tumble, 0 for run
+                'motile_state': 1,  # motile_state 1 for tumble, -1 for run
             },
             'external': {
                 'thrust': 0,
@@ -104,7 +104,7 @@ class MotorActivity(Process):
         set_and_emit = [
                 'ccw_motor_bias',
                 'ccw_to_cw',
-                'motor_state',
+                'motile_state',
                 'CheA',
                 'CheY_P']
         for state, default in self.parameters['initial_state']['internal'].items():
@@ -119,7 +119,7 @@ class MotorActivity(Process):
     def next_update(self, timestep, states):
         internal = states['internal']
         P_on = internal['chemoreceptor_activity']
-        motor_state_current = internal['motor_state']
+        motile_state_current = internal['motile_state']
 
         # parameters
         adapt_precision = self.parameters['adapt_precision']
@@ -139,36 +139,36 @@ class MotorActivity(Process):
         ccw_motor_bias = mb_0 / (CheY_P * (1 - mb_0) + mb_0)  # (1/s)
         ccw_to_cw = cw_to_ccw * (1 / ccw_motor_bias - 1)  # (1/s)
         # don't let ccw_to_cw get under leak value
-        if ccw_to_cw < self.parameters['cw_to_ccw_leak']:
-            ccw_to_cw = self.parameters['cw_to_ccw_leak']
+        if ccw_to_cw < self.parameters['ccw_to_cw_leak']:
+            ccw_to_cw = self.parameters['ccw_to_cw_leak']
 
-        if motor_state_current == 0:  # 0 for run
+        if motile_state_current == -1:  # -1 for run
             # switch to tumble (cw)?
             rate = -math.log(1 - ccw_to_cw)  # rate for probability function of time
             prob_switch = 1 - math.exp(-rate * timestep)
             if np.random.random(1)[0] <= prob_switch:
-                motor_state = 1
+                motile_state = 1
                 thrust, torque = tumble(self.parameters['tumble_jitter'])
             else:
-                motor_state = 0
+                motile_state = -1
                 thrust, torque = run()
 
-        elif motor_state_current == 1:  # 1 for tumble
+        elif motile_state_current == 1:  # 1 for tumble
             # switch to run (ccw)?
             rate = -math.log(1 - cw_to_ccw)  # rate for probability function of time
             prob_switch = 1 - math.exp(-rate * timestep)
             if np.random.random(1)[0] <= prob_switch:
-                motor_state = 0
+                motile_state = -1
                 [thrust, torque] = run()
             else:
-                motor_state = 1
+                motile_state = 1
                 [thrust, torque] = tumble()
 
         return {
             'internal': {
                 'ccw_motor_bias': ccw_motor_bias,
                 'ccw_to_cw': ccw_to_cw,
-                'motor_state': motor_state,
+                'motile_state': motile_state,
                 'CheY_P': CheY_P},
             'external': {
                 'thrust': thrust,
@@ -177,14 +177,14 @@ class MotorActivity(Process):
         }
 
 def tumble(tumble_jitter=120.0):
-    thrust = 100  # (pN)
+    thrust = 0.2  # (pN)
     torque = random.normalvariate(0, tumble_jitter)
     return [thrust, torque]
 
 def run():
-    # average thrust = 200 pN according to:
-    # Berg, Howard C. E. coli in Motion. Under "Torque-Speed Dependence"
-    thrust = 250  # (pN)
+    # average thrust = 0.5 pN according to:
+    # Hughes MP & Morgan H. (1999) Measurement of bacterial flagellar thrust by negative dielectrophoresis.
+    thrust = 0.5  # (pN)
     torque = 0.0
     return [thrust, torque]
 
@@ -197,19 +197,19 @@ def test_variable_receptor():
     CheY_P_vec = []
     ccw_motor_bias_vec = []
     ccw_to_cw_vec = []
-    motor_state_vec = []
+    motile_state_vec = []
     for activity in chemoreceptor_activity:
         state['internal']['chemoreceptor_activity'] = activity
         update = motor.next_update(timestep, state)
         CheY_P = update['internal']['CheY_P']
         ccw_motor_bias = update['internal']['ccw_motor_bias']
         ccw_to_cw = update['internal']['ccw_to_cw']
-        motile_state = update['internal']['motor_state']
+        motile_state = update['internal']['motile_state']
 
         CheY_P_vec.append(CheY_P)
         ccw_motor_bias_vec.append(ccw_motor_bias)
         ccw_to_cw_vec.append(ccw_to_cw)
-        motor_state_vec.append(motile_state)
+        motile_state_vec.append(motile_state)
 
     # check ccw_to_cw bias is strictly increasing with increased receptor activity
     assert all(i <= j for i, j in zip(ccw_to_cw_vec, ccw_to_cw_vec[1:]))
@@ -219,7 +219,7 @@ def test_variable_receptor():
         'CheY_P': CheY_P_vec,
         'ccw_motor_bias': ccw_motor_bias_vec,
         'ccw_to_cw': ccw_to_cw_vec,
-        'motor_state': motor_state_vec}
+        'motile_state': motile_state_vec}
 
 
 if __name__ == '__main__':

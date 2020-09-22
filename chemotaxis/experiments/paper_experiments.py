@@ -21,53 +21,51 @@ Notes:
 """
 
 import numpy as np
+import copy
 
 # vivarium-core imports
-from vivarium.library.units import units
 from vivarium.core.composition import (
     simulate_process_in_experiment,
     simulate_compartment_in_experiment,
     agent_environment_experiment,
     plot_simulation_output,
-    make_agent_ids,
-)
-from vivarium.core.emitter import time_indexed_timeseries_from_data
+    plot_agents_multigen,
+    make_agent_ids)
+from vivarium.core.emitter import (
+    time_indexed_timeseries_from_data,
+    timeseries_from_data)
+from vivarium.library.dict_utils import deep_merge
+from vivarium.library.units import units
 
-# experiment workflow
+# experiment control workflow
 from chemotaxis.experiments.control import (
     control,
     plot_control,
-    agent_body_config,
-)
+    agent_body_config)
 
 # vivarium-cell imports
 from cell.processes.metabolism import (
     Metabolism,
     get_minimal_media_iAF1260b,
-    get_iAF1260b_config,
-)
+    get_iAF1260b_config)
 from cell.composites.growth_division import GrowthDivision
 from cell.processes.static_field import make_field
 from cell.composites.lattice import (
     Lattice,
-    make_lattice_config,
-)
+    make_lattice_config)
 from cell.composites.static_lattice import StaticLattice
 
-# chemotaxis processes
+# processes and their associated configurations
 from chemotaxis.processes.flagella_motor import (
     FlagellaMotor,
-    get_chemoreceptor_activity_timeline,
-)
+    get_chemoreceptor_activity_timeline)
 from chemotaxis.processes.chemoreceptor_cluster import (
     ReceptorCluster,
     get_pulse_timeline,
-    get_brownian_ligand_timeline,
-)
+    get_brownian_ligand_timeline)
 
-# chemotaxis composites
+# composites and their associated configurations
 from chemotaxis.composites.chemotaxis_master import ChemotaxisMaster
-from chemotaxis.composites.chemotaxis_minimal import ChemotaxisMinimal
 from chemotaxis.composites.flagella_expression import (
     FlagellaExpressionMetabolism,
     get_flagella_metabolism_initial_state)
@@ -88,6 +86,7 @@ from cell.plots.gene_expression import (
     plot_timeseries_heatmaps,
     gene_network_plot)
 from cell.plots.multibody_physics import plot_agent_trajectory
+from chemotaxis.plots.chemotaxis_experiments import plot_motility
 from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
 from chemotaxis.plots.transport_metabolism import plot_glc_lcts_environment
 from chemotaxis.plots.flagella_activity import (
@@ -633,7 +632,7 @@ def run_chemotaxis_transduction(out_dir='out'):
     time_step = 0.1
     n_flagella = 5
     ligand_id = 'MeAsp'
-    initial_ligand = 1e-1
+    initial_ligand = 1e0
 
     # configure the compartment
     compartment_config = {
@@ -642,17 +641,21 @@ def run_chemotaxis_transduction(out_dir='out'):
             'initial_ligand': initial_ligand,
             'time_step': time_step},
         'flagella': {
-            'n_flagella': n_flagella,
             'time_step': time_step}}
     compartment = ChemotaxisMaster(compartment_config)
 
+    initial_state = {
+        'proteins': {
+            'flagella': n_flagella}}
+
     # make a timeline of external ligand concentrations
+    # moving at speed of 14 um/sec
     timeline = get_brownian_ligand_timeline(
         ligand_id=ligand_id,
         initial_conc=initial_ligand,
         timestep=time_step,
         total_time=total_time,
-        speed=8)
+        speed=14)
 
     # run experiment with helper function simulate_compartment_in_experiment
     experiment_settings = {
@@ -661,8 +664,8 @@ def run_chemotaxis_transduction(out_dir='out'):
             'timeline': timeline,
             'time_step': time_step,
             'ports': {
-                'external': ('boundary', 'external')},
-        }}
+                'external': ('boundary', 'external')}},
+        'initial_state': initial_state}
     timeseries = simulate_compartment_in_experiment(
         compartment,
         experiment_settings)
@@ -678,77 +681,84 @@ def run_chemotaxis_transduction(out_dir='out'):
 def run_chemotaxis_experiment(out_dir='out'):
 
     # simulation parameters
-    total_time = 10
-    emit_step = 100
-    time_step = 0.001
+    total_time = 60 * 8
+    n_receptor_motor = 6
+    n_motor = 6
+
+    # agent parameters
+    fast_process_timestep = 0.01
+    slow_process_timestep = 10
 
     # environment parameters
     ligand_id = 'MeAsp'
     bounds = [1000, 3000]
 
-    # field parameters
+    # exponential field parameters
+    initial_agent_location = [0.5, 0.1]
+    field_center = [0.5, 0.0]
     field_scale = 4.0
     exponential_base = 1.3e2
-    field_center = [0.5, 0.0]
 
-    # agent state
-    initial_agent_location = [0.5, 0.1]
+    # initialize ligand concentration based on position in exponential field
+    # this allows the receptor process to initialize at a steady states
+    # TODO -- this can be calculated with static_field.get_concentration
     loc_dx = (initial_agent_location[0] - field_center[0]) * bounds[0]
     loc_dy = (initial_agent_location[1] - field_center[1]) * bounds[1]
     dist = np.sqrt(loc_dx ** 2 + loc_dy ** 2)
     initial_ligand = field_scale * exponential_base ** (dist / 1000)
 
     # configure agents
+    master_chemotaxis_config = {
+        'agents_path': ('..', '..', 'agents'),
+        'fields_path': ('..', '..', 'fields'),
+        'dimensions_path': ('..', '..', 'dimensions'),
+        'daughter_path': tuple(),
+        'receptor': {
+            'time_step': fast_process_timestep,
+            'ligand_id': ligand_id,
+            'initial_ligand': initial_ligand},
+        'flagella': {'time_step': fast_process_timestep},
+        'PMF': {'time_step': fast_process_timestep},
+        'transport': {'time_step': slow_process_timestep},
+        'metabolism': {'time_step': slow_process_timestep},
+        'transcription': {'time_step': slow_process_timestep},
+        'translation': {'time_step': slow_process_timestep},
+        'degradation': {'time_step': slow_process_timestep},
+        'complexation': {'time_step': slow_process_timestep},
+        'division': {'time_step': slow_process_timestep}}
+
+    # chemoreceptor configuration with 'None' ligand_id,
+    # which will leave it in a steady state.
+    no_receptor_config = deep_merge(
+        copy.deepcopy(master_chemotaxis_config),
+        {'receptor': {'ligand_id': 'None', 'initial_ligand': 1}})
+
+    # list of agent configurations
     agents_config = [
         {
-            'number': 5,
+            'number': n_receptor_motor,
             'name': 'receptor + motor',
             'type': ChemotaxisMaster,
-            'config': {
-                'ligand_id': ligand_id,
-                'initial_ligand': initial_ligand,
-                'external_path': ('global',),
-                'agents_path': ('..', '..', 'agents'),
-                'fields_path': ('..', '..', 'fields'),
-                'dimensions_path': ('..', '..', 'dimensions'),
-                'daughter_path': tuple(),
-                'receptor': {'time_step': time_step},
-                # 'motor': {
-                #     'tumble_jitter': 4000,  # TODO -- why tumble jitter?
-                #     'time_step': time_step,
-                # },
-            },
+            'config': master_chemotaxis_config,
         },
         {
-            'number': 5,
+            'number': n_motor,
             'name': 'motor',
             'type': ChemotaxisMaster,
-            'config': {
-                'ligand_id': 'None',
-                # 'initial_ligand': 1.0,
-                'external_path': ('global',),
-                'agents_path': ('..', '..', 'agents'),
-                'fields_path': ('..', '..', 'fields'),
-                'dimensions_path': ('..', '..', 'dimensions'),
-                'daughter_path': tuple(),
-                'receptor': {'time_step': time_step},
-                # 'motor': {
-                #     'tumble_jitter': tumble_jitter,
-                #     'time_step': time_step,
-                # },
-            },
+            'config': no_receptor_config,
         },
     ]
     agent_ids = make_agent_ids(agents_config)
 
-    # configure environment
+    # configure the environment
     environment_config = {
         'type': StaticLattice,
         'config': {
             'multibody': {
-                'bounds': bounds
-            },
+                'time_step': fast_process_timestep,
+                'bounds': bounds},
             'field': {
+                'time_step': fast_process_timestep,
                 'molecules': [ligand_id],
                 'gradient': {
                     'type': 'exponential',
@@ -756,16 +766,10 @@ def run_chemotaxis_experiment(out_dir='out'):
                         ligand_id: {
                             'center': field_center,
                             'scale': field_scale,
-                            'base': exponential_base,
-                        },
-                    },
-                },
-                'bounds': bounds,
-            },
-        },
-    }
+                            'base': exponential_base}}},
+                'bounds': bounds}}}
 
-    # initialize state
+    # initialize experiment state
     initial_state = {}
     initial_agent_body = agent_body_config({
         'bounds': bounds,
@@ -777,10 +781,12 @@ def run_chemotaxis_experiment(out_dir='out'):
     # database emitter saves to mongoDB
     experiment_settings = {
         'experiment_name': '7d',
-        'description': 'ChemotaxisMaster agents are placed in a large StaticLattice environment with an'
-                       'exponential gradient to demonstrate their chemotaxis.',
+        'description': 'Two configurations of ChemotaxisMaster -- one with receptors for '
+                       'MeAsp another without useful chemoreceptors -- are placed in a '
+                       'large StaticLattice environment with an exponential gradient to '
+                       'demonstrate their chemotaxis.',
         'total_time': total_time,
-        'emit_step': emit_step,
+        'emit_step': fast_process_timestep * 10,
         'emitter': {'type': 'database'},
     }
 
@@ -794,6 +800,7 @@ def run_chemotaxis_experiment(out_dir='out'):
     # run the experiment
     experiment.update(total_time)
     data = experiment.emitter.get_data()
+    experiment.end()
 
     # plot trajectory
     field_config = environment_config['config']['field']
@@ -805,6 +812,16 @@ def run_chemotaxis_experiment(out_dir='out'):
         'rotate_90': True,
     }
     plot_agent_trajectory(indexed_timeseries, plot_config, out_dir, 'trajectory')
+
+    # multigen agents plot
+    plot_settings = {
+        'agents_key': 'agents',
+        'max_rows': 30}
+    plot_agents_multigen(data, plot_settings, out_dir)
+
+    # motility
+    embdedded_timeseries = timeseries_from_data(data)
+    plot_motility(embdedded_timeseries, out_dir)
 
 
 # put all the experiments for the paper in a dictionary

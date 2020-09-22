@@ -52,7 +52,7 @@ from chemotaxis import COMPOSITE_OUT_DIR
 NAME = 'chemotaxis_master'
 
 
-def get_chemotaxis_master_schema_override():
+def get_iAF1260b_schema_override():
     """ schema_override method to selectively turn off metabolic state emits """
     config = get_iAF1260b_path_config()
     metabolism = Metabolism(config)
@@ -87,14 +87,14 @@ class ChemotaxisMaster(Generator):
         'daughter_path': tuple(),
         'transport': get_glucose_lactose_transport_config(),
         'metabolism': get_iAF1260b_config(),
-        'receptor': {'ligand': 'MeAsp'},
+        'receptor': {'ligand_id': 'MeAsp'},
         'flagella': {'n_flagella': 4},
         'PMF': {},
         'mass_deriver': {},
         'chromosome': {},
         'division': {},
         'divide': True,
-        '_schema': get_chemotaxis_master_schema_override()
+        '_schema': get_iAF1260b_schema_override()
     }
 
     def __init__(self, config=None):

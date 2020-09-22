@@ -38,27 +38,33 @@ class MembranePotential(Process):
 
         * (mmol) http://book.bionumbers.org/what-are-the-concentrations-of-different-ions-in-cells/
         * Schultz, Stanley G., and A. K. Solomon. "Cation Transport in Escherichia coli" (1961)
+        * Zilberstein, Dan, et al. "Escherichia coli intracellular pH, membrane potential, and cell growth."
+          Journal of bacteriology 158.1 (1984): 246-252.
         * TODO -- add Mg2+, Ca2+
     """
 
     name = NAME
     defaults = {
+
         'initial_state': {
             'internal': {
                 'K': 300,  # (mmol) 30-300
                 'Na': 10,  # (mmol) 10
-                'Cl': 10},  # (mmol) 10-200 media-dependent
+                'Cl': 10,
+                'PROTON': 0},  # (mmol) 10-200 media-dependent
             'external': {
                 'K': 5,
                 'Na': 145,
                 'Cl': 110,  # (mmol)
+                'PROTON': 0,
                 'T': 310.15}
         },
 
         'permeability_map': {
             'K': 'p_K',
             'Na': 'p_Na',
-            'Cl': 'p_Cl'
+            'Cl': 'p_Cl',
+            'PROTON': 'p_PROTON',
         },
 
         # cation is positively charged, anion is negatively charged
@@ -73,11 +79,13 @@ class MembranePotential(Process):
         'p_K': 1,  # unitless, relative membrane permeability of K
         'p_Na': 0.05,  # unitless, relative membrane permeability of Na
         'p_Cl': 0.05,  # unitless, relative membrane permeability of Cl
+        'p_PROTON': 1,  # should be more?
 
         # physical constants
         'R': constants.gas_constant,  # (J * K^-1 * mol^-1) gas constant
         'F': constants.physical_constants['Faraday constant'][0],  # (C * mol^-1) Faraday constant
         'k': constants.Boltzmann,  # (J * K^-1) Boltzmann constant
+        'e': 1,  # proton charge
     }
 
     def __init__(self, parameters=None):
@@ -125,10 +133,10 @@ class MembranePotential(Process):
         R = self.parameters['R']
         F = self.parameters['F']
         k = self.parameters['k']
+        e = self.parameters['e']
 
         # state
         T = external_state['T']  # temperature
-        # e = 1 # proton charge # TODO -- get proton charge from state
 
         # Membrane potential.
         numerator = 0

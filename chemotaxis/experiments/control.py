@@ -8,6 +8,8 @@ Handles experiment specifications for `paper_experiments.py`
 
 import os
 import argparse
+import numpy as np
+import math
 
 # vivarium-core imports
 from vivarium.library.units import units
@@ -21,7 +23,7 @@ from vivarium.core.composition import (
 
 from chemotaxis import EXPERIMENT_OUT_DIR
 
-
+PI = math.pi
 
 def single_agent_config(config):
     width = 1
@@ -34,13 +36,14 @@ def single_agent_config(config):
     return {
         'boundary': {
             'location': location,
-            # 'angle': np.random.uniform(0, 2 * PI),
+            'angle': np.random.uniform(0, 2 * PI),
             # 'volume': volume,
             'length': length,
             'width': width,
             'mass': 1339 * units.fg,
-            # 'thrust': 0,
-            # 'torque': 0,
+        },
+        'membrane': {
+            'PMF': -140.0
         }
     }
 
