@@ -52,7 +52,7 @@ from chemotaxis import COMPOSITE_OUT_DIR
 NAME = 'chemotaxis_master'
 
 
-def get_chemotaxis_master_schema_override():
+def get_iAF1260b_schema_override():
     """ schema_override method to selectively turn off metabolic state emits """
     config = get_iAF1260b_path_config()
     metabolism = Metabolism(config)
@@ -94,7 +94,7 @@ class ChemotaxisMaster(Generator):
         'chromosome': {},
         'division': {},
         'divide': True,
-        '_schema': get_chemotaxis_master_schema_override()
+        '_schema': get_iAF1260b_schema_override()
     }
 
     def __init__(self, config=None):

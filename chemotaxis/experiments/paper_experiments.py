@@ -24,55 +24,48 @@ import numpy as np
 import copy
 
 # vivarium-core imports
-from vivarium.library.units import units
 from vivarium.core.composition import (
     simulate_process_in_experiment,
     simulate_compartment_in_experiment,
     agent_environment_experiment,
     plot_simulation_output,
     plot_agents_multigen,
-    make_agent_ids,
-)
+    make_agent_ids)
 from vivarium.core.emitter import (
     time_indexed_timeseries_from_data,
     timeseries_from_data)
 from vivarium.library.dict_utils import deep_merge
+from vivarium.library.units import units
 
-# experiment workflow
+# experiment control workflow
 from chemotaxis.experiments.control import (
     control,
     plot_control,
-    agent_body_config,
-)
+    agent_body_config)
 
 # vivarium-cell imports
 from cell.processes.metabolism import (
     Metabolism,
     get_minimal_media_iAF1260b,
-    get_iAF1260b_config,
-)
+    get_iAF1260b_config)
 from cell.composites.growth_division import GrowthDivision
 from cell.processes.static_field import make_field
 from cell.composites.lattice import (
     Lattice,
-    make_lattice_config,
-)
+    make_lattice_config)
 from cell.composites.static_lattice import StaticLattice
 
-# chemotaxis processes
+# processes and their associated configurations
 from chemotaxis.processes.flagella_motor import (
     FlagellaMotor,
-    get_chemoreceptor_activity_timeline,
-)
+    get_chemoreceptor_activity_timeline)
 from chemotaxis.processes.chemoreceptor_cluster import (
     ReceptorCluster,
     get_pulse_timeline,
-    get_brownian_ligand_timeline,
-)
+    get_brownian_ligand_timeline)
 
-# chemotaxis composites
+# composites and their associated configurations
 from chemotaxis.composites.chemotaxis_master import ChemotaxisMaster
-from chemotaxis.composites.chemotaxis_minimal import ChemotaxisMinimal
 from chemotaxis.composites.flagella_expression import (
     FlagellaExpressionMetabolism,
     get_flagella_metabolism_initial_state)
@@ -639,7 +632,7 @@ def run_chemotaxis_transduction(out_dir='out'):
     time_step = 0.1
     n_flagella = 5
     ligand_id = 'MeAsp'
-    initial_ligand = 1e-1
+    initial_ligand = 1e0
 
     # configure the compartment
     compartment_config = {
@@ -648,17 +641,21 @@ def run_chemotaxis_transduction(out_dir='out'):
             'initial_ligand': initial_ligand,
             'time_step': time_step},
         'flagella': {
-            'n_flagella': n_flagella,
             'time_step': time_step}}
     compartment = ChemotaxisMaster(compartment_config)
 
+    initial_state = {
+        'proteins': {
+            'flagella': n_flagella}}
+
     # make a timeline of external ligand concentrations
+    # moving at speed of 14 um/sec
     timeline = get_brownian_ligand_timeline(
         ligand_id=ligand_id,
         initial_conc=initial_ligand,
         timestep=time_step,
         total_time=total_time,
-        speed=8)
+        speed=14)
 
     # run experiment with helper function simulate_compartment_in_experiment
     experiment_settings = {
@@ -667,8 +664,8 @@ def run_chemotaxis_transduction(out_dir='out'):
             'timeline': timeline,
             'time_step': time_step,
             'ports': {
-                'external': ('boundary', 'external')},
-        }}
+                'external': ('boundary', 'external')}},
+        'initial_state': initial_state}
     timeseries = simulate_compartment_in_experiment(
         compartment,
         experiment_settings)
@@ -704,7 +701,7 @@ def run_chemotaxis_experiment(out_dir='out'):
 
     # initialize ligand concentration based on position in exponential field
     # this allows the receptor process to initialize at a steady states
-    # TODO -- this can be calculated by static_field.get_concentration
+    # TODO -- this can be calculated with static_field.get_concentration
     loc_dx = (initial_agent_location[0] - field_center[0]) * bounds[0]
     loc_dy = (initial_agent_location[1] - field_center[1]) * bounds[1]
     dist = np.sqrt(loc_dx ** 2 + loc_dy ** 2)
@@ -770,9 +767,7 @@ def run_chemotaxis_experiment(out_dir='out'):
                             'center': field_center,
                             'scale': field_scale,
                             'base': exponential_base}}},
-                'bounds': bounds,
-            }
-        }}
+                'bounds': bounds}}}
 
     # initialize experiment state
     initial_state = {}
@@ -786,9 +781,10 @@ def run_chemotaxis_experiment(out_dir='out'):
     # database emitter saves to mongoDB
     experiment_settings = {
         'experiment_name': '7d',
-        'description': 'Two configurations of ChemotaxisMaster -- one with receptors for MeAsp another without '
-                       'useful chemoreceptors -- are placed in a large StaticLattice environment with an '
-                       'exponential gradient to demonstrate their chemotaxis.',
+        'description': 'Two configurations of ChemotaxisMaster -- one with receptors for '
+                       'MeAsp another without useful chemoreceptors -- are placed in a '
+                       'large StaticLattice environment with an exponential gradient to '
+                       'demonstrate their chemotaxis.',
         'total_time': total_time,
         'emit_step': fast_process_timestep * 10,
         'emitter': {'type': 'database'},

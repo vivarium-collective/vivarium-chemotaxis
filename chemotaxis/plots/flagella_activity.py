@@ -23,7 +23,6 @@ def plot_activity(
 
     CheY_vec = timeseries['internal']['CheY']
     CheY_P_vec = timeseries['internal']['CheY_P']
-    cw_bias_vec = timeseries['internal']['cw_bias']
     motile_state_vec = timeseries['internal']['motile_state']
     thrust_vec = timeseries['boundary']['thrust']
     flagella_activity = timeseries.get('flagella', {})
@@ -82,7 +81,7 @@ def plot_activity(
 
     # plot results
     cols = 1
-    rows = 5
+    rows = 4
     width = 3
     height = width / aspect_ratio
     plt.figure(figsize=(width, height))
@@ -90,10 +89,9 @@ def plot_activity(
 
     # define subplots
     ax1 = plt.subplot(rows, cols, 1)
-    ax2 = plt.subplot(rows, cols, 2)
-    ax3 = plt.subplot(rows, cols, 3)
-    ax4 = plt.subplot(rows, cols, 4)
-    ax5 = plt.subplot(rows, cols, 5)
+    ax3 = plt.subplot(rows, cols, 2)
+    ax4 = plt.subplot(rows, cols, 3)
+    ax5 = plt.subplot(rows, cols, 4)
 
     # plot Che-P state
     ax1.plot(time_vec, CheY_vec, label='CheY')
@@ -104,14 +102,6 @@ def plot_activity(
     ax1.spines['top'].set_visible(False)
     ax1.set_xlim(time_vec[0], time_vec[-1])
     ax1.set_ylabel('concentration \n (uM)')
-
-    # plot CW bias
-    ax2.plot(time_vec, cw_bias_vec)
-    ax2.spines['right'].set_visible(False)
-    ax2.spines['top'].set_visible(False)
-    ax2.set_xticks([])
-    ax2.set_xlim(time_vec[0], time_vec[-1])
-    ax2.set_ylabel('CW bias')
 
     # plot flagella states in a grid
     if len(activity_grid) > 0:
@@ -205,7 +195,6 @@ def plot_signal_transduction(timeseries, plot_config, out_dir='out', filename='s
     fontsize = plot_config.get('fontsize', 12)
     chemoreceptor_activity = timeseries['internal']['chemoreceptor_activity']
     CheY_P = timeseries['internal']['CheY_P']
-    cw_bias = timeseries['internal']['cw_bias']
     motile_state = timeseries['internal']['motile_state']
     time_vec = timeseries['time']
 
@@ -225,7 +214,7 @@ def plot_signal_transduction(timeseries, plot_config, out_dir='out', filename='s
 
     # plot results
     cols = 1
-    rows = 5
+    rows = 4
     width = 3
     height = width / aspect_ratio
     plt.figure(figsize=(width, height))
@@ -235,17 +224,14 @@ def plot_signal_transduction(timeseries, plot_config, out_dir='out', filename='s
     ax2 = plt.subplot(rows, cols, 2)
     ax3 = plt.subplot(rows, cols, 3)
     ax4 = plt.subplot(rows, cols, 4)
-    ax5 = plt.subplot(rows, cols, 5)
 
     for ligand_id, ligand_vec in ligand.items():
         ax1.plot(time_vec, ligand_vec, 'steelblue')
     ax2.plot(time_vec, chemoreceptor_activity, 'steelblue')
     ax3.plot(time_vec, CheY_P, 'steelblue')
-    ax4.plot(time_vec, cw_bias, 'steelblue')
-    # ax5.plot(time_vec, motile_state, 'steelblue')
 
     # plot cell motile state
-    ax5.imshow(motile_state_grid,
+    ax4.imshow(motile_state_grid,
                interpolation='nearest',
                aspect='auto',
                cmap=cmap1,
@@ -270,20 +256,14 @@ def plot_signal_transduction(timeseries, plot_config, out_dir='out', filename='s
     ax3.tick_params(right=False, top=False)
     ax3.set_ylabel("CheY-P", fontsize=fontsize)
 
-    ax4.set_xticklabels([])
     ax4.spines['right'].set_visible(False)
     ax4.spines['top'].set_visible(False)
     ax4.tick_params(right=False, top=False)
-    ax4.set_ylabel("CW bias", fontsize=fontsize)
-
-    ax5.spines['right'].set_visible(False)
-    ax5.spines['top'].set_visible(False)
-    ax5.tick_params(right=False, top=False)
-    ax5.set_xlabel("time (s)", fontsize=fontsize)
-    ax5.set_ylabel("motile state", fontsize=fontsize)
+    ax4.set_xlabel("time (s)", fontsize=fontsize)
+    ax4.set_ylabel("motile state", fontsize=fontsize)
 
     # legend
-    ax5.legend(
+    ax4.legend(
         title='motile state',
         handles=motile_legend_elements,
         loc='center left',

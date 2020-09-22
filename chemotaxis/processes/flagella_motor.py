@@ -32,7 +32,7 @@ NAME = 'flagella_motor'
 class FlagellaMotor(Process):
     """ Flagellar motor activity
 
-    Generates thrust and torque based on number of flagella and their motor states.
+    Generates thrust and torque based on number of flagella and their individual motor states.
 
     CheY phosphorylation model from:
         Kollmann, M., Lovdok, L., Bartholome, K., Timmer, J., & Sourjik, V. (2005).
@@ -42,18 +42,21 @@ class FlagellaMotor(Process):
         Mears, P. J., Koirala, S., Rao, C. V., Golding, I., & Chemla, Y. R. (2014).
         Escherichia coli swimming is robust against variations in flagellar number. Elife.
 
+    Rotational state of an individual flagellum from:
+        Sneddon, M. W., Pontius, W., & Emonet, T. (2012). Stochastic coordination of multiple
+        actuators reduces latency and improves chemotactic response in bacteria.
+
     """ 
 
     name = NAME
     expected_pmf = -140  # PMF ~170mV at pH 7, ~140mV at pH 7.7 (Berg H, E. coli in motion, 2004, pg 113)
     expected_flagella = 4
-    expected_thrust = 0.5  # (pN) Hughes MP & Morgan H. (1999) Measurement of bacterial flagellar thrust by negative dielectrophoresis.
+    expected_thrust = 0.5  # (pN) Hughes MP & Morgan H. (1999) Measurement of bacterial flagellar thrust.
     defaults = {
         'time_step': 0.01,
         'n_flagella': expected_flagella,
 
         #  CheY phosphorylation parameters
-        # 'k_A': 5.0,  #
         'k_y': 100.0,  # 1/uM/s
         'k_z': 30.0,  # / CheZ,
         'gamma_y': 0.1,  # rate constant
@@ -164,14 +167,14 @@ class FlagellaMotor(Process):
 
     def next_update(self, timestep, states):
 
-        # get flagella subcompartments and current flagella counts
+        # get flagella sub-compartments and current flagella protein counts
         flagella = states['flagella']
         n_flagella = states['internal_counts']['flagella']
 
         # proton motive force
         PMF = states['membrane']['PMF']
 
-        # get internal states
+        # internal states
         internal = states['internal']
         P_on = internal['chemoreceptor_activity']
         CheY_0 = internal['CheY']
@@ -188,11 +191,12 @@ class FlagellaMotor(Process):
         # relative steady-state concentration of phosphorylated CheY.
         new_CheY_P = adapt_precision * k_y * k_s * P_on / (k_y * k_s * P_on + k_z + gamma_y)  # CheZ cancels out of k_z
         dCheY_P = new_CheY_P - CheY_P_0
+        # TODO -- add an assert here instead
         CheY_P = max(new_CheY_P, 0.0)  # keep value positive
         CheY = max(CheY_0 - dCheY_P, 0.0)  # keep value positive
 
         ## update flagella
-        # update number of flagella
+        # check number of flagella proteins, compare with subcompartments
         flagella_update = {}
         new_flagella = int(n_flagella) - len(flagella)
         if new_flagella < 0:
@@ -236,21 +240,14 @@ class FlagellaMotor(Process):
             'internal': {
                 'motile_state': motile_state,
                 'CheY_P': CheY_P,
-                'CheY': CheY
-            },
+                'CheY': CheY},
             'boundary': {
                 'thrust': thrust,
-                'torque': torque
-            }}
+                'torque': torque}}
 
 
     def update_flagellum(self, motor_state, CheY_P, timestep):
-        """
-        Rotational state of an individual flagellum based on:
-            Sneddon, M. W., Pontius, W., & Emonet, T. (2012).
-            Stochastic coordination of multiple actuators reduces
-            latency and improves chemotactic response in bacteria.
-
+        """ rotational states of a individual flagellum
         # TODO -- normal, semi, curly states from Sneddon
         """
         g_0 = self.parameters['g_0']  # (k_B/T) free energy barrier for CCW-->CW
@@ -295,13 +292,17 @@ class FlagellaMotor(Process):
 
     def tumble(self, n_flagella, PMF):
         # thrust scales with lg(n_flagella) because only the thickness of the bundle is affected
-        thrust = self.parameters['tumble_scaling'] * PMF * self.parameters['flagellum_thrust'] * math.log(n_flagella + 1)
+        thrust = self.parameters['tumble_scaling'] * \
+                 PMF * self.parameters['flagellum_thrust'] * \
+                 math.log(n_flagella + 1)
         torque = random.normalvariate(0, self.parameters['tumble_jitter'])
         return [thrust, torque]
 
     def run(self, n_flagella, PMF):
         # thrust scales with lg(n_flagella) because only the thickness of the bundle is affected
-        thrust = self.parameters['run_scaling'] * PMF * self.parameters['flagellum_thrust'] * math.log(n_flagella + 1)
+        thrust = self.parameters['run_scaling'] * \
+                 PMF * self.parameters['flagellum_thrust'] * \
+                 math.log(n_flagella + 1)
         torque = 0.0
         return [thrust, torque]
 
@@ -314,7 +315,8 @@ def get_chemoreceptor_activity_timeline(
         initial_value=1.0/3.0
 ):
     val = copy.copy(initial_value)
-    timeline = [(0, {('internal', 'chemoreceptor_activity'): initial_value})]
+    timeline = [(0, {
+        ('internal', 'chemoreceptor_activity'): initial_value})]
     t = 0
     while t < total_time:
         val += random.choice((-1, 1)) * rate * time_step
@@ -322,7 +324,8 @@ def get_chemoreceptor_activity_timeline(
             val = 0
         if val > 1:
             val = 1
-        timeline.append((t, {('internal', 'chemoreceptor_activity'): val}))
+        timeline.append((t, {
+            ('internal', 'chemoreceptor_activity'): val}))
         t += time_step
     return timeline
 

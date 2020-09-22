@@ -11,7 +11,7 @@ ECOLI_GENOME_FILE_NAME = 'Escherichia_coli_str_k_12_substr_mg1655.ASM584v2.dna.c
 ECOLI_GENOME_PATH = os.path.abspath(
     os.path.join(
         __file__,
-        "../../flat/{}".format(ECOLI_GENOME_FILE_NAME)
+        "../../fasta/{}".format(ECOLI_GENOME_FILE_NAME)
     )
 )
 
