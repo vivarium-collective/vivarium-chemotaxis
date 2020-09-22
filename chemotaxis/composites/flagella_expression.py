@@ -26,31 +26,31 @@ from vivarium.library.units import units
 from vivarium.library.dict_utils import deep_merge
 
 # data
-from cell.data.nucleotides import nucleotides
-from cell.data.amino_acids import amino_acids
-from cell.plots.gene_expression import plot_timeseries_heatmaps
+from vivarium_cell.data.nucleotides import nucleotides
+from vivarium_cell.data.amino_acids import amino_acids
+from vivarium_cell.plots.gene_expression import plot_timeseries_heatmaps
 from chemotaxis.data.chromosomes.flagella_chromosome import FlagellaChromosome
 
 # processes
-from cell.processes.transcription import Transcription, UNBOUND_RNAP_KEY
-from cell.processes.translation import Translation, UNBOUND_RIBOSOME_KEY
-from cell.processes.degradation import RnaDegradation
-from cell.processes.complexation import Complexation
-from cell.processes.convenience_kinetics import ConvenienceKinetics
-from cell.processes.metabolism import Metabolism, get_iAF1260b_config
-from cell.processes.division_volume import DivisionVolume
+from vivarium_cell.processes.transcription import Transcription, UNBOUND_RNAP_KEY
+from vivarium_cell.processes.translation import Translation, UNBOUND_RIBOSOME_KEY
+from vivarium_cell.processes.degradation import RnaDegradation
+from vivarium_cell.processes.complexation import Complexation
+from vivarium_cell.processes.convenience_kinetics import ConvenienceKinetics
+from vivarium_cell.processes.metabolism import Metabolism, get_iAF1260b_config
+from vivarium_cell.processes.division_volume import DivisionVolume
 from vivarium.processes.meta_division import MetaDivision
 from vivarium.processes.tree_mass import TreeMass
 
 # composites
-from cell.composites.gene_expression import GeneExpression
+from vivarium_cell.composites.gene_expression import GeneExpression
 from chemotaxis.composites.transport_metabolism import (
     get_glucose_lactose_transport_config,
     get_iAF1260b_config,
 )
 
 # plots
-from cell.plots.gene_expression import plot_gene_expression_output
+from vivarium_cell.plots.gene_expression import plot_gene_expression_output
 
 # directories
 from chemotaxis import COMPOSITE_OUT_DIR, REFERENCE_DATA_DIR

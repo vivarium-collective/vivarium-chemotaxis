@@ -69,10 +69,10 @@ class MotorActivity(Process):
         'initial_state': {
             'internal': {
                 # response regulator proteins
-                'CheY_tot': 9.7,  # (uM) #0.0097,  # (mM) 9.7 uM = 0.0097 mM
+                'CheY_tot': 9.7,  # (uM) (mM) 9.7 uM = 0.0097 mM
                 'CheY_P': 0.5,
-                'CheZ': 0.01*100,  # (uM) #phosphatase 100 uM = 0.1 mM (0.01 scaling from RapidCell1.4.2)
-                'CheA': 0.01*100,  # (uM) #100 uM = 0.1 mM (0.01 scaling from RapidCell1.4.2)
+                'CheZ': 0.01*100,  # (uM) phosphatase 100 uM = 0.1 mM
+                'CheA': 0.01*100,  # (uM) 100 uM = 0.1 mM
                 # sensor activity
                 'chemoreceptor_activity': 1/3,
                 # motor activity

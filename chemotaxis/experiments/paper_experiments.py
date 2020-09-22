@@ -44,16 +44,16 @@ from chemotaxis.experiments.control import (
     agent_body_config)
 
 # vivarium-cell imports
-from cell.processes.metabolism import (
+from vivarium_cell.processes.metabolism import (
     Metabolism,
     get_minimal_media_iAF1260b,
     get_iAF1260b_config)
-from cell.composites.growth_division import GrowthDivision
-from cell.processes.static_field import make_field
-from cell.composites.lattice import (
+from vivarium_cell.composites.growth_division import GrowthDivision
+from vivarium_cell.processes.static_field import make_field
+from vivarium_cell.composites.lattice import (
     Lattice,
     make_lattice_config)
-from cell.composites.static_lattice import StaticLattice
+from vivarium_cell.composites.static_lattice import StaticLattice
 
 # processes and their associated configurations
 from chemotaxis.processes.flagella_motor import (
@@ -77,15 +77,15 @@ from chemotaxis.composites.transport_metabolism import (
 
 # data
 from chemotaxis.data.chromosomes.flagella_chromosome import FlagellaChromosome
-from cell.data.nucleotides import nucleotides
-from cell.data.amino_acids import amino_acids
+from vivarium_cell.data.nucleotides import nucleotides
+from vivarium_cell.data.amino_acids import amino_acids
 
 # plots
-from cell.plots.metabolism import plot_exchanges
-from cell.plots.gene_expression import (
+from vivarium_cell.plots.metabolism import plot_exchanges
+from vivarium_cell.plots.gene_expression import (
     plot_timeseries_heatmaps,
     gene_network_plot)
-from cell.plots.multibody_physics import plot_agent_trajectory
+from vivarium_cell.plots.multibody_physics import plot_agent_trajectory
 from chemotaxis.plots.chemotaxis_experiments import plot_motility
 from chemotaxis.plots.chemoreceptor_cluster import plot_receptor_output
 from chemotaxis.plots.transport_metabolism import plot_glc_lcts_environment

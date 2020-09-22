@@ -15,7 +15,7 @@ import math
 from vivarium.library.units import units
 
 # directories
-from cell.plots.multibody_physics import plot_tags, plot_snapshots
+from vivarium_cell.plots.multibody_physics import plot_tags, plot_snapshots
 from vivarium.core.composition import (
     plot_agents_multigen,
     plot_compartment_topology,
