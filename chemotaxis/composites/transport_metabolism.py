@@ -21,14 +21,14 @@ from vivarium.core.composition import (
 # processes
 from vivarium.processes.meta_division import MetaDivision
 from vivarium.processes.tree_mass import TreeMass
-from cell.processes.division_volume import DivisionVolume
-from cell.processes.metabolism import (
+from vivarium_cell.processes.division_volume import DivisionVolume
+from vivarium_cell.processes.metabolism import (
     Metabolism,
     get_minimal_media_iAF1260b,
 )
-from cell.processes.metabolism import get_iAF1260b_config as get_iAF1260b_path_config
-from cell.processes.convenience_kinetics import ConvenienceKinetics
-from cell.processes.ode_expression import ODE_expression
+from vivarium_cell.processes.metabolism import get_iAF1260b_config as get_iAF1260b_path_config
+from vivarium_cell.processes.convenience_kinetics import ConvenienceKinetics
+from vivarium_cell.processes.ode_expression import ODE_expression
 
 # plots
 from chemotaxis.plots.transport_metabolism import plot_glc_lcts_environment

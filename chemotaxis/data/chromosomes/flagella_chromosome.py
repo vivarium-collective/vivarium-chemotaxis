@@ -2,9 +2,9 @@ import os
 
 from vivarium.library.units import units
 from vivarium.library.fasta import read_sequence
-from cell.library.polymerize import generate_template
-from cell.data.knowledge_base import KnowledgeBase
-from cell.states.chromosome import Chromosome
+from vivarium_cell.library.polymerize import generate_template
+from vivarium_cell.data.knowledge_base import KnowledgeBase
+from vivarium_cell.states.chromosome import Chromosome
 
 
 ECOLI_GENOME_FILE_NAME = 'Escherichia_coli_str_k_12_substr_mg1655.ASM584v2.dna.chromosome.Chromosome.fa'

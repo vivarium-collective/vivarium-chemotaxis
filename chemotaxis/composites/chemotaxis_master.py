@@ -20,14 +20,14 @@ from vivarium.library.dict_utils import deep_merge
 # processes
 from vivarium.processes.meta_division import MetaDivision
 from vivarium.processes.tree_mass import TreeMass
-from cell.processes.metabolism import Metabolism
-from cell.processes.metabolism import get_iAF1260b_config as get_iAF1260b_path_config
-from cell.processes.convenience_kinetics import ConvenienceKinetics
-from cell.processes.transcription import Transcription
-from cell.processes.translation import Translation
-from cell.processes.degradation import RnaDegradation
-from cell.processes.complexation import Complexation
-from cell.processes.division_volume import DivisionVolume
+from vivarium_cell.processes.metabolism import Metabolism
+from vivarium_cell.processes.metabolism import get_iAF1260b_config as get_iAF1260b_path_config
+from vivarium_cell.processes.convenience_kinetics import ConvenienceKinetics
+from vivarium_cell.processes.transcription import Transcription
+from vivarium_cell.processes.translation import Translation
+from vivarium_cell.processes.degradation import RnaDegradation
+from vivarium_cell.processes.complexation import Complexation
+from vivarium_cell.processes.division_volume import DivisionVolume
 from chemotaxis.processes.chemoreceptor_cluster import ReceptorCluster, get_brownian_ligand_timeline
 from chemotaxis.processes.flagella_motor import FlagellaMotor
 from chemotaxis.processes.membrane_potential import MembranePotential
@@ -43,7 +43,7 @@ from chemotaxis.composites.transport_metabolism import (
 )
 
 # plots
-from cell.plots.gene_expression import plot_gene_expression_output
+from vivarium_cell.plots.gene_expression import plot_gene_expression_output
 
 # directories
 from chemotaxis import COMPOSITE_OUT_DIR

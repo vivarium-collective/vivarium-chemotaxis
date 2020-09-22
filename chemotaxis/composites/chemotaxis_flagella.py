@@ -22,12 +22,12 @@ from chemotaxis.processes.chemoreceptor_cluster import (
 )
 from vivarium.processes.meta_division import MetaDivision
 from vivarium.processes.tree_mass import TreeMass
-from cell.processes.transcription import Transcription
-from cell.processes.translation import Translation
-from cell.processes.degradation import RnaDegradation
-from cell.processes.complexation import Complexation
-from cell.processes.growth_protein import GrowthProtein
-from cell.processes.derive_globals import DeriveGlobals
+from vivarium_cell.processes.transcription import Transcription
+from vivarium_cell.processes.translation import Translation
+from vivarium_cell.processes.degradation import RnaDegradation
+from vivarium_cell.processes.complexation import Complexation
+from vivarium_cell.processes.growth_protein import GrowthProtein
+from vivarium_cell.processes.derive_globals import DeriveGlobals
 from chemotaxis.processes.flagella_motor import FlagellaMotor
 from chemotaxis.composites.flagella_expression import (
     get_flagella_expression_config,
