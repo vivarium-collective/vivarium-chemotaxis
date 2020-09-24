@@ -839,14 +839,6 @@ experiments_library = {
     '7b': run_chemoreceptor_pulse,
     '7c': run_chemotaxis_transduction,
     '7d': run_chemotaxis_experiment,
-    '5': ['5a', '5b', '5c', '5d'],
-    '6': ['6a', '6b', '6c'],
-    '7': ['7a', '7b', '7c', '7d'],
-    'all': [
-        '3b',
-        '5a', '5b', '5c', '5d',
-        '6a', '6b', '6c',
-        '7a', '7b', '7c', '7d'],
 }
 
 
