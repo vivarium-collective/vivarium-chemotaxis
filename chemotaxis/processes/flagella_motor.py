@@ -58,7 +58,7 @@ class FlagellaMotor(Process):
 
         #  CheY phosphorylation parameters
         'k_y': 100.0,  # 1/uM/s
-        'k_z': 30.0,  # / CheZ,
+        'k_z': 30.0,  # / [CheZ],
         'gamma_y': 0.1,  # rate constant
         'k_s': 0.45,  # scaling coefficient
         'adapt_precision': 8,  # scales CheY_P to cluster activity
@@ -66,9 +66,9 @@ class FlagellaMotor(Process):
         # rotational state of individual flagella
         # parameters from Sneddon, Pontius, and Emonet (2012)
         'omega': 1.3,  # (1/s) characteristic motor switch time
-        'g_0': 40,  # (k_B/T) free energy barrier for CCW-->CW
-        'g_1': 40,  # (k_B/T) free energy barrier for CW-->CCW
-        'K_D': 3.06,  # binding constant of Chey-P to base of the motor
+        'g_0': 40,  # (k_B*T) free energy barrier for CCW-->CW
+        'g_1': 40,  # (k_B*T) free energy barrier for CW-->CCW
+        'K_D': 3.06,  # binding constant of CheY-P to base of the motor
 
         # added parameters
         'ccw_to_cw_leak': 0.2,  # 1/s rate of spontaneous switch to cw
@@ -85,8 +85,8 @@ class FlagellaMotor(Process):
                 # response regulator proteins
                 'CheY': 2.59,
                 'CheY_P': 2.59,  # (uM) mean concentration of CheY-P
-                'CheZ': 1.0,  # (uM) #phosphatase 100 uM = 0.1 mM
-                'CheA': 1.0,  # (uM) #100 uM = 0.1 mM
+                'CheZ': 1.0,  # (uM) phosphatase
+                'CheA': 1.0,  # (uM)
                 # sensor activity
                 'chemoreceptor_activity': 1/3,
                 # cell motile state
@@ -196,7 +196,7 @@ class FlagellaMotor(Process):
         CheY = max(CheY_0 - dCheY_P, 0.0)  # keep value positive
 
         ## update flagella
-        # check number of flagella proteins, compare with subcompartments
+        # check number of flagella proteins, compare with sub-compartments
         flagella_update = {}
         new_flagella = int(n_flagella) - len(flagella)
         if new_flagella < 0:
@@ -250,8 +250,8 @@ class FlagellaMotor(Process):
         """ rotational states of a individual flagellum
         # TODO -- normal, semi, curly states from Sneddon
         """
-        g_0 = self.parameters['g_0']  # (k_B/T) free energy barrier for CCW-->CW
-        g_1 = self.parameters['g_1']  # (k_B/T) free energy barrier for CW-->CCW
+        g_0 = self.parameters['g_0']  # (k_B*T) free energy barrier for CCW-->CW
+        g_1 = self.parameters['g_1']  # (k_B*T) free energy barrier for CW-->CCW
         K_D = self.parameters['K_D']  # binding constant of CheY-P to base of the motor
         omega = self.parameters['omega']  # (1/s) characteristic motor switch time
 
@@ -263,7 +263,6 @@ class FlagellaMotor(Process):
         CCW_to_CW = omega * math.exp(-delta_g)
         CW_bias = CCW_to_CW / (CCW_to_CW + CW_to_CCW)
         CCW_bias = CW_to_CCW / (CW_to_CCW + CCW_to_CW)
-        # switch_freq = CCW_to_CW * (1 - CW_bias) + CW_to_CCW * CW_bias
 
         # don't let ccw_to_cw get under leak value
         if CW_bias < self.parameters['ccw_to_cw_leak']:
@@ -291,7 +290,7 @@ class FlagellaMotor(Process):
         return new_motor_state
 
     def tumble(self, n_flagella, PMF):
-        # thrust scales with lg(n_flagella) because only the thickness of the bundle is affected
+        # thrust scales with log(n_flagella) because only the thickness of the bundle is affected
         thrust = self.parameters['tumble_scaling'] * \
                  PMF * self.parameters['flagellum_thrust'] * \
                  math.log(n_flagella + 1)
@@ -299,7 +298,7 @@ class FlagellaMotor(Process):
         return [thrust, torque]
 
     def run(self, n_flagella, PMF):
-        # thrust scales with lg(n_flagella) because only the thickness of the bundle is affected
+        # thrust scales with log(n_flagella) because only the thickness of the bundle is affected
         thrust = self.parameters['run_scaling'] * \
                  PMF * self.parameters['flagellum_thrust'] * \
                  math.log(n_flagella + 1)
