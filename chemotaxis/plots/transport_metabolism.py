@@ -2,7 +2,7 @@ import os
 
 import matplotlib.pyplot as plt
 
-from vivarium.core.composition import set_axes
+from vivarium.plots.simulation_output import set_axes
 from vivarium.library.dict_utils import get_value_from_path
 
 
