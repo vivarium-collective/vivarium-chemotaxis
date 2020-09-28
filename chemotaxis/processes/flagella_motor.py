@@ -13,11 +13,9 @@ import uuid
 import numpy as np
 
 from vivarium.core.process import Process
-from vivarium.core.composition import (
-    simulate_process_in_experiment,
-    plot_simulation_output,
-)
+from vivarium.core.composition import simulate_process_in_experiment
 from vivarium.core.emitter import timeseries_from_data
+from vivarium.plots.simulation_output import plot_simulation_output
 
 # plots
 from chemotaxis.plots.flagella_activity import plot_activity
@@ -189,25 +187,25 @@ class FlagellaMotor(Process):
 
         ## Kinase activity
         # relative steady-state concentration of phosphorylated CheY.
-        new_CheY_P = adapt_precision * k_y * k_s * P_on / (k_y * k_s * P_on + k_z + gamma_y)  # CheZ cancels out of k_z
+        # CheZ combined in k_z as dephosphorylation rate of CheY-P
+        new_CheY_P = adapt_precision * k_y * k_s * P_on / (k_y * k_s * P_on + k_z + gamma_y)
         dCheY_P = new_CheY_P - CheY_P_0
+
         # TODO -- add an assert here instead
         CheY_P = max(new_CheY_P, 0.0)  # keep value positive
         CheY = max(CheY_0 - dCheY_P, 0.0)  # keep value positive
 
-        ## update flagella
-        # check number of flagella proteins, compare with sub-compartments
+        ## Update flagella subcompartments
+        # check number of flagella proteins, compare with sub-compartments add/delete accordingly
         flagella_update = {}
         new_flagella = int(n_flagella) - len(flagella)
         if new_flagella < 0:
-            # remove flagella
             flagella_update['_delete'] = []
             remove = random.sample(list(flagella.keys()), abs(new_flagella))
             for flagella_id in remove:
                 flagella_update['_delete'].append((flagella_id,))
 
         elif new_flagella > 0:
-            # add flagella
             flagella_update['_add'] = []
             for index in range(new_flagella):
                 flagella_id = str(uuid.uuid1())
@@ -215,7 +213,7 @@ class FlagellaMotor(Process):
                     'path': (flagella_id, ),
                     'state': random.choice([-1, 1])})
 
-        # update flagella states
+        # update individual flagella states
         for flagella_id, motor_state in flagella.items():
             new_motor_state = self.update_flagellum(motor_state, CheY_P, timestep)
             flagella_update.update({flagella_id: new_motor_state})

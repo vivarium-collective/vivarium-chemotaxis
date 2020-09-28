@@ -16,11 +16,11 @@ import numpy as np
 from vivarium.core.process import Generator
 from vivarium.core.composition import (
     simulate_compartment_in_experiment,
-    plot_simulation_output,
     save_flat_timeseries,
     load_timeseries,
     assert_timeseries_close,
 )
+from vivarium.plots.simulation_output import plot_simulation_output
 from vivarium.core.emitter import path_timeseries_from_embedded_timeseries
 from vivarium.library.units import units
 from vivarium.library.dict_utils import deep_merge

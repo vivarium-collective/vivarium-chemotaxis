@@ -7,10 +7,8 @@ Chemotaxis Minimal Composite
 import os
 
 from vivarium.core.process import Generator
-from vivarium.core.composition import (
-    simulate_compartment_in_experiment,
-    plot_simulation_output,
-)
+from vivarium.core.composition import simulate_compartment_in_experiment
+from vivarium.plots.simulation_output import plot_simulation_output
 
 # processes
 from chemotaxis.processes.chemoreceptor_cluster import (

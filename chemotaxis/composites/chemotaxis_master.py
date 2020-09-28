@@ -10,11 +10,10 @@ import uuid
 
 # core imports
 from vivarium.core.process import Generator
-from vivarium.core.composition import (
-    simulate_compartment_in_experiment,
-    plot_simulation_output,
-    plot_compartment_topology,
-)
+from vivarium.core.composition import simulate_compartment_in_experiment
+from vivarium.plots.simulation_output import plot_simulation_output
+from vivarium.plots.topology import plot_compartment_topology
+
 from vivarium.library.dict_utils import deep_merge
 
 # processes

@@ -28,14 +28,14 @@ from vivarium.core.composition import (
     simulate_process_in_experiment,
     simulate_compartment_in_experiment,
     agent_environment_experiment,
-    plot_simulation_output,
-    plot_agents_multigen,
     make_agent_ids)
 from vivarium.core.emitter import (
     time_indexed_timeseries_from_data,
     timeseries_from_data)
 from vivarium.library.dict_utils import deep_merge
 from vivarium.library.units import units
+from vivarium.plots.simulation_output import plot_simulation_output
+from vivarium.plots.agents_multigen import plot_agents_multigen
 
 # experiment control workflow
 from chemotaxis.experiments.control import (

@@ -15,8 +15,8 @@ from vivarium.core.composition import (
     save_flat_timeseries,
     load_timeseries,
     assert_timeseries_close,
-    plot_simulation_output,
 )
+from vivarium.plots.simulation_output import plot_simulation_output
 
 # processes
 from vivarium.processes.meta_division import MetaDivision

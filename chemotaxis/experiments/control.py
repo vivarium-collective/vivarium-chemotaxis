@@ -16,14 +16,13 @@ from vivarium.library.units import units
 
 # directories
 from vivarium_cell.plots.multibody_physics import plot_tags, plot_snapshots
-from vivarium.core.composition import (
-    plot_agents_multigen,
-    plot_compartment_topology,
-)
+from vivarium.plots.simulation_output import plot_simulation_output
+from vivarium.plots.agents_multigen import plot_agents_multigen
 
 from chemotaxis import EXPERIMENT_OUT_DIR
 
 PI = math.pi
+
 
 def single_agent_config(config):
     width = 1
