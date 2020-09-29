@@ -1,11 +1,18 @@
 # vivarium-chemotaxis
 
-[vivarium-chemotaxis](https://github.com/vivarium-collective/vivarium-chemotaxis) is a library for chemotaxis-specific
-vivarium processes.
+[Vivarium-chemotaxis](https://github.com/vivarium-collective/vivarium-chemotaxis) is a library for the multi-scale 
+model of chemotaxis described in:
+Agmon, E., Spangler, R.K. "A Multi-Scale Approach to Modeling E. coli Chemotaxis". (accepted).
 
 Visit [the Vivarium Core
 documentation](https://vivarium-core.readthedocs.io/) to learn how to
 use the core Vivarium engine to create computational biology models.
+
+
+![vivarium-chemotaxis](doc/_static/ecoli_master.png)
+**ChemotaxisMaster Composite**, with processes for metabolism (MTB), transport (TXP), transcription (TSC), 
+translation (TRL), complexation (CXN), degradation (DEG), proton motive force (PMF), flagella activity (FLG), 
+and chemoreceptor activity (CHE).
 
 ## setup
 Please refer to the Vivarium Core documentation for more complete instructions.
