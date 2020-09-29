@@ -4,6 +4,8 @@
 model of chemotaxis described in:
 Agmon, E., Spangler, R.K. "A Multi-Scale Approach to Modeling E. coli Chemotaxis". (accepted).
 
+Supplementary materials are available [here](doc/AgmonSpangler2020_supplementary.pdf).
+
 Visit [the Vivarium Core
 documentation](https://vivarium-core.readthedocs.io/) to learn how to
 use the core Vivarium engine to create computational biology models.
