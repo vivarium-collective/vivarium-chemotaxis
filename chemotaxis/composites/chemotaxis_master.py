@@ -261,7 +261,7 @@ def test_chemotaxis_master(
         'initial_state': initial_state,
         'timeline': {
             'timeline': timeline,
-            'ports': {
+            'paths': {
                 'external': ('boundary', 'external')}}}
     return simulate_compartment_in_experiment(compartment, settings)
 

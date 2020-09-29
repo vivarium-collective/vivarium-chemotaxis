@@ -103,7 +103,7 @@ def test_chemotaxis_minimal(total_time=10):
     experiment_settings = {
         'timeline': {
             'timeline': timeline,
-            'ports': {'external': ('boundary', 'external')}},
+            'paths': {'external': ('boundary', 'external')}},
         'timestep': time_step,
         'total_time': total_time}
     timeseries = simulate_compartment_in_experiment(compartment, experiment_settings)

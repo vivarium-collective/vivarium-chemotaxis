@@ -663,7 +663,7 @@ def run_chemotaxis_transduction(out_dir='out'):
         'timeline': {
             'timeline': timeline,
             'time_step': time_step,
-            'ports': {
+            'paths': {
                 'external': ('boundary', 'external')}},
         'initial_state': initial_state}
     timeseries = simulate_compartment_in_experiment(

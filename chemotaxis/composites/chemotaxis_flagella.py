@@ -271,7 +271,7 @@ def test_expression_chemotaxis(
         'initial_state': initial_state,
         'timeline': {
             'timeline': timeline,
-            'ports': {
+            'paths': {
                 'external': ('boundary', 'external')}},
     }
     timeseries = simulate_compartment_in_experiment(
@@ -294,7 +294,7 @@ def test_variable_chemotaxis(
         'initial_state': initial_state,
         'timeline': {
             'timeline': timeline,
-            'ports': {'external': ('boundary', 'external')}},
+            'paths': {'external': ('boundary', 'external')}},
     }
     timeseries = simulate_compartment_in_experiment(
         compartment,
@@ -324,7 +324,6 @@ if __name__ == '__main__':
         timeseries = test_variable_chemotaxis(
             n_flagella=args.flagella,
             timeline=get_brownian_ligand_timeline(total_time=90))
-        print_growth(timeseries)
         # plot
         plot_timeseries(timeseries, variable_out_dir)
         plot_signal_transduction(timeseries, {}, variable_out_dir)
