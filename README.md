@@ -17,6 +17,13 @@ force (PMF), flagella activity (FLG), and chemoreceptor activity (CHE).
 This repository includes the processes for CHE, FLG, and PMF; the other processes are imported from 
 [vivarium-cell](https://github.com/vivarium-collective/vivarium-cell).
 
+## Library
+You might want to use the processes and composites in a different project. If so, they can be installed and imported
+as a Python (pip) library. To install:
+```
+$ pip install vivarium-chemotaxis
+```
+
 ## Setup
 Please refer to the Vivarium Core documentation for more complete instructions.
 
@@ -31,6 +38,11 @@ Then the remaining requirements:
 ```
 $ pip install -r requirements.txt
 ```
+
+MongoDB is required for some of the larger experiments that have experiment settings with 
+{'emitter': {'type': 'database'}}. Follow instructions in the Vivarium documentation's
+[Getting Started Guide](https://vivarium-core.readthedocs.io/en/latest/getting_started.html)
+for instructions on MongoDB.
 
 ## Run individual processes and composites
 Each process file under `chemotaxis/processes` can run on its own. Some of these have their own command line options.
