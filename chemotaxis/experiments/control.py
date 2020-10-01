@@ -18,6 +18,7 @@ from vivarium.library.units import units
 from vivarium_cell.plots.multibody_physics import plot_tags, plot_snapshots
 from vivarium.plots.simulation_output import plot_simulation_output
 from vivarium.plots.agents_multigen import plot_agents_multigen
+from vivarium.plots.topology import plot_compartment_topology
 
 from chemotaxis import EXPERIMENT_OUT_DIR
 
