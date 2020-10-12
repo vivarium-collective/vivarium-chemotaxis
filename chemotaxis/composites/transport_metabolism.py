@@ -84,8 +84,8 @@ def get_lacY_expression_config():
         'lacy_RNA': 'if [(external, glc__D_e) > 0.05 '  # limiting concentration of glc
                     'or (internal, lcts_p) < 0.05]'}  # internal lcts is hypothesized to disinhibit lacY transcription
     transcription_leak = {
-        'rate': 1e-4,
-        'magnitude': 1e-7}
+        'rate': 5e-4,
+        'magnitude': 5e-7}
 
     # initial state
     initial_state = {

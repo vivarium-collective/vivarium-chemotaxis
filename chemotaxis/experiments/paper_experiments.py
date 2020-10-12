@@ -22,6 +22,7 @@ Notes:
 
 import numpy as np
 import copy
+import pytest
 
 # vivarium-core imports
 from vivarium.core.composition import (
@@ -95,10 +96,10 @@ from chemotaxis.plots.flagella_activity import (
 
 
 # figure 3b
-def growth_division_experiment(out_dir='out'):
+def growth_division_experiment(config={}, out_dir=None):
 
     # simulation parameters
-    total_time = 21000
+    total_time = config.get('total_time', 21000)
     emit_step = 120
     initial_agent_id = 'growth_division'
     parallel = True
@@ -145,21 +146,22 @@ def growth_division_experiment(out_dir='out'):
     data = experiment.emitter.get_data()
     experiment.end()  # end required for parallel processes
 
-    # plot output
-    plot_config = {
-        'environment_config': environment_config,
-        'emit_fields': emit_fields,
-        'topology_network': {
-            'compartment': GrowthDivision({
-                'agent_id': initial_agent_id})}}
-    plot_control(data, plot_config, out_dir)
+    if out_dir:
+        # plot output
+        plot_config = {
+            'environment_config': environment_config,
+            'emit_fields': emit_fields,
+            'topology_network': {
+                'compartment': GrowthDivision({
+                    'agent_id': initial_agent_id})}}
+        plot_control(data, plot_config, out_dir)
 
 
 # figure 5a
-def BiGG_metabolism(out_dir='out'):
+def BiGG_metabolism(config={}, out_dir=None):
 
     # simulation parameters
-    total_time = 2500
+    total_time = config.get('total_time', 2500)
     env_volume = 1e-13 * units.L
 
     # get iAF1260b BiGG model configuration
@@ -179,19 +181,20 @@ def BiGG_metabolism(out_dir='out'):
     # run simulation with the helper function simulate_process_in_experiment
     timeseries = simulate_process_in_experiment(metabolism, sim_settings)
 
-    # plot output
-    plot_config = {
-        'environment': {'volume': env_volume},
-        'legend': False,
-        'aspect_ratio': 1.0}
-    plot_exchanges(timeseries, plot_config, out_dir)
+    if out_dir:
+        # plot output
+        plot_config = {
+            'environment': {'volume': env_volume},
+            'legend': False,
+            'aspect_ratio': 1.0}
+        plot_exchanges(timeseries, plot_config, out_dir)
 
 
 # figure 5b
-def transport_metabolism(out_dir='out'):
+def transport_metabolism(config={}, out_dir=None):
 
     # experiment parameters
-    total_time = 5000
+    total_time = config.get('total_time', 5000)
     environment_volume = 1e-13 * units.L
     initial_concentrations = {
         'glc__D_e': 1.0,
@@ -207,7 +210,8 @@ def transport_metabolism(out_dir='out'):
         'expression': {
             'transcription_leak': {
                 'rate': 4e-3,
-                'magnitude': 2e-7}},
+                'magnitude': 5e-7}
+        },
         'divide': False}
 
     # make the compartment
@@ -234,22 +238,23 @@ def transport_metabolism(out_dir='out'):
     # run simulation with helper function simulate_compartment_in_experiment
     timeseries = simulate_compartment_in_experiment(compartment, sim_settings)
 
-    # plot output
-    plot_settings = {
-        'internal_path': ('cytoplasm',),
-        'external_path': ('boundary', 'external'),
-        'global_path': ('boundary',),
-        'environment_volume': environment_volume,
-        'aspect_ratio': 1.0}
-    plot_glc_lcts_environment(timeseries, plot_settings, out_dir)
-    plot_simulation_output(timeseries, {}, out_dir)
+    if out_dir:
+        # plot output
+        plot_settings = {
+            'internal_path': ('cytoplasm',),
+            'external_path': ('boundary', 'external'),
+            'global_path': ('boundary',),
+            'environment_volume': environment_volume,
+            'aspect_ratio': 1.0}
+        plot_glc_lcts_environment(timeseries, plot_settings, out_dir)
+        plot_simulation_output(timeseries, {}, out_dir)
 
 
 # figure 5c
-def transport_metabolism_environment(out_dir='out'):
+def transport_metabolism_environment(config={}, out_dir=None):
 
     # simulation parameters
-    total_time = 30000
+    total_time = config.get('total_time', 30000)
     emit_step = 100
     parallel = True  # TODO -- make this an option you can pass in
 
@@ -260,7 +265,7 @@ def transport_metabolism_environment(out_dir='out'):
     n_bins = [30, 30]
     depth = 50.0
     diffusion = 5e-3
-    jitter_force = 1e-2
+    jitter_force = 1e-3
     env_timestep = 10
     initial_external = {
         'glc__D_e': 1.0,
@@ -356,16 +361,17 @@ def transport_metabolism_environment(out_dir='out'):
     data = experiment.emitter.get_data()
     experiment.end()  # end required for parallel processes
 
-    # plot output
-    plot_config = {
-        'environment_config': environment_config,
-        'emit_fields': emit_fields,
-        'tagged_molecules': tagged_molecules}
-    plot_control(data, plot_config, out_dir)
+    if out_dir:
+        # plot output
+        plot_config = {
+            'environment_config': environment_config,
+            'emit_fields': emit_fields,
+            'tagged_molecules': tagged_molecules}
+        plot_control(data, plot_config, out_dir)
 
 
 # figure 5d
-def lacy_expression(out_dir='out'):
+def lacy_expression(config={}, out_dir=None):
     """ two experiments for ODE-based LacY expression
 
     These experiments use only the ode_expression process,
@@ -375,7 +381,7 @@ def lacy_expression(out_dir='out'):
     """
 
     # parameters
-    total_time = 8000
+    total_time = config.get('total_time', 8000)
     shift_time1 = int(total_time / 5)
     shift_time2 = int(4 * total_time / 5)
 
@@ -400,19 +406,20 @@ def lacy_expression(out_dir='out'):
         (shift_time2, {('external', 'glc__D_e'): 0.1}),
         (total_time, {})]
 
-    # experiment 1
-    settings1 = {'timeline': {'timeline': timeline1}}
-    timeseries1 = simulate_process_in_experiment(process, settings1)
-    plot_simulation_output(timeseries1, {}, out_dir, 'experiment_1')
+    if out_dir:
+        # experiment 1
+        settings1 = {'timeline': {'timeline': timeline1}}
+        timeseries1 = simulate_process_in_experiment(process, settings1)
+        plot_simulation_output(timeseries1, {}, out_dir, 'experiment_1')
 
-    # experiment 2
-    settings2 = {'timeline': {'timeline': timeline2}}
-    timeseries2 = simulate_process_in_experiment(process, settings2)
-    plot_simulation_output(timeseries2, {}, out_dir, 'experiment_2')
+        # experiment 2
+        settings2 = {'timeline': {'timeline': timeline2}}
+        timeseries2 = simulate_process_in_experiment(process, settings2)
+        plot_simulation_output(timeseries2, {}, out_dir, 'experiment_2')
 
 
 # figure 6a
-def flagella_expression_network(out_dir='out'):
+def flagella_expression_network(config={}, out_dir=None):
     """
     Make a network plot of the flagella expression processes.
     This saves an networkx plot with a default layout, along with
@@ -425,19 +432,20 @@ def flagella_expression_network(out_dir='out'):
     flagella_expression_network = flagella_compartment.generate()
     flagella_expression_processes = flagella_expression_network['processes']
 
-    # make expression network plot
-    data = {
-        'operons': flagella_expression_processes['transcription'].genes,
-        'templates': flagella_expression_processes['transcription'].templates,
-        'complexes': flagella_expression_processes['complexation'].stoichiometry}
-    gene_network_plot(data, out_dir)
+    if out_dir:
+        # make expression network plot
+        data = {
+            'operons': flagella_expression_processes['transcription'].genes,
+            'templates': flagella_expression_processes['transcription'].templates,
+            'complexes': flagella_expression_processes['complexation'].stoichiometry}
+        gene_network_plot(data, out_dir)
 
 
 # figure 6b
-def flagella_just_in_time(out_dir='out'):
+def flagella_just_in_time(config={}, out_dir=None):
 
     # experiment parameters
-    total_time = 4000
+    total_time = config.get('total_time', 4000)
 
     # configuration
     # longer time steps speed up the simulation,
@@ -461,39 +469,40 @@ def flagella_just_in_time(out_dir='out'):
         'initial_state': initial_state}
     timeseries = simulate_compartment_in_experiment(compartment, settings)
 
-    # plot output as a heat maps
-    # transcript_list is made in expected just-in-time order
-    # order proteins and small molecules alphabetically
-    flagella_data = FlagellaChromosome()
-    transcript_list = list(flagella_data.chromosome_config['genes'].keys())
-    protein_list = flagella_data.complexation_monomer_ids + flagella_data.complexation_complex_ids
-    protein_list.sort()
-    molecule_list = list(nucleotides.values()) + list(amino_acids.values())
-    molecule_list.sort()
-    plot_config = {
-        'name': 'flagella',
-        'ports': {
-            'transcripts': 'transcripts',
-            'proteins': 'proteins',
-            'molecules': 'molecules'},
-        'plot_ports': {
-            'transcripts': transcript_list,
-            'proteins': protein_list,
-            'molecules': molecule_list}}
-    plot_timeseries_heatmaps(timeseries, plot_config, out_dir)
+    if out_dir:
+        # plot output as a heat maps
+        # transcript_list is made in expected just-in-time order
+        # order proteins and small molecules alphabetically
+        flagella_data = FlagellaChromosome()
+        transcript_list = list(flagella_data.chromosome_config['genes'].keys())
+        protein_list = flagella_data.complexation_monomer_ids + flagella_data.complexation_complex_ids
+        protein_list.sort()
+        molecule_list = list(nucleotides.values()) + list(amino_acids.values())
+        molecule_list.sort()
+        plot_config = {
+            'name': 'flagella',
+            'ports': {
+                'transcripts': 'transcripts',
+                'proteins': 'proteins',
+                'molecules': 'molecules'},
+            'plot_ports': {
+                'transcripts': transcript_list,
+                'proteins': protein_list,
+                'molecules': molecule_list}}
+        plot_timeseries_heatmaps(timeseries, plot_config, out_dir)
 
-    # plot output
-    sim_plot_config = {
-        'max_rows': 30,
-        'remove_zeros': True,
-        'skip_ports': ['chromosome', 'ribosomes']}
-    plot_simulation_output(timeseries, sim_plot_config, out_dir)
+        # plot output
+        sim_plot_config = {
+            'max_rows': 30,
+            'remove_zeros': True,
+            'skip_ports': ['chromosome', 'ribosomes']}
+        plot_simulation_output(timeseries, sim_plot_config, out_dir)
 
 
 # figure 6c
-def run_heterogeneous_flagella_experiment(out_dir='out'):
+def run_heterogeneous_flagella_experiment(config={}, out_dir=None):
 
-    total_time = 15000
+    total_time = config.get('total_time', 15000)
     emit_step = 120
     process_time_step = 60
     environment_time_step = 120
@@ -540,8 +549,9 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
     # database emitter saves to mongoDB
     experiment_settings = {
         'experiment_name': '6c',
-        'description': 'A single FlagellaExpressionMetabolism compartment is placed in a Lattice environment and'
-                       'grown into a small colony to demonstrate heterogeneous expression of flagellar genes.',
+        'description': 'A single FlagellaExpressionMetabolism compartment is placed '
+                       'in a Lattice environment and grown into a small colony with '
+                       'heterogeneous expression of flagellar genes.',
         'total_time': total_time,
         'emit_step': emit_step,
         'emitter': {'type': 'database'},
@@ -557,23 +567,24 @@ def run_heterogeneous_flagella_experiment(out_dir='out'):
     data = experiment.emitter.get_data()
     experiment.end()  # end required for parallel processes
 
-    # remove the first timestep so that it is not always the brightest
-    if 0.0 in data:
-        del data[0.0]
+    if out_dir:
+        # remove the first timestep so that it is not always the brightest
+        if 0.0 in data:
+            del data[0.0]
 
-    # plot output
-    plot_config = {
-        'environment_config': environment_config,
-        'tagged_molecules': tagged_molecules,
-        'emit_fields': emit_fields,
-        'topology_network': {
-            'compartment': FlagellaExpressionMetabolism({})}}
-    plot_control(data, plot_config, out_dir)
+        # plot output
+        plot_config = {
+            'environment_config': environment_config,
+            'tagged_molecules': tagged_molecules,
+            'emit_fields': emit_fields,
+            'topology_network': {
+                'compartment': FlagellaExpressionMetabolism({})}}
+        plot_control(data, plot_config, out_dir)
 
 
 # figure 7a
-def run_flagella_activity(out_dir='out'):
-    total_time = 80
+def run_flagella_activity(config={}, out_dir=None):
+    total_time = config.get('total_time', 80)
     time_step = 0.01
     initial_flagella = 1
 
@@ -600,13 +611,14 @@ def run_flagella_activity(out_dir='out'):
             'time_step': time_step}}
     data = simulate_process_in_experiment(process, settings)
 
-    # plot output
-    plot_settings = {'aspect_ratio': 0.4}
-    plot_activity(data, plot_settings, out_dir)
+    if out_dir:
+        # plot output
+        plot_settings = {'aspect_ratio': 0.4}
+        plot_activity(data, plot_settings, out_dir)
 
 
 # figure 7b
-def run_chemoreceptor_pulse(out_dir='out'):
+def run_chemoreceptor_pulse(config={}, out_dir=None):
     ligand = 'MeAsp'
     timeline = get_pulse_timeline(ligand=ligand)
 
@@ -621,14 +633,15 @@ def run_chemoreceptor_pulse(out_dir='out'):
             'timeline': timeline}}
     timeseries = simulate_process_in_experiment(receptor, experiment_settings)
 
-    # plot output
-    plot_settings = {'aspect_ratio': 0.4}
-    plot_receptor_output(timeseries, plot_settings, out_dir, 'pulse')
+    if out_dir:
+        # plot output
+        plot_settings = {'aspect_ratio': 0.4}
+        plot_receptor_output(timeseries, plot_settings, out_dir, 'pulse')
 
 
 # figure 7c
-def run_chemotaxis_transduction(out_dir='out'):
-    total_time = 60
+def run_chemotaxis_transduction(config={}, out_dir=None):
+    total_time = config.get('total_time', 60)
     time_step = 0.1
     n_flagella = 5
     ligand_id = 'MeAsp'
@@ -670,18 +683,19 @@ def run_chemotaxis_transduction(out_dir='out'):
         compartment,
         experiment_settings)
 
-    # plot output
-    plot_config = {
-        'ligand_id': ligand_id,
-        'aspect_ratio': 0.4}
-    plot_signal_transduction(timeseries, plot_config, out_dir)
+    if out_dir:
+        # plot output
+        plot_config = {
+            'ligand_id': ligand_id,
+            'aspect_ratio': 0.4}
+        plot_signal_transduction(timeseries, plot_config, out_dir)
 
 
 # figure 7d
-def run_chemotaxis_experiment(out_dir='out'):
+def run_chemotaxis_experiment(config={}, out_dir=None):
 
     # simulation parameters
-    total_time = 60 * 8
+    total_time = config.get('total_time', 480)
     n_receptor_motor = 6
     n_motor = 6
 
@@ -781,10 +795,10 @@ def run_chemotaxis_experiment(out_dir='out'):
     # database emitter saves to mongoDB
     experiment_settings = {
         'experiment_name': '7d',
-        'description': 'Two configurations of ChemotaxisMaster -- one with receptors for '
-                       'MeAsp another without useful chemoreceptors -- are placed in a '
-                       'large StaticLattice environment with an exponential gradient to '
-                       'demonstrate their chemotaxis.',
+        'description': 'Two types of ChemotaxisMaster -- {} agents with receptors for '
+                       'MeAsp, {} agents without useful chemoreceptors -- are placed in a '
+                       'large environment with an exponential gradient to demonstrate their '
+                       'chemotaxis.'.format(n_receptor_motor, n_motor),
         'total_time': total_time,
         'emit_step': fast_process_timestep * 10,
         'emitter': {'type': 'database'},
@@ -802,26 +816,27 @@ def run_chemotaxis_experiment(out_dir='out'):
     data = experiment.emitter.get_data()
     experiment.end()
 
-    # plot trajectory
-    field_config = environment_config['config']['field']
-    indexed_timeseries = time_indexed_timeseries_from_data(data)
-    field = make_field(field_config)
-    plot_config = {
-        'bounds': field_config['bounds'],
-        'field': field,
-        'rotate_90': True,
-    }
-    plot_agent_trajectory(indexed_timeseries, plot_config, out_dir, 'trajectory')
+    if out_dir:
+        # plot trajectory
+        field_config = environment_config['config']['field']
+        indexed_timeseries = time_indexed_timeseries_from_data(data)
+        field = make_field(field_config)
+        plot_config = {
+            'bounds': field_config['bounds'],
+            'field': field,
+            'rotate_90': True,
+        }
+        plot_agent_trajectory(indexed_timeseries, plot_config, out_dir, 'trajectory')
 
-    # multigen agents plot
-    plot_settings = {
-        'agents_key': 'agents',
-        'max_rows': 30}
-    plot_agents_multigen(data, plot_settings, out_dir)
+        # multigen agents plot
+        plot_settings = {
+            'agents_key': 'agents',
+            'max_rows': 30}
+        plot_agents_multigen(data, plot_settings, out_dir)
 
-    # motility
-    embdedded_timeseries = timeseries_from_data(data)
-    plot_motility(embdedded_timeseries, out_dir)
+        # motility
+        embdedded_timeseries = timeseries_from_data(data)
+        plot_motility(embdedded_timeseries, out_dir)
 
 
 # put all the experiments for the paper in a dictionary
@@ -840,6 +855,14 @@ experiments_library = {
     '7c': run_chemotaxis_transduction,
     '7d': run_chemotaxis_experiment,
 }
+
+
+# this test runs each experiment for 1 second
+@pytest.mark.slow
+def test_all_experiments():
+    for name, experiment in experiments_library.items():
+        config = {'total_time': 1}
+        experiment(config=config)
 
 
 if __name__ == '__main__':

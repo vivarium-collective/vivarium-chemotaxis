@@ -25,5 +25,6 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     install_requires=[
-        'vivarium-core==0.0.32',
-        'vivarium-cell==0.0.23'])
+        'vivarium-cell==0.0.23',
+        'vivarium-core==0.0.34',
+    ])

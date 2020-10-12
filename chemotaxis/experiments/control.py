@@ -139,7 +139,7 @@ def control(experiments_library):
         if callable(experiment_type):
             control_out_dir = os.path.join(out_dir, experiment_id)
             make_dir(control_out_dir)
-            experiment_type(control_out_dir)
+            experiment_type(out_dir=control_out_dir)
         elif isinstance(experiment_type, list):
             # iterate over list with multiple experiments
             for sub_experiment_id in experiment_type:
@@ -147,7 +147,7 @@ def control(experiments_library):
                 make_dir(control_out_dir)
                 exp = experiments_library[sub_experiment_id]
                 try:
-                    exp(control_out_dir)
+                    exp(out_dir=control_out_dir)
                 except:
                     print('{} experiment failed'.format(sub_experiment_id))
     else:
