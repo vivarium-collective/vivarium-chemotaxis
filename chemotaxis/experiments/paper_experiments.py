@@ -96,13 +96,12 @@ from chemotaxis.plots.flagella_activity import (
 
 
 # figure 3b
-def growth_division_experiment(config={}, out_dir=None):
+def growth_division_experiment(config={}, out_dir=None, parallel=False):
 
     # simulation parameters
     total_time = config.get('total_time', 21000)
     emit_step = 120
     initial_agent_id = 'growth_division'
-    parallel = True
 
     # environment parameters
     env_time_step = 60
@@ -251,12 +250,11 @@ def transport_metabolism(config={}, out_dir=None):
 
 
 # figure 5c
-def transport_metabolism_environment(config={}, out_dir=None):
+def transport_metabolism_environment(config={}, out_dir=None, parallel=False):
 
     # simulation parameters
     total_time = config.get('total_time', 30000)
     emit_step = 100
-    parallel = True  # TODO -- make this an option you can pass in
 
     # environment parameters
     # put cells in a very shallow environment, with low concentrations of glucose.
@@ -500,7 +498,7 @@ def flagella_just_in_time(config={}, out_dir=None):
 
 
 # figure 6c
-def run_heterogeneous_flagella_experiment(config={}, out_dir=None):
+def run_heterogeneous_flagella_experiment(config={}, out_dir=None, parallel=False):
 
     total_time = config.get('total_time', 15000)
     emit_step = 120
@@ -513,7 +511,6 @@ def run_heterogeneous_flagella_experiment(config={}, out_dir=None):
         ('proteins', 'flhDC'),
     ]
     emit_fields = ['glc__D_e']
-    parallel = True
 
     # configure agents and environment
     agents_config = {
@@ -857,12 +854,14 @@ experiments_library = {
 }
 
 
-# this test runs each experiment for 1 second
+# test each experiment for 1 second
 @pytest.mark.slow
 def test_all_experiments():
     for name, experiment in experiments_library.items():
+        print('testing experiment {}...'.format(name))
         config = {'total_time': 1}
         experiment(config=config)
+        print('Success!')
 
 
 if __name__ == '__main__':
