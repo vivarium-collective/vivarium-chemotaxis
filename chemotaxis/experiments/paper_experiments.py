@@ -96,7 +96,11 @@ from chemotaxis.plots.flagella_activity import (
 
 
 # figure 3b
-def growth_division_experiment(config={}, out_dir=None, parallel=False):
+def growth_division_experiment(
+        config={},
+        out_dir=None,
+        parallel=False,
+        emitter='database'):
 
     # simulation parameters
     total_time = config.get('total_time', 21000)
@@ -132,7 +136,8 @@ def growth_division_experiment(config={}, out_dir=None, parallel=False):
         'experiment_name': '3b',
         'description': 'a simple GrowthDivision agent is placed in a Lattice environment and grown.',
         'total_time': total_time,
-        'emit_step': emit_step}
+        'emit_step': emit_step,
+        'emitter': {'type': emitter}}
     experiment = agent_environment_experiment(
         agents_config=agents_config,
         environment_config=environment_config,
@@ -157,7 +162,10 @@ def growth_division_experiment(config={}, out_dir=None, parallel=False):
 
 
 # figure 5a
-def BiGG_metabolism(config={}, out_dir=None):
+def BiGG_metabolism(
+        config={},
+        out_dir=None,
+        emitter='timeseries'):
 
     # simulation parameters
     total_time = config.get('total_time', 2500)
@@ -190,7 +198,10 @@ def BiGG_metabolism(config={}, out_dir=None):
 
 
 # figure 5b
-def transport_metabolism(config={}, out_dir=None):
+def transport_metabolism(
+        config={},
+        out_dir=None,
+        emitter='timeseries'):
 
     # experiment parameters
     total_time = config.get('total_time', 5000)
@@ -250,7 +261,11 @@ def transport_metabolism(config={}, out_dir=None):
 
 
 # figure 5c
-def transport_metabolism_environment(config={}, out_dir=None, parallel=False):
+def transport_metabolism_environment(
+        config={},
+        out_dir=None,
+        parallel=False,
+        emitter='database'):
 
     # simulation parameters
     total_time = config.get('total_time', 30000)
@@ -345,7 +360,7 @@ def transport_metabolism_environment(config={}, out_dir=None, parallel=False):
                        'glucose some cells begin to express LacY uptake lactose.',
         'total_time': total_time,
         'emit_step': emit_step,
-        'emitter': {'type': 'database'}}
+        'emitter': {'type': emitter}}
 
     # make the experiment with helper function agent_environment_experiment
     experiment = agent_environment_experiment(
@@ -369,7 +384,10 @@ def transport_metabolism_environment(config={}, out_dir=None, parallel=False):
 
 
 # figure 5d
-def lacy_expression(config={}, out_dir=None):
+def lacy_expression(
+        config={},
+        out_dir=None,
+        emitter='timeseries'):
     """ two experiments for ODE-based LacY expression
 
     These experiments use only the ode_expression process,
@@ -417,7 +435,10 @@ def lacy_expression(config={}, out_dir=None):
 
 
 # figure 6a
-def flagella_expression_network(config={}, out_dir=None):
+def flagella_expression_network(
+        config={},
+        out_dir=None,
+        emitter='timeseries'):
     """
     Make a network plot of the flagella expression processes.
     This saves an networkx plot with a default layout, along with
@@ -440,7 +461,10 @@ def flagella_expression_network(config={}, out_dir=None):
 
 
 # figure 6b
-def flagella_just_in_time(config={}, out_dir=None):
+def flagella_just_in_time(
+        config={},
+        out_dir=None,
+        emitter='timeseries'):
 
     # experiment parameters
     total_time = config.get('total_time', 4000)
@@ -498,7 +522,11 @@ def flagella_just_in_time(config={}, out_dir=None):
 
 
 # figure 6c
-def run_heterogeneous_flagella_experiment(config={}, out_dir=None, parallel=False):
+def run_heterogeneous_flagella_experiment(
+        config={},
+        out_dir=None,
+        parallel=False,
+        emitter='database'):
 
     total_time = config.get('total_time', 15000)
     emit_step = 120
@@ -551,7 +579,7 @@ def run_heterogeneous_flagella_experiment(config={}, out_dir=None, parallel=Fals
                        'heterogeneous expression of flagellar genes.',
         'total_time': total_time,
         'emit_step': emit_step,
-        'emitter': {'type': 'database'},
+        'emitter': {'type': emitter},
     }
     experiment = agent_environment_experiment(
         agents_config=agents_config,
@@ -580,7 +608,10 @@ def run_heterogeneous_flagella_experiment(config={}, out_dir=None, parallel=Fals
 
 
 # figure 7a
-def run_flagella_activity(config={}, out_dir=None):
+def run_flagella_activity(
+        config={},
+        out_dir=None,
+        emitter='timeseries'):
     total_time = config.get('total_time', 80)
     time_step = 0.01
     initial_flagella = 1
@@ -615,7 +646,10 @@ def run_flagella_activity(config={}, out_dir=None):
 
 
 # figure 7b
-def run_chemoreceptor_pulse(config={}, out_dir=None):
+def run_chemoreceptor_pulse(
+        config={},
+        out_dir=None,
+        emitter='timeseries'):
     ligand = 'MeAsp'
     timeline = get_pulse_timeline(ligand=ligand)
 
@@ -637,7 +671,10 @@ def run_chemoreceptor_pulse(config={}, out_dir=None):
 
 
 # figure 7c
-def run_chemotaxis_transduction(config={}, out_dir=None):
+def run_chemotaxis_transduction(
+        config={},
+        out_dir=None,
+        emitter='timeseries'):
     total_time = config.get('total_time', 60)
     time_step = 0.1
     n_flagella = 5
@@ -689,7 +726,10 @@ def run_chemotaxis_transduction(config={}, out_dir=None):
 
 
 # figure 7d
-def run_chemotaxis_experiment(config={}, out_dir=None):
+def run_chemotaxis_experiment(
+        config={},
+        out_dir=None,
+        emitter='database'):
 
     # simulation parameters
     total_time = config.get('total_time', 480)
@@ -798,7 +838,7 @@ def run_chemotaxis_experiment(config={}, out_dir=None):
                        'chemotaxis.'.format(n_receptor_motor, n_motor),
         'total_time': total_time,
         'emit_step': fast_process_timestep * 10,
-        'emitter': {'type': 'database'},
+        'emitter': {'type': emitter},
     }
 
     # use helper function agent_environment_experiment to make the experiment
@@ -860,7 +900,7 @@ def test_all_experiments():
     for name, experiment in experiments_library.items():
         print('testing experiment {}...'.format(name))
         config = {'total_time': 1}
-        experiment(config=config)
+        experiment(config=config, emitter='timeseries')
         print('Success!')
 
 
