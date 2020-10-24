@@ -128,6 +128,7 @@ def growth_division_experiment(
             time_step=env_time_step,
             bounds=[30, 30],
             molecules=fields,
+            jitter_force=1e-6,
             keep_fields_emit=emit_fields,
             parallel=parallel)}
 
@@ -278,7 +279,7 @@ def transport_metabolism_environment(
     n_bins = [30, 30]
     depth = 50.0
     diffusion = 5e-3
-    jitter_force = 1e-3
+    jitter_force = 1e-6
     env_timestep = 10
     initial_external = {
         'glc__D_e': 1.0,
@@ -562,6 +563,7 @@ def run_heterogeneous_flagella_experiment(
             time_step=environment_time_step,
             concentrations=media,
             bounds=bounds,
+            jitter_force=1e-6,
             depth=6000.0,
             keep_fields_emit=emit_fields,
             parallel=parallel)}
