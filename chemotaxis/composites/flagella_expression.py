@@ -13,7 +13,7 @@ import pytest
 import numpy as np
 
 # vivarium-core imports
-from vivarium.core.process import Generator
+from vivarium.core.process import Composite
 from vivarium.core.composition import (
     simulate_compartment_in_experiment,
     save_flat_timeseries,
@@ -183,7 +183,7 @@ def FlagellaGeneExpression(config={}):
 
 
 # flagella expression compartment with transport and metabolism
-class FlagellaExpressionMetabolism(Generator):
+class FlagellaExpressionMetabolism(Composite):
     """ Flagella stochastic expression with metabolism """
 
     name = 'flagella_expression_metabolism'

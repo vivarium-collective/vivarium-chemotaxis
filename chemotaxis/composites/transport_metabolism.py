@@ -8,7 +8,7 @@ import os
 import argparse
 
 from vivarium.library.units import units
-from vivarium.core.process import Generator
+from vivarium.core.process import Composite
 from vivarium.core.emitter import path_timeseries_from_embedded_timeseries
 from vivarium.core.composition import (
     simulate_compartment_in_experiment,
@@ -184,7 +184,7 @@ def get_metabolism_initial_external_state(
     return molecules
 
 
-class TransportMetabolismExpression(Generator):
+class TransportMetabolismExpression(Composite):
     """ Transport/Metabolism/Expression composite
 
     Metabolism is an FBA BiGG model, transport is a kinetic model with

@@ -9,10 +9,10 @@ import argparse
 import uuid
 
 # core imports
-from vivarium.core.process import Generator
+from vivarium.core.process import Composite
 from vivarium.core.composition import simulate_compartment_in_experiment
 from vivarium.plots.simulation_output import plot_simulation_output
-from vivarium.plots.topology import plot_compartment_topology
+from vivarium.plots.topology import plot_topology
 
 from vivarium.library.dict_utils import deep_merge
 
@@ -60,18 +60,18 @@ def get_iAF1260b_schema_override():
             'internal': {
                 mol_id: {
                     '_emit': False,
-                } for mol_id in metabolism.initial_state['internal'].keys()
+                } for mol_id in metabolism.initial_state()['internal'].keys()
             },
             'external': {
                 mol_id: {
                     '_emit': False,
-                } for mol_id in metabolism.initial_state['external'].keys()
+                } for mol_id in metabolism.initial_state()['external'].keys()
             },
         }
     }
 
 
-class ChemotaxisMaster(Generator):
+class ChemotaxisMaster(Composite):
     """ Chemotaxis Master Composite
 
      The most complete chemotaxis agent in the vivarium-chemotaxis repository
@@ -139,7 +139,7 @@ class ChemotaxisMaster(Generator):
                 {},
                 daughter_path=daughter_path,
                 agent_id=agent_id,
-                compartment=self)
+                generator=self)
             meta_division = MetaDivision(meta_division_config)
             processes['meta_division'] = meta_division
 
@@ -231,10 +231,11 @@ class ChemotaxisMaster(Generator):
 def save_master_chemotaxis_topology(out_dir):
     compartment = ChemotaxisMaster({})
     settings = {'show_ports': True}
-    plot_compartment_topology(
+    plot_topology(
         compartment,
         settings,
-        out_dir)
+        out_dir,
+        'chemotaxis_master')
 
 
 def test_chemotaxis_master(

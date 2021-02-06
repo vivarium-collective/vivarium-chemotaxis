@@ -9,7 +9,7 @@ import sys
 import argparse
 
 from vivarium.library.units import units
-from vivarium.core.process import Generator
+from vivarium.core.process import Composite
 from vivarium.core.composition import simulate_compartment_in_experiment
 from vivarium.plots.simulation_output import plot_simulation_output
 
@@ -47,7 +47,7 @@ DEFAULT_INITIAL_LIGAND = 1e-2
 
 
 
-class ChemotaxisExpressionFlagella(Generator):
+class ChemotaxisExpressionFlagella(Composite):
     """
     A composite of the ReceptorCluster, FlagellaMotor, GrowthProtein
     and stochastic gene expression processes: Translation, Transcription,
@@ -177,7 +177,7 @@ class ChemotaxisExpressionFlagella(Generator):
 
 
 
-class ChemotaxisVariableFlagella(Generator):
+class ChemotaxisVariableFlagella(Composite):
     """
     A composite of the ReceptorCluster and FlagellaMotor processes
     """

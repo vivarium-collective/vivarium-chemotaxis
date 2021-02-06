@@ -6,7 +6,7 @@ Chemotaxis Minimal Composite
 
 import os
 
-from vivarium.core.process import Generator
+from vivarium.core.process import Composite
 from vivarium.core.composition import simulate_compartment_in_experiment
 from vivarium.plots.simulation_output import plot_simulation_output
 
@@ -24,7 +24,7 @@ from chemotaxis import COMPOSITE_OUT_DIR
 NAME = 'chemotaxis_minimal'
 
 
-class ChemotaxisMinimal(Generator):
+class ChemotaxisMinimal(Composite):
     """ Chemotaxis Minimal Composite
 
      A chemotactic cell with only receptor and motor processes.
