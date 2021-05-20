@@ -27,4 +27,5 @@ setup(
     install_requires=[
         'vivarium-cell==0.0.23',
         'vivarium-core==0.0.34',
+        'pymunk==5.6.0',
     ])
