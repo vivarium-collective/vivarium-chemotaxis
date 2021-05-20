@@ -25,7 +25,7 @@ $ pip install vivarium-chemotaxis
 ```
 
 ## Setup
-Please refer to the Vivarium Core documentation for more complete instructions.
+Please refer to the [Vivarium Core documentation](https://vivarium-core.readthedocs.io/en/latest/) for more complete instructions.
 
 Make a python environment with Python 3 (pyenv is recommended) and install dependencies. 
 
